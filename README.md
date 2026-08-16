@@ -1,108 +1,113 @@
 <div align="center">
 
-# 🏛️ QGIS Plugin Portfolio Analytics & Governance Studio
-### *Enterprise Executive Decision Cockpit · Quantitative Econometrics · Cartographic Intelligence · Cyber-Forensic Surveillance Center*
+# QGIS Plugin Portfolio Analytics & Governance Studio
+### *Enterprise Telemetry, Quantitative Econometrics & Cyber-Forensic Surveillance Platform*
 
 <br/>
 
-[![Live Governance Studio](https://img.shields.io/badge/🚀%20OPEN%20LIVE%20GOVERNANCE%20STUDIO-CLICK%20HERE-0284c7?style=for-the-badge&logo=qgis&logoColor=white&labelColor=070a10)](https://yusufeminoglu.github.io/qgis-plugins-governance/)
-[![Direct Web Access](https://img.shields.io/badge/🌐%20DIRECT%20WEB%20ACCESS-yusufeminoglu.github.io-10b981?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=070a10)](https://yusufeminoglu.github.io/qgis-plugins-governance/)
+[![Launch Live Studio](https://img.shields.io/badge/LIVE%20GOVERNANCE%20STUDIO-LAUNCH%20DASHBOARD-0284c7?style=for-the-badge&logo=qgis&logoColor=white&labelColor=0b111e)](https://yusufeminoglu.github.io/qgis-plugins-governance/)
+[![QGIS Official Profile](https://img.shields.io/badge/QGIS.ORG-AUTHOR%20PORTFOLIO-38bdf8?style=for-the-badge&logo=rss&logoColor=white&labelColor=0b111e)](https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/)
 
-<br/>
+<br/><br/>
 
-[![Daily Telemetry & Security Audit](https://github.com/YusufEminoglu/qgis-plugins-governance/actions/workflows/daily_sync.yml/badge.svg)](https://github.com/YusufEminoglu/qgis-plugins-governance/actions/workflows/daily_sync.yml)
-[![GitHub Pages Deployed](https://img.shields.io/badge/Pages-Deployed%20%26%20Live-success?style=flat&logo=github)](https://yusufeminoglu.github.io/qgis-plugins-governance/)
-[![Portfolio Size](https://img.shields.io/badge/Portfolio-24%20Production%20Plugins-38bdf8?style=flat&logo=python)](https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](LICENSE)
-[![Author: Yusuf Eminoğlu](https://img.shields.io/badge/Author-Yusuf%20Eminoğlu-amber?style=flat)](https://github.com/YusufEminoglu)
+[![Build & Sync](https://img.shields.io/github/actions/workflow/status/YusufEminoglu/qgis-plugins-governance/daily_sync.yml?branch=main&label=TELEMETRY%20SYNC&style=flat-square&color=0284c7)](https://github.com/YusufEminoglu/qgis-plugins-governance/actions)
+[![Pages Status](https://img.shields.io/badge/PAGES-LIVE%20DEPLOYED-10b981?style=flat-square)](https://yusufeminoglu.github.io/qgis-plugins-governance/)
+[![Portfolio](https://img.shields.io/badge/PORTFOLIO-24%20PRODUCTION%20PLUGINS-6366f1?style=flat-square)](https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/)
+[![License](https://img.shields.io/badge/LICENSE-MIT-334155?style=flat-square)](LICENSE)
+[![Author](https://img.shields.io/badge/AUTHOR-YUSUF%20EMİNOĞLU-0ea5e9?style=flat-square)](https://github.com/YusufEminoglu)
 
-<br/>
+<br/><br/>
 
----
-
-### 🌟 🌐 **CANLI İNTERAKTİF GOVERNANCE STUDIO'YA GİTMEK İÇİN TIKLAYIN** 🌐 🌟
-# 👉 [https://yusufeminoglu.github.io/qgis-plugins-governance/](https://yusufeminoglu.github.io/qgis-plugins-governance/) 👈
-
-> **Click the link above or the prominent launch badges to open the full interactive telemetry cockpit directly in your browser.** Real-time analytics, automated vote fraud surveillance, econometric growth projections, and interactive zero-dependency vector SVG choropleth maps across all 24 production QGIS plugins.
-
----
+<table>
+  <tr>
+    <td align="center" style="padding: 24px; border: 1px solid #0284c7; border-radius: 14px; background-color: #0b111e;">
+      <h2 style="margin: 0 0 8px 0; letter-spacing: -0.025em; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <a href="https://yusufeminoglu.github.io/qgis-plugins-governance/" style="color: #38bdf8; text-decoration: none;">
+          ACCESS THE LIVE INTERACTIVE GOVERNANCE STUDIO
+        </a>
+      </h2>
+      <p style="margin: 0 0 14px 0; color: #94a3b8; font-size: 14px; line-height: 1.6;">
+        Real-time telemetry, quantitative econometrics, vector choropleth cartography, and cryptographic forensic audit dossiers across 24 production QGIS plugins.
+      </p>
+      <code><strong><a href="https://yusufeminoglu.github.io/qgis-plugins-governance/" style="color: #0284c7; font-size: 15px; text-decoration: none;">https://yusufeminoglu.github.io/qgis-plugins-governance/</a></strong></code>
+    </td>
+  </tr>
+</table>
 
 </div>
 
 <br/>
 
-## 📖 Executive Summary & Overview
+## Executive Summary
 
-The **QGIS Plugin Portfolio Analytics & Rating Governance Studio** is a world-class, enterprise-grade governance platform designed for the **Yusuf Eminoğlu QGIS Plugin Ecosystem** (comprising 24 specialized production plugins across spatial analysis, space syntax, urban resilience, 3D city modeling, CAD platform engineering, raster MCDA, spatio-temporal datacubes, and advanced cartography).
+The **QGIS Plugin Portfolio Analytics & Governance Studio** provides real-time telemetry, quantitative econometrics, macro-regional spatial analysis, and forensic vote-bombing surveillance for the **Yusuf Eminoğlu QGIS Plugin Ecosystem** (24 production plugins spanning urban analytics, spatial statistics, CAD platform engineering, 3D city visualization, and advanced cartography).
 
-The studio connects directly to the official **QGIS.org XML Repository**, synchronizes persistent historical telemetry in [`plugins_history.json`](plugins_history.json), detects rating anomalies / vote-bombing attacks via mathematical entropy analysis, models portfolio econometrics (Gini inequality, Bayesian ratings, adoption acceleration), and delivers high-impact executive storytelling.
+The platform continuously queries the official **QGIS.org XML Repository**, synchronizes persistent historical records in [`plugins_history.json`](plugins_history.json), detects inorganic rating anomalies via Shannon entropy analysis, models adoption kinematics ($a = \frac{d^2D}{dt^2}$), and publishes live visual intelligence.
 
-👉 **Launch Live Studio:** [**https://yusufeminoglu.github.io/qgis-plugins-governance/**](https://yusufeminoglu.github.io/qgis-plugins-governance/)
+**Direct Live Studio URL:** [https://yusufeminoglu.github.io/qgis-plugins-governance/](https://yusufeminoglu.github.io/qgis-plugins-governance/)
 
 ---
 
-## 💎 Key Capabilities & Architectural Pillars
+## Architectural Pillars & Analytical Modules
 
-### 1. 🛡️ Forensic Cyber-Security & Rating Abuse Surveillance Engine
-- **Shannon Influx Entropy ($H$) & Anomaly Score ($EAS$):** Detects inorganic rating bursts, vote bombing, and bot manipulation by measuring probability distribution shifts in vote increments ($H = -\sum p_i \log_2 p_i$).
-- **Implied Influx Rating & Damage Index:** Reconciles baseline scores against live states to compute exact fraudulent score drops and calculates the required organic 5-star votes to recover.
-- **5-Channel Forensic Dossier Exporter:** One-click modal generating export packages for:
-  1. **GitHub Issue Markdown:** Formatted complaint dossiers with cryptographic evidence signatures.
-  2. **Official QGIS PSC / Hub Admin Memorandum:** Direct **SQL `DELETE` & `UPDATE`** directives ready for database administrators to restore baselines.
-  3. **Discord Webhook JSON:** Formatted rich embeds with severity indicators.
+### 1. Cyber-Forensic Surveillance & Rating Audit Engine
+- **Shannon Influx Entropy ($H$) & Anomaly Score ($EAS$):** Identifies coordinated vote bombing and inorganic volume bursts by evaluating probability distribution shifts across incremental rating votes ($H = -\sum p_i \log_2 p_i$).
+- **Implied Influx Rating & Damage Index:** Computes exact score deviations against historical baselines and calculates the organic 5-star volume required to offset malicious submissions.
+- **Multi-Channel Forensic Dossier Exporter:** Generates standardized incident evidence packages:
+  1. **GitHub Issue Markdown:** Formatted incident dossiers with SHA-256 evidence signatures for QGIS issue trackers.
+  2. **QGIS PSC / Hub Admin Memorandum:** Direct **SQL `DELETE` & `UPDATE`** directives for database administrators to restore baseline scores.
+  3. **Discord Webhook Payload:** Formatted embed alerts with severity indicators.
   4. **Slack Block Kit:** Enterprise alert message payloads.
-  5. **Cryptographic Raw JSON Evidence:** Timestamped SHA-256 verifiable incident package.
+  5. **Cryptographic JSON Bundle:** Timestamped raw data packages for external verification.
 
-### 2. 📐 Advanced Quantitative Econometrics & Adoption Modeling
-- **Sample-Bias Corrected Gini Inequality Coefficient ($G^*$):** Quantifies ecosystem download concentration vs diversity across all 24 plugins ($G^* = 0.4676$).
-- **Herfindahl-Hirschman Index ($HHI$):** Measures market share distribution and portfolio resilience ($HHI = 1888$).
-- **Empirical Bayes Rating Reliability ($R_{\text{Bayes}}$):** Bayesian shrinkage formulation with global prior ($m = 5.0$) that fairly balances high-volume plugins with emerging tools.
-- **Adoption Acceleration ($a = \frac{d^2D}{dt^2}$):** Second-derivative kinematic metric pinpointing breakout plugins versus plateauing tools.
-- **Probabilistic Milestone Arrival Horizons:** Multi-scenario Monte Carlo curves with 95% confidence intervals predicting exact dates for 100K, 250K, and 500K cumulative downloads.
+### 2. Quantitative Econometrics & Adoption Kinematics
+- **Sample-Bias Corrected Gini Inequality Coefficient ($G^*$):** Quantifies ecosystem download concentration across the 24 plugins ($G^* = 0.4676$).
+- **Herfindahl-Hirschman Index ($HHI$):** Assesses portfolio market diversity and structural resilience ($HHI = 1888$).
+- **Empirical Bayes Rating Reliability ($R_{\text{Bayes}}$):** Applies Bayesian shrinkage with a global prior ($m = 5.0$) to balance high-volume tools with newly released plugins.
+- **Adoption Acceleration ($a = \frac{d^2D}{dt^2}$):** Second-derivative metric distinguishing high-momentum tools from plateauing releases.
+- **Probabilistic Milestone Arrival Horizons:** Multi-scenario Monte Carlo curves with 95% confidence intervals forecasting arrival dates for 100K, 250K, and 500K cumulative downloads.
 
-### 3. 🗺️ Zero-Dependency Cartographic Heatmap & Geospatial Intelligence
-- **Native Vector SVG World Choropleth:** Zero-dependency, lightweight interactive world map with country-level adoption color grading and live HUD tooltips.
-- **Regional Pan / Zoom Controls:** Smooth matrix transform zoom into Europe, North America, Asia-Pacific, Latin America, and Africa.
-- **Suite Geographic Affinity Matrix ($LQ$):** Location Quotient analysis evaluating relative demand for PlanX, Zero2, CAD, and Spatial Stats across global macro-regions.
+### 3. Cartographic Intelligence & Spatial Demographics
+- **Native Vector SVG World Choropleth:** Zero-dependency interactive map visualizing country-level adoption density with real-time HUD telemetry tooltips.
+- **Regional Pan / Zoom Control Matrix:** Interactive transformations focused on Europe, North America, Asia-Pacific, Latin America, and Eastern Europe/Middle East.
+- **Suite Geographic Affinity Matrix ($LQ$):** Location Quotient calculations quantifying regional demand across PlanX, Zero2, CAD, and Spatial Stats suites.
 
-### 4. 🎨 Master Dual-Theme Luxury Design System
-- **Obsidian Titanium:** Deep velvet space palette with crystalline glassmorphism (`::before` specular highlight) and ambient starfield particles.
-- **Alabaster Platinum:** Editorial Swiss light theme meeting strict **WCAG AAA** contrast requirements.
-- **Kinetic Tabular Monospace Counters:** Real-time smooth numerical rolling animations (`animateValue()`) formatted with `JetBrains Mono` and `tnum`.
-- **Spotlight Command Palette (<kbd>Ctrl+K</kbd>):** Instant keyboard-driven fuzzy navigation across plugins, tools, comparators, and export modals.
+### 4. Dual-Theme Design Matrix
+- **Obsidian Titanium:** Deep slate space palette with crystalline glassmorphism and subtle ambient lighting.
+- **Alabaster Platinum:** High-contrast Swiss editorial light theme meeting strict **WCAG AAA** readability standards.
+- **Kinetic Tabular Monospace Counters:** Tabular numerical rollup animations (`animateValue()`) formatted in `JetBrains Mono`.
+- **Spotlight Command Palette (<kbd>Ctrl+K</kbd>):** Keyboard-driven fuzzy navigation across all plugins, analytical views, and export tools.
 
-### 5. 📰 Executive Storytelling & Social Media Announcement Kit
-- **State of the Ecosystem Report Generator:** Instantly produces quarterly and annual executive briefings with key takeaways, risks, and strategic guidance.
-- **Multi-Platform Social Media Kit:** Auto-formats announcements tailored for LinkedIn, X (Twitter) threads, Reddit `r/QGIS`, and GIS StackExchange.
-- **Honors & Superlatives Badges:**
-  - 👑 **Crown Jewel** (Highest Total Adoption)
-  - ⚡ **Speed Demon** (Highest Growth Velocity)
-  - 🎓 **Academic Standard** (Highest Rating & Bayesian Confidence)
-  - 🚀 **Rising Star** (Strongest Positive Acceleration)
+### 5. Executive Storytelling & Communications Suite
+- **State of the Ecosystem Report Generator:** Automated executive briefings highlighting quarterly health, risk factors, and strategic growth priorities.
+- **Multi-Platform Announcement Kit:** Pre-formatted announcement templates for LinkedIn, X (Twitter), Reddit `r/QGIS`, and GIS StackExchange.
+- **Honors & Superlatives Classification:**
+  - **Crown Jewel:** Highest cumulative adoption volume.
+  - **Speed Demon:** Highest monthly run-rate velocity.
+  - **Academic Standard:** Highest Bayesian reliability and rating stability.
+  - **Rising Star:** Strongest positive adoption acceleration.
 
 ---
 
-## ⚙️ Automated GitOps & Telemetry Architecture
-
-The studio operates on a fully automated, serverless **GitOps pipeline**:
+## Automated GitOps Telemetry Pipeline
 
 ```mermaid
 flowchart LR
-  CRON["🕒 GitHub Actions Cron<br/>(Every 6 Hours)"] --> RUN["⚙️ Python Analytics Engine<br/>(generate_dashboard.py)"]
-  QGIS["🌐 Official QGIS Hub XML<br/>(plugins.qgis.org)"] --> RUN
-  HIST[("📊 Persistent History Store<br/>(plugins_history.json)")] <--> RUN
-  RUN --> HTML["📄 Interactive Web Studio<br/>(index.html)"]
-  RUN --> COMMIT["🔒 Git Auto-Commit<br/>(Yusuf Eminoğlu)"]
-  HTML --> PAGES["🚀 GitHub Pages Live Broadcast<br/>(yusufeminoglu.github.io)"]
+  CRON["GitHub Actions Cron<br/>(Every 6 Hours)"] --> RUN["Python Analytics Engine<br/>(generate_dashboard.py)"]
+  QGIS["Official QGIS XML Feed<br/>(plugins.qgis.org)"] --> RUN
+  HIST[("Persistent History Store<br/>(plugins_history.json)")] <--> RUN
+  RUN --> HTML["Interactive Web Studio<br/>(index.html)"]
+  RUN --> COMMIT["Git Automated Commit<br/>(Author: Yusuf Eminoğlu)"]
+  HTML --> PAGES["GitHub Pages Broadcast<br/>(yusufeminoglu.github.io)"]
 ```
 
-1. **Automated Synchronization:** `.github/workflows/daily_sync.yml` triggers every 6 hours to fetch fresh XML metadata directly from `plugins.qgis.org`.
-2. **Cryptographic Historical Store:** Metric snapshots are merged into [`plugins_history.json`](plugins_history.json) to preserve an immutable historical log of all downloads, ratings, and votes.
-3. **Continuous Deployment:** `index.html` is compiled and deployed instantaneously to [GitHub Pages](https://yusufeminoglu.github.io/qgis-plugins-governance/).
+1. **Automated Fetch:** Scheduled GitHub Actions workflows query the live XML feed at `plugins.qgis.org/plugins/plugins.xml`.
+2. **Historical Ledger:** New snapshots are committed to [`plugins_history.json`](plugins_history.json) to preserve an immutable historical baseline.
+3. **Continuous Broadcast:** Updated static bundles are deployed directly to [GitHub Pages](https://yusufeminoglu.github.io/qgis-plugins-governance/).
 
 ---
 
-## 📦 The Yusuf Eminoğlu QGIS Plugin Portfolio (24 Plugins)
+## Ecosystem Catalog (24 Production Plugins)
 
 | Plugin Name | Category | Primary Focus & Domain | Official QGIS Hub |
 |:---|:---|:---|:---:|
@@ -133,32 +138,32 @@ flowchart LR
 
 ---
 
-## 🛠️ Local Development & Regeneration
+## Local Execution & Standalone Output
 
-To run the telemetry engine locally or generate an offline copy:
+To run the telemetry engine locally:
 
 ```powershell
-# 1. Fetch live metrics and generate standalone dashboard
+# 1. Direct Python invocation
 python generate_dashboard.py
 
-# 2. Or run via PowerShell automation script
+# 2. Automated PowerShell workflow
 .\update_dashboard.ps1
 ```
 
-The resulting `index.html` and `qgis_plugins_dashboard.html` files are 100% self-contained and require zero external backend infrastructure or build tools.
+The generated artifacts (`index.html` and `qgis_plugins_dashboard.html`) are completely self-contained with zero runtime dependencies.
 
 ---
 
-## 🔗 Direct Links & Resources
+## Links & Reference Resources
 
-- 🌐 **Live Web Governance Studio:** [https://yusufeminoglu.github.io/qgis-plugins-governance/](https://yusufeminoglu.github.io/qgis-plugins-governance/)
-- 💻 **Source Repository:** [https://github.com/YusufEminoglu/qgis-plugins-governance](https://github.com/YusufEminoglu/qgis-plugins-governance)
-- 👤 **Author's QGIS Official Hub Profile:** [https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/](https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/)
-- 🐙 **Author's GitHub Profile:** [https://github.com/YusufEminoglu](https://github.com/YusufEminoglu)
+- **Live Studio Dashboard:** [https://yusufeminoglu.github.io/qgis-plugins-governance/](https://yusufeminoglu.github.io/qgis-plugins-governance/)
+- **Source Code Repository:** [https://github.com/YusufEminoglu/qgis-plugins-governance](https://github.com/YusufEminoglu/qgis-plugins-governance)
+- **Author Profile on QGIS Hub:** [https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/](https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/)
+- **Author GitHub Profile:** [https://github.com/YusufEminoglu](https://github.com/YusufEminoglu)
 
 ---
 
-## 📜 License & Attribution
+## License & Attribution
 
-All tools, analytical formulations, visualizers, and documentation are authored and maintained by **Yusuf Eminoğlu**.  
-Released under the [MIT License](LICENSE).
+All software, mathematical algorithms, and documentation are authored and maintained by **Yusuf Eminoğlu**.  
+Licensed under the [MIT License](LICENSE).

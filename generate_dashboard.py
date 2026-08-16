@@ -14,6 +14,7 @@ import os
 import sys
 import math
 import hashlib
+import base64
 from collections import Counter
 from datetime import datetime, timezone, timedelta
 
@@ -211,6 +212,27 @@ try:
             })
 
     yusuf_plugins.sort(key=lambda x: x['downloads'], reverse=True)
+
+    # Resolve each plugin's main icon (from assets/plugin_icons/, keyed by the GitHub
+    # repo slug) and inline it as a base64 data URI, so the static dashboard can draw
+    # the real plugin icon in the BCG matrix with zero external requests. The icons are
+    # committed in this repo because CI regenerates the page without the sibling dirs.
+    _icon_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "plugin_icons")
+
+    def resolve_plugin_icon(repository):
+        if not repository:
+            return None
+        slug = repository.rstrip("/").split("/")[-1].lower()
+        for ext, mime in ((".png", "image/png"), (".svg", "image/svg+xml")):
+            path = os.path.join(_icon_dir, slug + ext)
+            if os.path.exists(path):
+                with open(path, "rb") as _f:
+                    _b64 = base64.b64encode(_f.read()).decode("ascii")
+                return f"data:{mime};base64,{_b64}"
+        return None
+
+    for _p in yusuf_plugins:
+        _p['icon'] = resolve_plugin_icon(_p.get('repository', ''))
 
     # Portfolio calculations
     total_downloads = sum(p['downloads'] for p in yusuf_plugins)
@@ -594,6 +616,7 @@ try:
                     'flag': c_flag,
                     'region': c_reg,
                     'iso': iso_meta['iso'],
+                    'iso3': iso_meta.get('iso3', ''),
                     'cx': iso_meta['cx'],
                     'cy': iso_meta['cy'],
                     'downloads': 0,
@@ -925,11 +948,16 @@ try:
                 'PER': 'PE', 'VEN': 'VE', 'UKR': 'UA', 'IRL': 'IE'
             }
 
+            iso3_point_map = {}
             for feat in world_geojson.get('features', []):
                 props = feat.get('properties', {})
                 geom = feat.get('geometry', {})
                 name = props.get('name', '')
                 iso3 = props.get('iso', '')
+                lon = props.get('lon')
+                lat = props.get('lat')
+                if iso3 and lon is not None and lat is not None:
+                    iso3_point_map[iso3] = (lon, lat)
                 if name == 'Antarctica':
                     continue
                 iso2 = iso3_to_iso2.get(iso3, iso3[:2] if iso3 else 'XX')
@@ -942,6 +970,16 @@ try:
                     f'class="country-path cursor-pointer transition-all duration-200" d="{d_path}" />'
                 )
             print(f"[4/5] Processed {len(world_svg_layer_elements)} real-world sovereign country polygons.")
+
+            # Correct the country marker positions: replace the hardcoded atlas
+            # cx/cy with each country's own representative point from the GeoJSON
+            # (properties.lon/lat), projected into the same equirectangular space
+            # the polygons are drawn in. Without this the dots land off-country.
+            for c_name, c_info in country_data_map.items():
+                iso3 = c_info.get('iso3', '')
+                if iso3 in iso3_point_map:
+                    lon, lat = iso3_point_map[iso3]
+                    c_info['cx'], c_info['cy'] = project_equirectangular(lon, lat)
         except Exception as ge:
             print(f"Warning: Failed to load world_map.geojson: {ge}")
 
@@ -4253,7 +4291,63 @@ COMMIT;
         let overviewBarChart = null;
         let overviewDonutChart = null;
         let suiteRadarChart = null;
-        let bcgScatterChart = null;
+        function renderBcgScatter() {
+            const el = document.getElementById('bcg-scatter-chart');
+            if (!el) return;
+            const plugins = appData.plugins || [];
+            const isAlabaster = document.documentElement.getAttribute('data-theme') === 'alabaster';
+            const gridColor = isAlabaster ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.06)';
+            const labelColor = isAlabaster ? '#475569' : '#94a3b8';
+            const catColors = { 'PlanX Suite': '#6366f1', '02 Suite': '#0ea5e9', 'Standalone Plugins': '#64748b' };
+            const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+            const W = 820, H = 320, padL = 62, padR = 20, padT = 18, padB = 44;
+            const dlVals = plugins.map(p => p.downloads);
+            const vVals = plugins.map(p => Math.max(p.avg_monthly_downloads, 1));
+            const minDl = Math.max(Math.min(...dlVals), 1), maxDl = Math.max(...dlVals);
+            const minV = Math.max(Math.min(...vVals), 1), maxV = Math.max(...vVals);
+            const lx = d => padL + (Math.log(d) - Math.log(minDl)) / ((Math.log(maxDl) - Math.log(minDl)) || 1) * (W - padL - padR);
+            const ly = v => padT + (1 - (Math.log(v) - Math.log(minV)) / ((Math.log(maxV) - Math.log(minV)) || 1)) * (H - padT - padB);
+            const fmt = t => t >= 1000 ? (Math.round(t / 100) / 10) + 'k' : Math.round(t);
+            const ticks = (min, max, n) => {
+                const lo = Math.log10(min), hi = Math.log10(max);
+                const out = [];
+                for (let i = 0; i <= n; i++) out.push(Math.pow(10, lo + (hi - lo) * i / n));
+                return out;
+            };
+
+            let s = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">`;
+            ticks(minDl, maxDl, 4).forEach(t => {
+                const px = lx(t);
+                s += `<line x1="${px}" y1="${padT}" x2="${px}" y2="${H - padB}" stroke="${gridColor}"/>`;
+                s += `<text x="${px}" y="${H - padB + 18}" fill="${labelColor}" font-size="10" font-family="JetBrains Mono, monospace" text-anchor="middle">${fmt(t)}</text>`;
+            });
+            ticks(minV, maxV, 4).forEach(t => {
+                const py = ly(t);
+                s += `<line x1="${padL}" y1="${py}" x2="${W - padR}" y2="${py}" stroke="${gridColor}"/>`;
+                s += `<text x="${padL - 6}" y="${py + 3}" fill="${labelColor}" font-size="10" font-family="JetBrains Mono, monospace" text-anchor="end">${fmt(t)}</text>`;
+            });
+            s += `<text x="${(padL + W - padR) / 2}" y="${H - 8}" fill="${labelColor}" font-size="11" font-family="Plus Jakarta Sans, sans-serif" font-weight="700" text-anchor="middle">Cumulative Downloads</text>`;
+            s += `<text transform="rotate(-90 16 ${(padT + H - padB) / 2})" x="16" y="${(padT + H - padB) / 2}" fill="${labelColor}" font-size="11" font-family="Plus Jakarta Sans, sans-serif" font-weight="700" text-anchor="middle">Monthly Run-Rate (dl/mo)</text>`;
+
+            const med = arr => arr.slice().sort((a, b) => a - b)[Math.floor(arr.length / 2)];
+            const mx = lx(med(dlVals)), my = ly(med(vVals));
+            s += `<line x1="${mx}" y1="${padT}" x2="${mx}" y2="${H - padB}" stroke="${labelColor}" stroke-dasharray="4 5" opacity="0.45"/>`;
+            s += `<line x1="${padL}" y1="${my}" x2="${W - padR}" y2="${my}" stroke="${labelColor}" stroke-dasharray="4 5" opacity="0.45"/>`;
+
+            plugins.forEach(p => {
+                const px = lx(p.downloads), py = ly(Math.max(p.avg_monthly_downloads, 1));
+                const color = catColors[p.category] || '#64748b';
+                const tip = `${esc(p.name)} · ${p.downloads.toLocaleString()} downloads · ${Math.round(p.avg_monthly_downloads).toLocaleString()}/mo · ${p.category}`;
+                if (p.icon) {
+                    s += `<g transform="translate(${(px - 16).toFixed(1)} ${(py - 16).toFixed(1)})" style="cursor:pointer"><title>${tip}</title><circle cx="16" cy="16" r="19" fill="${color}" opacity="0.15"/><image href="${p.icon}" x="4" y="4" width="24" height="24" preserveAspectRatio="xMidYMid meet"/><circle cx="16" cy="16" r="19" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.55"/></g>`;
+                } else {
+                    s += `<g transform="translate(${px} ${py})" style="cursor:pointer"><title>${tip}</title><circle r="6" fill="${color}"/></g>`;
+                }
+            });
+            s += '</svg>';
+            el.innerHTML = s;
+        }
 
         function initializeCharts() {
             const isAlabaster = document.documentElement.getAttribute('data-theme') === 'alabaster';
@@ -4263,7 +4357,6 @@ COMMIT;
             if (overviewBarChart) overviewBarChart.destroy();
             if (overviewDonutChart) overviewDonutChart.destroy();
             if (suiteRadarChart) suiteRadarChart.destroy();
-            if (bcgScatterChart) bcgScatterChart.destroy();
 
             // 1. Horizontal Bar Chart
             const names = appData.plugins.map(p => p.name);
@@ -4394,59 +4487,8 @@ COMMIT;
             overviewDonutChart = new ApexCharts(document.querySelector("#overview-donut-chart"), donutOptions);
             overviewDonutChart.render();
 
-            // 3. BCG Scatter Matrix
-            const scatterSeries = [
-                {
-                    name: 'PlanX Suite',
-                    data: appData.plugins.filter(p => p.category === 'PlanX Suite').map(p => [p.downloads, Math.round(p.avg_monthly_downloads)])
-                },
-                {
-                    name: '02 Suite',
-                    data: appData.plugins.filter(p => p.category === '02 Suite').map(p => [p.downloads, Math.round(p.avg_monthly_downloads)])
-                },
-                {
-                    name: 'Standalone',
-                    data: appData.plugins.filter(p => p.category === 'Standalone Plugins').map(p => [p.downloads, Math.round(p.avg_monthly_downloads)])
-                }
-            ];
-
-            const scatterOptions = {
-                series: scatterSeries,
-                chart: {
-                    height: 310,
-                    type: 'scatter',
-                    toolbar: { show: false },
-                    foreColor: labelColor,
-                    zoom: { enabled: false }
-                },
-                colors: ['#6366f1', '#0ea5e9', '#64748b'],
-                grid: { borderColor: gridColor },
-                xaxis: {
-                    title: { text: 'Cumulative Downloads' },
-                    labels: { formatter: function(v) { return v.toLocaleString(); }, style: { fontFamily: 'JetBrains Mono' } }
-                },
-                yaxis: {
-                    title: { text: 'Monthly Run-Rate (Downloads/mo)' },
-                    labels: { formatter: function(v) { return Math.round(v).toLocaleString(); }, style: { fontFamily: 'JetBrains Mono' } }
-                },
-                legend: { position: 'bottom', fontSize: '11px', markers: { radius: 6 } },
-                tooltip: {
-                    theme: isAlabaster ? 'light' : 'dark',
-                    custom: function({ series, seriesIndex, dataPointIndex, w }) {
-                        const pt = w.config.series[seriesIndex].data[dataPointIndex];
-                        const pl = appData.plugins.find(x => x.downloads === pt[0] && Math.round(x.avg_monthly_downloads) === pt[1]);
-                        const name = pl ? pl.name : 'Plugin';
-                        return `<div class="p-3 text-xs font-mono">
-                            <strong class="font-bold font-heading text-cyan-400 block mb-1">${name}</strong>
-                            <div>Downloads: <strong>${pt[0].toLocaleString()}</strong></div>
-                            <div>Velocity: <strong>${pt[1].toLocaleString()}/mo</strong></div>
-                        </div>`;
-                    }
-                }
-            };
-
-            bcgScatterChart = new ApexCharts(document.querySelector("#bcg-scatter-chart"), scatterOptions);
-            bcgScatterChart.render();
+            // 3. BCG Scatter Matrix — custom SVG with each plugin's own icon as the node
+            renderBcgScatter();
 
             // 4. Suite Capability Radar Chart
             const radarOptions = {

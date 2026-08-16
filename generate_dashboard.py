@@ -912,7 +912,19 @@ try:
             font-feature-settings: "tnum" 1, "zero" 1, "cv05" 1;
         }
 
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+        }
+
         .studio-container {
+            position: relative;
+            z-index: 10;
             width: 100%;
             max-width: 1720px;
             margin-left: auto;
@@ -2187,7 +2199,7 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             const targetBtn = document.getElementById(`tab-btn-${tabId}`);
             if (targetBtn) targetBtn.className = "px-5 py-3 text-sm font-bold border-b-2 border-cyan-400 text-cyan-400 flex items-center gap-2 whitespace-nowrap";
 
-            if (tabId === 'overview' || tabId === 'simulator') {
+            if (tabId === 'overview' || tabId === 'simulator' || tabId === 'deepdive') {
                 setTimeout(initializeCharts, 100);
             }
             if (tabId === 'audit') {

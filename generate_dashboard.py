@@ -1,10 +1,10 @@
 """
-QGIS Plugin Portfolio Analytics & Rating Abuse Governance Studio
+QGIS Plugin Portfolio Analytics, Forensic Governance & Geospatial Intelligence Studio
 Author: Yusuf Eminoğlu
-Description: Generates an ultra-elite analytical dashboard and rating abuse
-surveillance system for QGIS plugins with dual themes, Command Palette (Ctrl+K),
-BCG Quadrant scatter matrix, 3-way benchmark comparator, Monte Carlo forecast curves,
-and executive narrative briefings.
+License: MIT
+Description: Enterprise-grade analytics, econometric growth models, forensic rating abuse
+surveillance, interactive vector SVG choropleth mapping, and multi-channel executive storytelling
+for 24 QGIS plugins across urban analytics, spatial statistics, CAD, and 3D GIS.
 """
 
 import urllib.request
@@ -12,6 +12,8 @@ import xml.etree.ElementTree as ET
 import json
 import os
 import sys
+import math
+import hashlib
 from collections import Counter
 from datetime import datetime, timezone, timedelta
 
@@ -243,66 +245,10 @@ try:
         categories_stats[cat]['total_rating_sum'] += (p['average_vote'] * p['votes_count'])
         categories_stats[cat]['total_votes'] += p['votes_count']
 
-    # Regional & Country Aggregations
-    country_plugins_map = {}
-    global_country_totals = {}
-    global_regional_totals = {}
-
-    for p in yusuf_plugins:
-        for c in p['countries']:
-            c_name = c['country']
-            c_flag = c['flag']
-            c_reg = c['region']
-
-            if c_name not in global_country_totals:
-                global_country_totals[c_name] = {'downloads': 0, 'flag': c_flag, 'region': c_reg}
-                country_plugins_map[c_name] = []
-            global_country_totals[c_name]['downloads'] += c['downloads']
-            country_plugins_map[c_name].append({
-                'name': p['name'],
-                'downloads': c['downloads'],
-                'percentage': c['percentage'],
-                'category': p['category']
-            })
-
-            if c_reg not in global_regional_totals:
-                global_regional_totals[c_reg] = 0
-            global_regional_totals[c_reg] += c['downloads']
-
-    for c_name in country_plugins_map:
-        country_plugins_map[c_name].sort(key=lambda x: x['downloads'], reverse=True)
-
-    sorted_global_countries = sorted(
-        global_country_totals.items(),
-        key=lambda x: x[1]['downloads'],
-        reverse=True
-    )[:10]
-
-    global_countries = []
-    for c_name, info in sorted_global_countries:
-        pct = (info['downloads'] / total_downloads) * 100.0 if total_downloads > 0 else 0.0
-        global_countries.append({
-            'country': c_name,
-            'flag': info['flag'],
-            'region': info['region'],
-            'downloads': info['downloads'],
-            'percentage': round(pct, 1),
-            'top_plugins': country_plugins_map[c_name][:5]
-        })
-
-    regional_distribution = []
-    for reg_name, reg_downloads in sorted(global_regional_totals.items(), key=lambda x: x[1], reverse=True):
-        reg_pct = (reg_downloads / total_downloads) * 100.0 if total_downloads > 0 else 0.0
-        regional_distribution.append({
-            'region': reg_name,
-            'downloads': reg_downloads,
-            'percentage': round(reg_pct, 1)
-        })
-
     # =========================================================================
     # [3/5] PERSISTENT HISTORICAL SNAPSHOT STORE & FORENSIC AUDIT ENGINE
     # =========================================================================
-    print("[3/5] Syncing persistent historical store and computing forensic audits...")
+    print("[3/5] Syncing persistent historical store, computing econometrics, and auditing entropy...")
     history_file_path = os.path.join(os.path.dirname(__file__), "plugins_history.json")
 
     history = []
@@ -360,29 +306,105 @@ try:
         json.dump(history, hf, indent=2, ensure_ascii=False)
 
     baseline = history[0]["plugins"]
+    base_timestamp_str = history[0].get("timestamp")
+    base_date = datetime.fromisoformat(base_timestamp_str) if base_timestamp_str else None
+    delta_days = (reference_date - base_date).days if base_date else 0
+
+    # 1. Advanced Econometric Modeling: Gini, Diversity, and Bayesian Reliability
+    downloads_list = [p['downloads'] for p in yusuf_plugins]
+    n_plugins = len(downloads_list)
+    sorted_dl = sorted(downloads_list)
+    index_sum = sum((i + 1) * d for i, d in enumerate(sorted_dl))
+    gini_raw = (2.0 * index_sum) / (n_plugins * total_downloads) - ((n_plugins + 1.0) / n_plugins) if total_downloads > 0 else 0.0
+    gini_corrected = (n_plugins / (n_plugins - 1.0)) * gini_raw if n_plugins > 1 else gini_raw
+
+    shares = [d / total_downloads for d in downloads_list if d > 0]
+    hhi = sum(s ** 2 for s in shares)
+    shannon_entropy_portfolio = -sum(s * math.log(s) for s in shares)
+    n_effective = math.exp(shannon_entropy_portfolio)
+
+    total_portfolio_votes = sum(p['votes_count'] for p in yusuf_plugins)
+    prior_mean_rating = (sum(p['average_vote'] * p['votes_count'] for p in yusuf_plugins) / total_portfolio_votes) if total_portfolio_votes > 0 else 4.80
+    m_bayesian = 5.0
+    prior_var = 0.25
+
+    # 2. Forensic Surveillance & Shannon Influx Entropy Engine
+    H_MAX_ENTROPY = math.log2(5.0)  # 2.321928 bits
     anomaly_reports = []
+    raided_plugins = []
 
     for p in yusuf_plugins:
         name = p['name']
         cur_votes = p['votes_count']
         cur_avg = p['average_vote']
         cur_score = cur_votes * cur_avg
+        cur_dl = p['downloads']
+        v_hist = p['avg_monthly_downloads']
 
+        # Bayesian Rating
+        z_weight = cur_votes / (cur_votes + m_bayesian)
+        r_bayes = z_weight * cur_avg + (1.0 - z_weight) * prior_mean_rating
+        cred_floor = max(1.0, r_bayes - 1.96 * math.sqrt(prior_var / (cur_votes + m_bayesian)))
+
+        # Baseline Reconciliation
         base_data = baseline.get(name, {
             "votes_count": cur_votes,
             "average_vote": cur_avg,
-            "total_score": cur_score
+            "total_score": cur_score,
+            "downloads": cur_dl
         })
 
         base_votes = base_data.get("votes_count", cur_votes)
         base_avg = base_data.get("average_vote", cur_avg)
         base_score = base_votes * base_avg
+        base_dl = base_data.get("downloads", cur_dl)
 
         delta_votes = cur_votes - base_votes
         delta_score = cur_score - base_score
         delta_rating = cur_avg - base_avg
-
         implied_new_rating = (delta_score / delta_votes) if delta_votes > 0 else 0.0
+
+        # Adoption Acceleration & Kinetic Momentum
+        if delta_days > 0 and base_dl < cur_dl:
+            v_recent = (cur_dl - base_dl) / (delta_days / 30.4375)
+            alpha_kinetic = (v_recent / v_hist) if v_hist > 0 else 1.0
+            accel = (v_recent - v_hist) / (0.5 * (p['days_active'] + delta_days) / 30.4375)
+        else:
+            v_recent = v_hist
+            alpha_kinetic = 1.0
+            accel = 0.0
+
+        if alpha_kinetic >= 2.5:
+            regime, regime_badge = "Hyper-Explosive", "rose"
+        elif alpha_kinetic >= 1.3:
+            regime, regime_badge = "Accelerating Expansion", "emerald"
+        elif alpha_kinetic >= 0.8:
+            regime, regime_badge = "Steady-State Cruising", "cyan"
+        elif alpha_kinetic >= 0.3:
+            regime, regime_badge = "Decelerating Growth", "amber"
+        else:
+            regime, regime_badge = "Plateau / Dormant", "slate"
+
+        # Shannon Entropy of Influx Vector
+        if delta_votes > 0:
+            r_clamped = max(1.0, min(5.0, implied_new_rating))
+            if r_clamped <= 1.5:
+                probs = [1.0 - (r_clamped - 1.0), r_clamped - 1.0, 0.0, 0.0, 0.0]
+            elif r_clamped <= 2.0:
+                probs = [2.0 - r_clamped, r_clamped - 1.0, 0.0, 0.0, 0.0]
+            elif r_clamped >= 4.5:
+                probs = [0.0, 0.0, 0.0, 5.0 - r_clamped, 1.0 - (5.0 - r_clamped)]
+            else:
+                probs = [0.1, 0.2, 0.4, 0.2, 0.1]
+            p_sum = sum(probs)
+            norm_p = [prob / p_sum for prob in probs]
+            shannon_h = -sum(prob * math.log2(prob) for prob in norm_p if prob > 1e-6)
+            eas_score = (1.0 - (shannon_h / H_MAX_ENTROPY)) * max(0.0, (5.0 - r_clamped) / 4.0) * min(1.0, delta_votes / 3.0) * 100.0
+            purity = (norm_p[0] if r_clamped < 2.5 else norm_p[4]) * 100.0
+        else:
+            shannon_h = H_MAX_ENTROPY
+            eas_score = 0.0
+            purity = 0.0
 
         if delta_votes > 0 and (cur_votes - delta_votes) > 0:
             reconciled_after_purge = (cur_score - (delta_votes * 1.0)) / (cur_votes - delta_votes)
@@ -397,18 +419,20 @@ try:
 
         damage_index = max(0.0, (base_avg - cur_avg) * cur_votes)
 
-        status = "Healthy"
-        severity = "normal"
-        badge_color = "emerald"
+        # Cryptographic Evidence Signature
+        sig_raw = f"{name}:{cur_votes}:{cur_avg}:{delta_votes}:{implied_new_rating}:{reference_date.isoformat()}"
+        evidence_hash = hashlib.sha256(sig_raw.encode("utf-8")).hexdigest()[:16].upper()
 
         if delta_votes >= 3 and implied_new_rating <= 1.35:
             status = "CRITICAL 1-STAR RAID"
             severity = "critical"
             badge_color = "rose"
+            raided_plugins.append(name)
         elif (delta_votes >= 2 and implied_new_rating <= 2.20) or (delta_rating <= -0.20 and delta_votes >= 2):
             status = "SUSPICIOUS DROP"
             severity = "high"
             badge_color = "amber"
+            raided_plugins.append(name)
         elif delta_votes > 0 and implied_new_rating >= 3.8:
             status = "POSITIVE GROWTH"
             severity = "positive"
@@ -421,6 +445,28 @@ try:
             status = "STABLE BASELINE"
             severity = "stable"
             badge_color = "slate"
+
+        # Superlatives & Honors Badges
+        honors = []
+        if name == "PlanX CAD Toolset" or cur_dl >= 15000:
+            honors.append({"badge": "Crown Jewel", "icon": "fa-crown", "color": "amber"})
+        if v_hist >= 600:
+            honors.append({"badge": "Speed Demon", "icon": "fa-bolt-lightning", "color": "cyan"})
+        if cur_avg >= 4.75 and cur_votes >= 15:
+            honors.append({"badge": "Academic Standard", "icon": "fa-graduation-cap", "color": "emerald"})
+        if p['days_active'] < 180 and v_hist >= 350:
+            honors.append({"badge": "Rising Star", "icon": "fa-rocket", "color": "rose"})
+
+        p.update({
+            'bayesian_rating': round(r_bayes, 3),
+            'rating_credibility_floor_95': round(cred_floor, 3),
+            'kinetic_ratio': round(alpha_kinetic, 2),
+            'adoption_acceleration': round(accel, 2),
+            'kinetic_regime': regime,
+            'kinetic_badge': regime_badge,
+            'honors': honors,
+            'evidence_hash': evidence_hash
+        })
 
         anomaly_reports.append({
             "name": name,
@@ -441,20 +487,214 @@ try:
             "delta_score": round(delta_score, 2),
             "damage_index": round(damage_index, 1),
             "implied_new_rating": round(implied_new_rating, 2),
+            "shannon_entropy": round(shannon_h, 3),
+            "entropy_score": round(eas_score, 1),
+            "purity_pct": round(purity, 1),
             "reconciled_after_purge": round(reconciled_after_purge, 3),
             "needed_5_stars_to_recover": needed_5_stars,
+            "evidence_hash": evidence_hash,
             "status": status,
             "severity": severity,
             "badge_color": badge_color
         })
 
+    # Coordinated Cross-Plugin Attack Correlation Logic
+    raided_count = len(raided_plugins)
+    total_raid_votes = sum(a['delta_votes'] for a in anomaly_reports if a['severity'] in ('critical', 'high'))
+
+    if raided_count >= 3:
+        campaign_level = "CRITICAL_COORDINATED_SYBIL_CAMPAIGN"
+        campaign_threat_score = min(100, int((raided_count / n_plugins * 100) * 1.5 + total_raid_votes * 4))
+        campaign_desc = f"Simultaneous coordinated assault detected across {raided_count} independent plugins ({total_raid_votes} fraudulent votes)."
+    elif raided_count >= 2:
+        campaign_level = "SUSPICIOUS_MULTI_TARGET_ANOMALY"
+        campaign_threat_score = min(100, int((raided_count / n_plugins * 100) + total_raid_votes * 3))
+        campaign_desc = f"Multi-target anomaly identified across {raided_count} plugins."
+    elif raided_count == 1:
+        campaign_level = "ISOLATED_ANOMALOUS_TARGET"
+        campaign_threat_score = 45
+        campaign_desc = f"Isolated single-plugin vote bombing on {raided_plugins[0]}."
+    else:
+        campaign_level = "NO_COORDINATED_THREAT"
+        campaign_threat_score = 0
+        campaign_desc = "No coordinated cross-portfolio campaign detected."
+
+    correlation_meta = {
+        "campaign_level": campaign_level,
+        "campaign_threat_score": campaign_threat_score,
+        "campaign_desc": campaign_desc,
+        "raided_plugins": raided_plugins,
+        "raided_count": raided_count,
+        "total_raid_votes": total_raid_votes,
+        "audit_timestamp": reference_date.strftime('%Y-%m-%d %H:%M:%S UTC'),
+        "portfolio_evidence_signature": hashlib.sha256(f"PORTFOLIO:{raided_count}:{total_raid_votes}:{reference_date.isoformat()}".encode()).hexdigest()[:24].upper()
+    }
+
     severity_order = {"critical": 0, "high": 1, "amber": 2, "normal": 3, "positive": 4, "stable": 5}
-    anomaly_reports.sort(key=lambda x: (severity_order.get(x['severity'], 9), -x['delta_votes']))
+    anomaly_reports.sort(key=lambda x: (severity_order.get(x['severity'], 9), -x['delta_votes'], -x['entropy_score']))
 
     critical_count = sum(1 for a in anomaly_reports if a['severity'] == 'critical')
     warning_count = sum(1 for a in anomaly_reports if a['severity'] == 'high')
 
-    print(f"Audit Results: {critical_count} Critical Raids, {warning_count} Suspicious Influxes identified.")
+    # =========================================================================
+    # GEOSPATIAL & MACRO-REGIONAL INTELLIGENCE & SUITE AFFINITY MATRIX
+    # =========================================================================
+    macro_regions_meta = {
+        "Western Europe": {"code": "WEU", "icon": "fa-landmark", "rank_title": "Primary Anchor Market", "color": "#0ea5e9"},
+        "North America": {"code": "NAM", "icon": "fa-city", "rank_title": "High-Volume Engine", "color": "#38bdf8"},
+        "Latin America": {"code": "LAM", "icon": "fa-mountain-sun", "rank_title": "Rapid Growth Frontier", "color": "#10b981"},
+        "Eastern Europe & Middle East": {"code": "EME", "icon": "fa-mosque", "rank_title": "Strategic Core Hub", "color": "#f59e0b"},
+        "Asia-Pacific": {"code": "APAC", "icon": "fa-satellite-dish", "rank_title": "High-Velocity Tech Hub", "color": "#818cf8"}
+    }
+
+    country_iso_atlas = {
+        "United States": {"iso": "US", "cx": 220, "cy": 185, "reg": "North America"},
+        "Canada": {"iso": "CA", "cx": 200, "cy": 120, "reg": "North America"},
+        "Germany": {"iso": "DE", "cx": 505, "cy": 155, "reg": "Western Europe"},
+        "France": {"iso": "FR", "cx": 485, "cy": 175, "reg": "Western Europe"},
+        "United Kingdom": {"iso": "GB", "cx": 470, "cy": 145, "reg": "Western Europe"},
+        "Spain": {"iso": "ES", "cx": 465, "cy": 205, "reg": "Western Europe"},
+        "Italy": {"iso": "IT", "cx": 510, "cy": 195, "reg": "Western Europe"},
+        "Netherlands": {"iso": "NL", "cx": 490, "cy": 148, "reg": "Western Europe"},
+        "Turkey": {"iso": "TR", "cx": 565, "cy": 200, "reg": "Eastern Europe & Middle East"},
+        "Poland": {"iso": "PL", "cx": 530, "cy": 150, "reg": "Eastern Europe & Middle East"},
+        "Brazil": {"iso": "BR", "cx": 340, "cy": 330, "reg": "Latin America"},
+        "Mexico": {"iso": "MX", "cx": 190, "cy": 230, "reg": "Latin America"},
+        "India": {"iso": "IN", "cx": 690, "cy": 240, "reg": "Asia-Pacific"},
+        "China": {"iso": "CN", "cx": 770, "cy": 200, "reg": "Asia-Pacific"},
+        "Japan": {"iso": "JP", "cx": 855, "cy": 190, "reg": "Asia-Pacific"},
+        "Australia": {"iso": "AU", "cx": 840, "cy": 370, "reg": "Asia-Pacific"}
+    }
+
+    country_data_map = {}
+    suite_totals = {}
+    for p in yusuf_plugins:
+        c = p['category']
+        suite_totals[c] = suite_totals.get(c, 0) + p['downloads']
+
+    regional_totals = {}
+    suite_region_matrix = {}
+
+    for p in yusuf_plugins:
+        p_name = p['name']
+        cat = p['category']
+        if cat not in suite_region_matrix:
+            suite_region_matrix[cat] = {}
+
+        for c in p.get('countries', []):
+            c_name = c['country']
+            c_flag = c['flag']
+            c_reg = c['region']
+            d = c['downloads']
+
+            if c_name not in country_data_map:
+                iso_meta = country_iso_atlas.get(c_name, {"iso": "XX", "cx": 500, "cy": 250})
+                country_data_map[c_name] = {
+                    'country': c_name,
+                    'flag': c_flag,
+                    'region': c_reg,
+                    'iso': iso_meta['iso'],
+                    'cx': iso_meta['cx'],
+                    'cy': iso_meta['cy'],
+                    'downloads': 0,
+                    'suite_downloads': {},
+                    'top_plugins': []
+                }
+
+            country_data_map[c_name]['downloads'] += d
+            country_data_map[c_name]['suite_downloads'][cat] = country_data_map[c_name]['suite_downloads'].get(cat, 0) + d
+            country_data_map[c_name]['top_plugins'].append({
+                'name': p_name,
+                'downloads': d,
+                'category': cat,
+                'percentage': c['percentage']
+            })
+
+            regional_totals[c_reg] = regional_totals.get(c_reg, 0) + d
+            suite_region_matrix[cat][c_reg] = suite_region_matrix[cat].get(c_reg, 0) + d
+
+    for c_name, c_info in country_data_map.items():
+        c_info['top_plugins'].sort(key=lambda x: x['downloads'], reverse=True)
+        c_info['percentage'] = round((c_info['downloads'] / total_downloads) * 100, 1) if total_downloads > 0 else 0
+        dom_suite = max(c_info['suite_downloads'].items(), key=lambda x: x[1])[0] if c_info['suite_downloads'] else "N/A"
+        c_info['dominant_suite'] = dom_suite
+
+    global_countries = sorted(country_data_map.values(), key=lambda x: x['downloads'], reverse=True)
+
+    sorted_regions = sorted(regional_totals.items(), key=lambda x: x[1], reverse=True)
+    macro_regions_cards = []
+    for rank_idx, (reg_name, reg_dl) in enumerate(sorted_regions, start=1):
+        reg_pct = round((reg_dl / total_downloads) * 100, 1) if total_downloads > 0 else 0
+        meta = macro_regions_meta.get(reg_name, {"code": "REG", "icon": "fa-globe", "rank_title": "Regional Market", "color": "#0ea5e9"})
+
+        reg_suites = {s: suite_region_matrix[s].get(reg_name, 0) for s in suite_totals}
+        dom_suite = max(reg_suites.items(), key=lambda x: x[1]) if reg_suites else ("N/A", 0)
+        dom_suite_pct = round((dom_suite[1] / reg_dl) * 100, 1) if reg_dl > 0 else 0
+
+        reg_plugins_map = {}
+        for p in yusuf_plugins:
+            for c in p.get('countries', []):
+                if c['region'] == reg_name:
+                    reg_plugins_map[p['name']] = reg_plugins_map.get(p['name'], 0) + c['downloads']
+        top_3_plugins = sorted(reg_plugins_map.items(), key=lambda x: x[1], reverse=True)[:3]
+        top_3_formatted = [{'name': name, 'downloads': dl, 'percentage': round((dl / reg_dl) * 100, 1)} for name, dl in top_3_plugins]
+
+        macro_regions_cards.append({
+            'rank': rank_idx,
+            'region': reg_name,
+            'code': meta['code'],
+            'icon': meta['icon'],
+            'rank_title': meta['rank_title'],
+            'color': meta['color'],
+            'downloads': reg_dl,
+            'percentage': reg_pct,
+            'dominant_suite': dom_suite[0],
+            'dominant_suite_share': dom_suite_pct,
+            'top_plugins': top_3_formatted,
+            'country_count': sum(1 for c in country_data_map.values() if c['region'] == reg_name)
+        })
+
+    affinity_matrix = []
+    all_regions_ordered = [r['region'] for r in macro_regions_cards]
+
+    for suite_name, suite_dl in suite_totals.items():
+        suite_global_share = (suite_dl / total_downloads) if total_downloads > 0 else 0
+        region_cells = []
+
+        for reg_name in all_regions_ordered:
+            r_dl = regional_totals.get(reg_name, 0)
+            sr_dl = suite_region_matrix.get(suite_name, {}).get(reg_name, 0)
+
+            reg_share = round((sr_dl / r_dl) * 100, 1) if r_dl > 0 else 0.0
+            suite_share = round((sr_dl / suite_dl) * 100, 1) if suite_dl > 0 else 0.0
+            lq = round((sr_dl / r_dl) / (suite_dl / total_downloads), 2) if (r_dl > 0 and suite_dl > 0) else 1.00
+
+            if lq >= 1.15:
+                affinity_status = "Over-Indexing"
+                badge_color = "emerald"
+            elif lq <= 0.85:
+                affinity_status = "Under-Indexed"
+                badge_color = "amber"
+            else:
+                affinity_status = "Balanced"
+                badge_color = "cyan"
+
+            region_cells.append({
+                'region': reg_name,
+                'downloads': sr_dl,
+                'regional_share': reg_share,
+                'suite_share': suite_share,
+                'location_quotient': lq,
+                'affinity_status': affinity_status,
+                'badge_color': badge_color
+            })
+
+        affinity_matrix.append({
+            'suite': suite_name,
+            'global_downloads': suite_dl,
+            'global_share': round(suite_global_share * 100, 1),
+            'cells': region_cells
+        })
 
     # Time series history by plugin for interactive dual-axis chart
     history_by_plugin = {}
@@ -492,12 +732,22 @@ try:
             'top_tags': top_tags,
             'qgis_compatibility': qgis_compatibility,
             'global_countries': global_countries,
-            'regional_distribution': regional_distribution,
+            'macro_regions': macro_regions_cards,
+            'suite_affinity_matrix': affinity_matrix,
+            'econometrics': {
+                'gini_coefficient': round(gini_raw, 4),
+                'gini_corrected': round(gini_corrected, 4),
+                'herfindahl_index_hhi': round(hhi, 4),
+                'shannon_entropy': round(shannon_entropy_portfolio, 4),
+                'effective_plugin_count': round(n_effective, 2),
+                'prior_mean_rating': round(prior_mean_rating, 3)
+            },
             'critical_anomalies': critical_count,
             'warning_anomalies': warning_count,
             'total_snapshots': len(history)
         },
         'anomalies': anomaly_reports,
+        'correlation': correlation_meta,
         'history_meta': {
             'snapshots': history,
             'timestamps': history_timestamps,
@@ -506,9 +756,9 @@ try:
     }
 
     # =============================================================
-    # [4/5] LUXURY DUAL-THEME MASTER UI TEMPLATE
+    # [4/5] MASTER DUAL-THEME ANALYTICS & GOVERNANCE STUDIO TEMPLATE
     # =============================================================
-    print("[4/5] Assembling master dual-theme analytics and governance studio...")
+    print("[4/5] Assembling master dual-theme analytics, cartography, and governance studio...")
 
     html_template = """<!DOCTYPE html>
 <html lang="en" data-theme="obsidian">
@@ -516,6 +766,49 @@ try:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QGIS Plugin Portfolio Analytics & Governance Studio — Yusuf Eminoğlu</title>
+    
+    <!-- Comprehensive SEO Keywords & Metadata -->
+    <meta name="description" content="Enterprise analytics, telemetry, growth forecasting, and rating abuse forensic surveillance studio for Yusuf Eminoğlu's 24 production QGIS plugins across urban analytics, spatial statistics, CAD, and 3D GIS.">
+    <meta name="keywords" content="QGIS, QGIS Plugins, Yusuf Eminoğlu, PlanX, Urban Analytics, Spatial Statistics, Space Syntax, GIS, Remote Sensing, Urban Planning, Cartography, PyQGIS, GeoPackage, Three.js, OpenStreetMap, Rating Governance, Forensic Telemetry, Open Source GIS, Python GIS">
+    <meta name="author" content="Yusuf Eminoğlu">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://yusufeminoglu.github.io/qgis-plugins-governance/">
+
+    <!-- Open Graph / Facebook / LinkedIn -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yusufeminoglu.github.io/qgis-plugins-governance/">
+    <meta property="og:title" content="QGIS Plugin Portfolio Analytics & Governance Studio — Yusuf Eminoğlu">
+    <meta property="og:description" content="Enterprise telemetry, adoption forecasting, and rating abuse forensic surveillance for 24 QGIS urban analytics plugins.">
+    <meta property="og:image" content="https://yusufeminoglu.github.io/qgis-plugins-governance/preview.png">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://yusufeminoglu.github.io/qgis-plugins-governance/">
+    <meta name="twitter:title" content="QGIS Plugin Portfolio Analytics & Governance Studio">
+    <meta name="twitter:description" content="Enterprise analytics, telemetry, and rating abuse forensic surveillance for 24 QGIS urban analytics plugins.">
+
+    <!-- JSON-LD Structured Data (Schema.org) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "QGIS Plugin Portfolio Analytics & Governance Studio",
+      "author": {
+        "@type": "Person",
+        "name": "Yusuf Eminoğlu",
+        "url": "https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/"
+      },
+      "description": "Enterprise analytics, telemetry, growth forecasting, and rating abuse forensic surveillance studio for 24 production QGIS plugins.",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Cross-platform",
+      "offers": {
+        "@type": "Offer",
+        "price": "0.00",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -551,25 +844,57 @@ try:
         }
     </script>
     <style>
+        /* =========================================================================
+           MASTER DESIGN SYSTEM & SEMANTIC TOKEN ARCHITECTURE
+           ========================================================================= */
         :root {
             --bg-canvas: #070a10;
+            --bg-canvas-subtle: #0b111e;
             --text-main: #f8fafc;
             --text-sub: #94a3b8;
-            --panel-bg: rgba(16, 24, 40, 0.75);
+            --text-muted: #64748b;
+            --text-accent: #38bdf8;
+
+            --panel-bg: rgba(16, 24, 40, 0.72);
+            --panel-bg-hover: rgba(20, 32, 54, 0.82);
             --panel-border: rgba(255, 255, 255, 0.08);
-            --panel-border-hover: rgba(56, 189, 248, 0.3);
+            --panel-border-hover: rgba(56, 189, 248, 0.35);
+            --panel-specular: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.00) 100%);
+            --panel-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            --panel-shadow-hover: 0 20px 40px -8px rgba(0, 0, 0, 0.7), 0 0 24px -2px rgba(56, 189, 248, 0.12);
+
+            --nested-bg: rgba(7, 10, 16, 0.75);
+            --nested-border: rgba(255, 255, 255, 0.06);
+            --input-bg: #0b111e;
+            --input-border: rgba(255, 255, 255, 0.12);
+
             --font-heading: 'Plus Jakarta Sans', sans-serif;
             --font-body: 'Inter', sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
         }
+
         [data-theme="alabaster"] {
-            --bg-canvas: #f4f6fa;
+            --bg-canvas: #f1f5f9;
+            --bg-canvas-subtle: #e2e8f0;
             --text-main: #0f172a;
-            --text-sub: #64748b;
+            --text-sub: #334155;
+            --text-muted: #475569;
+            --text-accent: #0284c7;
+
             --panel-bg: rgba(255, 255, 255, 0.88);
-            --panel-border: rgba(15, 23, 42, 0.09);
-            --panel-border-hover: rgba(2, 132, 199, 0.4);
+            --panel-bg-hover: rgba(255, 255, 255, 0.98);
+            --panel-border: rgba(15, 23, 42, 0.08);
+            --panel-border-hover: rgba(2, 132, 199, 0.45);
+            --panel-specular: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.4) 100%);
+            --panel-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.04);
+            --panel-shadow-hover: 0 12px 30px -4px rgba(15, 23, 42, 0.12), 0 0 20px 0 rgba(2, 132, 199, 0.15);
+
+            --nested-bg: rgba(248, 250, 252, 0.85);
+            --nested-border: rgba(15, 23, 42, 0.08);
+            --input-bg: #ffffff;
+            --input-border: rgba(15, 23, 42, 0.16);
         }
+
         body {
             background-color: var(--bg-canvas);
             color: var(--text-main);
@@ -584,93 +909,112 @@ try:
         }
         .font-mono {
             font-family: var(--font-mono);
+            font-feature-settings: "tnum" 1, "zero" 1, "cv05" 1;
         }
+
+        .studio-container {
+            width: 100%;
+            max-width: 1720px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: clamp(1rem, 2.5vw, 2.5rem);
+            padding-right: clamp(1rem, 2.5vw, 2.5rem);
+        }
+
         .glass-panel {
+            position: relative;
             background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
             border: 1px solid var(--panel-border);
-            box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.45);
-            transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease, background 0.3s ease;
+            box-shadow: var(--panel-shadow);
+            border-radius: 1.5rem;
+            transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                        border-color 0.25s ease,
+                        box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                        background 0.3s ease;
+        }
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 1px;
+            background: var(--panel-specular);
+            border-radius: 1.5rem 1.5rem 0 0;
+            pointer-events: none;
         }
         .glass-panel:hover {
-            border: 1px solid var(--panel-border-hover);
-            box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.55), 0 0 20px 0 rgba(56, 189, 248, 0.06);
+            transform: translateY(-2px);
+            border-color: var(--panel-border-hover);
+            box-shadow: var(--panel-shadow-hover);
+            background: var(--panel-bg-hover);
         }
+
         .glass-panel-danger {
-            background: linear-gradient(135deg, rgba(244, 63, 94, 0.08) 0%, var(--panel-bg) 100%);
+            background: linear-gradient(135deg, rgba(244, 63, 94, 0.09) 0%, var(--panel-bg) 100%);
             border: 1px solid rgba(244, 63, 94, 0.35);
-            box-shadow: 0 10px 32px -4px rgba(244, 63, 94, 0.15);
+            box-shadow: 0 12px 35px -6px rgba(244, 63, 94, 0.22);
         }
+
         .btn-luxury {
             background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
             border: 1px solid rgba(56, 189, 248, 0.4);
-            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.28);
+            color: #ffffff !important;
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .btn-luxury:hover {
             background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
-            border-color: rgba(56, 189, 248, 0.7);
-            box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45);
+            border-color: rgba(56, 189, 248, 0.75);
+            box-shadow: 0 8px 22px rgba(2, 132, 199, 0.45);
             transform: translateY(-1px);
         }
+
         .btn-danger {
             background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
             border: 1px solid rgba(251, 113, 133, 0.4);
-            box-shadow: 0 4px 14px rgba(225, 29, 72, 0.3);
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 14px rgba(225, 29, 72, 0.28);
+            color: #ffffff !important;
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .btn-danger:hover {
             background: linear-gradient(135deg, #be123c 0%, #9f1239 100%);
-            box-shadow: 0 6px 20px rgba(225, 29, 72, 0.5);
+            box-shadow: 0 8px 24px rgba(225, 29, 72, 0.45);
             transform: translateY(-1px);
         }
-        ::-webkit-scrollbar {
-            width: 7px;
-            height: 7px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--bg-canvas);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #253347;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #38bdf8;
-        }
-        canvas#bg-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -20;
-            pointer-events: none;
-        }
-        @keyframes pulse-slow {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.75; transform: scale(1.04); }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(244, 63, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
         }
         .pulse-live {
-            animation: pulse-slow 2.4s infinite ease-in-out;
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-canvas); }
+        ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-accent); }
+
         kbd {
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 4px;
             padding: 1px 5px;
             font-size: 10px;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--font-mono);
             color: var(--text-sub);
         }
         [data-theme="alabaster"] kbd {
-            background: rgba(0, 0, 0, 0.05);
-            border-color: rgba(0, 0, 0, 0.15);
+            background: rgba(15, 23, 42, 0.06);
+            border-color: rgba(15, 23, 42, 0.14);
+            color: var(--text-sub);
         }
+
         @media print {
             body { background: #fff !important; color: #000 !important; }
-            .glass-panel { background: #fff !important; border: 1px solid #ccc !important; box-shadow: none !important; color: #000 !important; }
+            .glass-panel { background: #fff !important; border: 1px solid #ddd !important; box-shadow: none !important; color: #000 !important; }
             header, nav, button, .btn-luxury, .btn-danger, #bg-canvas, kbd, select, input { display: none !important; }
             .tab-pane { display: block !important; }
         }
@@ -681,12 +1025,12 @@ try:
     <!-- Interactive Background Constellation -->
     <canvas id="bg-canvas"></canvas>
 
-    <!-- Ambient Subtle Radial Glows -->
+    <!-- Ambient Radial Glows -->
     <div class="fixed top-0 left-1/4 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[140px] -z-10 pointer-events-none"></div>
     <div class="fixed top-1/3 right-1/4 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-[160px] -z-10 pointer-events-none"></div>
 
-    <!-- Main Container -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+    <!-- Main Fluid Container (Elastic up to 4K / QHD) -->
+    <div class="studio-container pt-6">
 
         <!-- Header Ribbon -->
         <header class="flex flex-col md:flex-row items-center justify-between p-6 mb-8 rounded-3xl glass-panel gap-4">
@@ -708,8 +1052,8 @@ try:
                     <i class="fa-solid fa-terminal text-cyan-400"></i> Command <kbd>Ctrl+K</kbd>
                 </button>
 
-                <button onclick="openExecutiveBriefingModal()" class="px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-1.5 transition-all" title="Generate Executive Narrative Briefing">
-                    <i class="fa-solid fa-newspaper text-emerald-400"></i> Briefing
+                <button onclick="openExecutiveStorytellingModal()" class="px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-1.5 transition-all" title="Generate State of Ecosystem Report & Community Kit">
+                    <i class="fa-solid fa-newspaper text-emerald-400"></i> Reports & Announcements
                 </button>
 
                 <!-- Theme Switcher Button -->
@@ -740,9 +1084,10 @@ try:
                 <i class="fa-solid fa-shield-halved text-rose-400"></i> Rating Abuse & Surveillance <kbd>2</kbd>
                 <span id="audit-alert-badge" class="ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500 text-white pulse-live"></span>
             </button>
-            <button onclick="switchTab('deepdive')" id="tab-btn-deepdive" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-cubes"></i> Plugin Explorer <kbd>3</kbd></button>
-            <button onclick="switchTab('simulator')" id="tab-btn-simulator" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-wand-magic-sparkles"></i> Forecast Simulator <kbd>4</kbd></button>
-            <button onclick="switchTab('table')" id="tab-btn-table" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-table"></i> Master Performance Table <kbd>5</kbd></button>
+            <button onclick="switchTab('carto')" id="tab-btn-carto" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-earth-americas text-emerald-400"></i> Geospatial Studio <kbd>3</kbd></button>
+            <button onclick="switchTab('deepdive')" id="tab-btn-deepdive" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-cubes"></i> Plugin Explorer <kbd>4</kbd></button>
+            <button onclick="switchTab('simulator')" id="tab-btn-simulator" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-wand-magic-sparkles"></i> Forecast Simulator <kbd>5</kbd></button>
+            <button onclick="switchTab('table')" id="tab-btn-table" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-table"></i> Master Performance Table <kbd>6</kbd></button>
         </div>
 
         <!-- ============================================================= -->
@@ -751,7 +1096,34 @@ try:
         <div id="tab-content-overview" class="tab-pane">
             <!-- KPI Cards Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="kpi-grid">
-                <!-- Dynamically generated by JS -->
+                <!-- Dynamically generated by JS with kinetic counters -->
+            </div>
+
+            <!-- Econometric Summary Ribbon -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8" id="econometric-ribbon">
+                <div class="p-4 rounded-2xl bg-obsidian-950/80 border border-white/5 flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] text-slate-400 uppercase font-mono font-semibold block">Gini Inequality Coefficient</span>
+                        <span class="text-lg font-bold font-mono text-white" id="eco-gini-val">0.4676 (Corrected)</span>
+                    </div>
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-bold">Optimal Pareto</span>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-obsidian-950/80 border border-white/5 flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] text-slate-400 uppercase font-mono font-semibold block">Portfolio Entropy Diversity (N_eff)</span>
+                        <span class="text-lg font-bold font-mono text-cyan-400" id="eco-entropy-val">14.8 Plugins</span>
+                    </div>
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono font-bold">High Multi-Pillar</span>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-obsidian-950/80 border border-white/5 flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] text-slate-400 uppercase font-mono font-semibold block">Empirical Bayes Rating Prior (μ₀)</span>
+                        <span class="text-lg font-bold font-mono text-amber-400" id="eco-prior-val">4.84 ★</span>
+                    </div>
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono font-bold">m = 5.0 Weight</span>
+                </div>
             </div>
 
             <!-- Main Charts Grid -->
@@ -814,37 +1186,12 @@ try:
                 </div>
             </div>
 
-            <!-- Target QGIS Runtime Compatibility & Regional Groups -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                <div class="p-6 rounded-3xl glass-panel">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-microchip text-cyan-400 mr-2"></i>Target QGIS Runtime Compatibility</h2>
-                            <p class="text-xs text-slate-400">Minimum engine requirement support across portfolio</p>
-                        </div>
-                        <span class="text-xs text-slate-400 font-mono">Engine Support</span>
-                    </div>
-                    <div id="qgis-compatibility-chart" class="w-full h-80"></div>
-                </div>
-
-                <div class="p-6 rounded-3xl glass-panel">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-globe text-cyan-400 mr-2"></i>Macro-Regional Download Distribution</h2>
-                            <p class="text-xs text-slate-400">Global traffic grouped by continental regions</p>
-                        </div>
-                        <span class="text-xs text-slate-400 font-mono">Regional Shares</span>
-                    </div>
-                    <div id="regional-bar-chart" class="w-full h-80"></div>
-                </div>
-            </div>
-
-            <!-- Milestone Velocity & Calendar Forecast -->
+            <!-- Milestone Velocity & Probabilistic Calendar Forecast -->
             <div class="p-6 rounded-3xl glass-panel mb-8">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                     <div>
-                        <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-bullseye text-cyan-400 mr-2"></i>Milestone Velocity & Calendar Forecast</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Empirical date projection toward the next major cumulative download tier</p>
+                        <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-bullseye text-cyan-400 mr-2"></i>Milestone Velocity & 95% Confidence Horizons</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Empirical date projection and Gaussian confidence bounds toward next download tier</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="text-xs text-slate-400">Global Goal:</span>
@@ -866,43 +1213,6 @@ try:
                     <!-- Top 3 closest to milestone -->
                 </div>
             </div>
-
-            <!-- Geographic Distribution & Interactive Country Inspector -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                <div class="p-6 rounded-3xl glass-panel col-span-1 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between mb-4">
-                            <h2 class="text-base font-bold tracking-tight">
-                                <i class="fa-solid fa-earth-americas text-cyan-400 mr-2"></i>Geographic Leaderboard
-                            </h2>
-                            <span class="text-[10px] text-slate-400 font-mono">Click to inspect</span>
-                        </div>
-                        <div id="global-countries-list" class="space-y-2.5">
-                            <!-- Filled dynamically -->
-                        </div>
-                    </div>
-                </div>
-
-                <div class="p-6 rounded-3xl glass-panel lg:col-span-2 flex flex-col justify-between">
-                    <div>
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
-                            <h2 class="text-base font-bold tracking-tight">
-                                <i class="fa-solid fa-chart-column text-cyan-400 mr-2"></i>Country Adoption & Regional Deep-Dive
-                            </h2>
-                            <span id="country-drilldown-badge" class="text-xs font-mono text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-xl border border-cyan-500/20 font-bold">🇺🇸 United States Selected</span>
-                        </div>
-                        <div id="global-countries-chart" class="w-full h-64"></div>
-                    </div>
-
-                    <!-- Selected Country Top Plugins Inspector Strip -->
-                    <div class="mt-4 pt-4 border-t border-white/5">
-                        <span class="text-xs font-bold block mb-2 font-heading" id="country-drilldown-title">Top 5 Plugins in United States:</span>
-                        <div class="grid grid-cols-1 sm:grid-cols-5 gap-3" id="country-top-plugins-container">
-                            <!-- Filled dynamically -->
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- ============================================================= -->
@@ -922,7 +1232,7 @@ try:
                                 <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30">ACTIVE SURVEILLANCE</span>
                             </div>
                             <p class="text-xs text-slate-300 mt-1 max-w-3xl leading-relaxed">
-                                Audits mathematical score increments ($Delta \\text{Score}$) against vote volume bursts ($Delta \\text{Votes}$). Computes the true implied average of incoming vote batches and generates verifiable GitHub Markdown complaint reports for QGIS Hub infrastructure maintainers.
+                                Audits mathematical score increments ($Delta \\text{Score}$) against vote volume bursts ($Delta \\text{Votes}$). Computes Shannon Influx Entropy ($H$) and generates cryptographically signed multi-channel evidence dossiers and SQL remediation scripts.
                             </p>
                         </div>
                     </div>
@@ -944,7 +1254,7 @@ try:
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-white/5 gap-3 mb-6">
                     <div>
                         <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-list-check text-rose-400 mr-2"></i>Security & Rating Anomaly Incidents</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Verified baseline reconciliation, implied influx analysis, and rollback recovery</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Verified baseline reconciliation, implied influx entropy analysis, and rollback recovery</p>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="filterAnomalyStatus('all')" id="audit-filter-all" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-cyan-600 text-white">All Plugins</button>
@@ -1008,7 +1318,219 @@ try:
         </div>
 
         <!-- ============================================================= -->
-        <!-- TAB 3: PLUGIN EXPLORER -->
+        <!-- TAB 3: GEOSPATIAL & CARTOGRAPHIC STUDIO -->
+        <!-- ============================================================= -->
+        <div id="tab-content-carto" class="tab-pane hidden">
+            <!-- Header with Spatial Intelligence Bar -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg">
+                            <i class="fa-solid fa-earth-americas"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold font-heading tracking-tight flex items-center gap-2">
+                                Geospatial Adoption & Macro-Regional Governance Studio
+                            </h2>
+                            <p class="text-xs text-slate-400 font-mono">
+                                Vector Choropleth Heatmap • Macro-Regional Penetration • Suite Affinity Matrix (Location Quotient LQ)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="bg-obsidian-950/80 p-1 rounded-2xl border border-white/5 flex items-center gap-1 font-mono text-xs">
+                        <button onclick="setMapFilter('all')" id="map-btn-all" class="px-3 py-1 rounded-xl bg-cyan-500/20 text-cyan-400 font-bold border border-cyan-500/30 transition-all">
+                            Global
+                        </button>
+                        <button onclick="setMapFilter('WEU')" id="map-btn-WEU" class="px-3 py-1 rounded-xl text-slate-400 hover:text-white transition-all">
+                            Europe
+                        </button>
+                        <button onclick="setMapFilter('NAM')" id="map-btn-NAM" class="px-3 py-1 rounded-xl text-slate-400 hover:text-white transition-all">
+                            N. America
+                        </button>
+                        <button onclick="setMapFilter('LAM')" id="map-btn-LAM" class="px-3 py-1 rounded-xl text-slate-400 hover:text-white transition-all">
+                            LatAm
+                        </button>
+                        <button onclick="setMapFilter('EME')" id="map-btn-EME" class="px-3 py-1 rounded-xl text-slate-400 hover:text-white transition-all">
+                            East Europe/ME
+                        </button>
+                        <button onclick="setMapFilter('APAC')" id="map-btn-APAC" class="px-3 py-1 rounded-xl text-slate-400 hover:text-white transition-all">
+                            APAC
+                        </button>
+                    </div>
+                    <button onclick="resetMapZoom()" class="p-2 rounded-xl bg-obsidian-950/80 border border-white/5 text-slate-400 hover:text-cyan-400 text-xs font-mono transition-colors" title="Reset Map View">
+                        <i class="fa-solid fa-compress"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tier 1: Macro-Region Strategic Performance Cards Deck -->
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6" id="macro-regions-deck">
+                <!-- Populated dynamically via JS -->
+            </div>
+
+            <!-- Tier 2: Interactive Vector SVG World Choropleth Heatmap & Spatial HUD -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+                <!-- Main World Map Canvas (8 Columns) -->
+                <div class="lg:col-span-8 p-6 rounded-3xl glass-panel relative overflow-hidden flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+                            <h3 class="text-sm font-bold font-heading tracking-tight">Global Country Adoption Heatmap</h3>
+                        </div>
+                        <div class="flex items-center gap-2 text-[10px] font-mono text-slate-400">
+                            <span>Adoption Tier:</span>
+                            <div class="flex items-center gap-1">
+                                <span class="w-3 h-2 rounded-sm bg-sky-950 border border-sky-800" title="Low Volume (< 2k)"></span>
+                                <span class="w-3 h-2 rounded-sm bg-sky-800" title="Moderate (2k-5k)"></span>
+                                <span class="w-3 h-2 rounded-sm bg-sky-600" title="Established (5k-10k)"></span>
+                                <span class="w-3 h-2 rounded-sm bg-cyan-500" title="Core Tier (10k-20k)"></span>
+                                <span class="w-3 h-2 rounded-sm bg-cyan-300" title="Anchor Tier (> 20k)"></span>
+                            </div>
+                            <span class="text-cyan-400 font-bold ml-1">High Intensity</span>
+                        </div>
+                    </div>
+
+                    <!-- Zero-Dependency SVG World Map Container -->
+                    <div class="relative w-full aspect-[2/1] bg-obsidian-950/90 rounded-2xl border border-white/5 overflow-hidden flex items-center justify-center" id="world-map-wrapper">
+                        <svg id="svg-world-map" viewBox="0 0 960 500" class="w-full h-full select-none cursor-grab active:cursor-grabbing transition-transform duration-300 ease-out">
+                            <defs>
+                                <pattern id="graticule-pattern" width="80" height="80" patternUnits="userSpaceOnUse">
+                                    <path d="M 80 0 L 0 0 0 80" fill="none" stroke="rgba(255, 255, 255, 0.03)" stroke-width="0.75"/>
+                                </pattern>
+                                <filter id="radar-glow" x="-50%" y="-50%" width="200%" height="200%">
+                                    <feGaussianBlur stdDeviation="3" result="blur" />
+                                    <feMerge>
+                                        <feMergeNode in="blur" />
+                                        <feMergeNode in="SourceGraphic" />
+                                    </feMerge>
+                                </filter>
+                            </defs>
+
+                            <rect width="960" height="500" fill="url(#graticule-pattern)"/>
+                            <line x1="0" y1="250" x2="960" y2="250" stroke="rgba(56, 189, 248, 0.15)" stroke-width="1" stroke-dasharray="4,4"/>
+                            <line x1="480" y1="0" x2="480" y2="500" stroke="rgba(56, 189, 248, 0.15)" stroke-width="1" stroke-dasharray="4,4"/>
+
+                            <!-- Base Continent Outlines -->
+                            <g id="svg-basemap-continents" fill="rgba(30, 41, 59, 0.4)" stroke="rgba(255, 255, 255, 0.06)" stroke-width="0.75">
+                                <path d="M120,60 L240,50 L340,70 L280,140 L210,145 L200,240 L160,260 L140,200 L90,160 Z" />
+                                <path d="M270,270 L380,290 L400,380 L350,470 L300,450 L270,350 Z" />
+                                <path d="M440,80 L560,70 L600,140 L530,220 L440,210 L430,140 Z" />
+                                <path d="M430,220 L580,210 L610,320 L540,430 L480,410 L440,300 Z" />
+                                <path d="M570,70 L870,80 L890,240 L780,310 L680,280 L600,160 Z" />
+                                <path d="M770,340 L880,330 L900,420 L780,430 Z" />
+                            </g>
+
+                            <!-- Interactive Tracked Country Polygons Layer -->
+                            <g id="svg-countries-layer" class="transition-all duration-300">
+                                <path id="geo-US" data-iso="US" class="country-path cursor-pointer transition-all duration-200" d="M140,140 L280,135 L270,220 L160,230 L135,170 Z M90,80 L160,70 L150,110 L100,120 Z" />
+                                <path id="geo-CA" data-iso="CA" class="country-path cursor-pointer transition-all duration-200" d="M130,70 L310,60 L330,125 L150,135 Z" />
+                                <path id="geo-MX" data-iso="MX" class="country-path cursor-pointer transition-all duration-200" d="M160,230 L230,225 L210,280 L175,270 Z" />
+                                <path id="geo-BR" data-iso="BR" class="country-path cursor-pointer transition-all duration-200" d="M290,280 L380,290 L390,360 L330,390 L290,330 Z" />
+                                <path id="geo-GB" data-iso="GB" class="country-path cursor-pointer transition-all duration-200" d="M455,130 L480,125 L475,160 L450,155 Z" />
+                                <path id="geo-FR" data-iso="FR" class="country-path cursor-pointer transition-all duration-200" d="M465,165 L500,160 L505,195 L465,195 Z" />
+                                <path id="geo-DE" data-iso="DE" class="country-path cursor-pointer transition-all duration-200" d="M495,140 L525,140 L525,170 L495,170 Z" />
+                                <path id="geo-ES" data-iso="ES" class="country-path cursor-pointer transition-all duration-200" d="M440,195 L480,195 L475,225 L440,225 Z" />
+                                <path id="geo-IT" data-iso="IT" class="country-path cursor-pointer transition-all duration-200" d="M500,185 L525,185 L530,220 L510,225 Z" />
+                                <path id="geo-NL" data-iso="NL" class="country-path cursor-pointer transition-all duration-200" d="M485,140 L498,140 L498,150 L485,150 Z" />
+                                <path id="geo-PL" data-iso="PL" class="country-path cursor-pointer transition-all duration-200" d="M525,140 L555,140 L555,165 L525,165 Z" />
+                                <path id="geo-TR" data-iso="TR" class="country-path cursor-pointer transition-all duration-200" d="M545,190 L595,185 L590,210 L545,210 Z" />
+                                <path id="geo-IN" data-iso="IN" class="country-path cursor-pointer transition-all duration-200" d="M665,215 L720,215 L705,280 L675,260 Z" />
+                                <path id="geo-CN" data-iso="CN" class="country-path cursor-pointer transition-all duration-200" d="M710,150 L830,145 L820,225 L720,225 Z" />
+                                <path id="geo-JP" data-iso="JP" class="country-path cursor-pointer transition-all duration-200" d="M845,170 L865,170 L860,210 L840,200 Z" />
+                                <path id="geo-AU" data-iso="AU" class="country-path cursor-pointer transition-all duration-200" d="M790,340 L880,340 L870,410 L800,410 Z" />
+                            </g>
+
+                            <!-- Radar Pulse Hubs Layer -->
+                            <g id="svg-nodes-layer"></g>
+                        </svg>
+
+                        <!-- Floating HUD Tooltip -->
+                        <div id="map-hud-tooltip" class="absolute pointer-events-none opacity-0 transition-opacity duration-200 bg-obsidian-950/95 border border-cyan-500/40 p-3 rounded-2xl shadow-2xl backdrop-blur-md z-30 min-w-[200px]"></div>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-between text-xs text-slate-400 font-mono">
+                        <span id="map-active-status"><i class="fa-solid fa-crosshairs text-cyan-400 mr-1.5"></i>Hover country or pulse node to inspect telemetry</span>
+                        <span class="text-[10px] text-slate-500">Equirectangular Standard Baseline • 0 Dependencies</span>
+                    </div>
+                </div>
+
+                <!-- Country Drilldown & Top Plugins Leaderboard (4 Columns) -->
+                <div class="lg:col-span-4 flex flex-col gap-4">
+                    <div class="p-6 rounded-3xl glass-panel flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-2">
+                                    <span id="drilldown-flag" class="text-2xl">🇺🇸</span>
+                                    <div>
+                                        <h3 id="drilldown-country-name" class="text-base font-bold font-heading">United States</h3>
+                                        <span id="drilldown-region-badge" class="text-[10px] font-mono text-cyan-400">North America • Rank #1</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div id="drilldown-downloads" class="text-lg font-bold font-mono text-white">--</div>
+                                    <div id="drilldown-pct" class="text-[10px] text-slate-400 font-mono">-- of Global</div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="flex justify-between text-[10px] font-mono text-slate-400 mb-1">
+                                    <span>Dominant Suite: <strong id="drilldown-dom-suite" class="text-cyan-400">--</strong></span>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2" id="drilldown-plugins-list">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tier 3: Suite Geographic Affinity Matrix & Location Quotient (LQ) Grid -->
+            <div class="p-6 rounded-3xl glass-panel">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                    <div>
+                        <h3 class="text-base font-bold font-heading flex items-center gap-2">
+                            <i class="fa-solid fa-cubes-stacked text-cyan-400"></i>
+                            Suite Geographic Affinity & Market Specialization Matrix
+                        </h3>
+                        <p class="text-xs text-slate-400 font-mono">
+                            Cross-tabulated Location Quotient ($LQ$) indicating regional adoption over/under-indexing
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs font-mono">
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Over-Index (LQ &ge; 1.15)</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-cyan-500"></span> Balanced (0.85–1.15)</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Frontier (&lt; 0.85)</span>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left font-mono text-xs border-collapse" id="suite-affinity-table">
+                        <thead>
+                            <tr class="border-b border-white/10 text-slate-400">
+                                <th class="py-3 px-4 font-heading font-semibold">Plugin Suite</th>
+                                <th class="py-3 px-4 text-right">Global Volume</th>
+                                <th class="py-3 px-4 text-center">Western Europe</th>
+                                <th class="py-3 px-4 text-center">North America</th>
+                                <th class="py-3 px-4 text-center">Latin America</th>
+                                <th class="py-3 px-4 text-center">East Europe & ME</th>
+                                <th class="py-3 px-4 text-center">Asia-Pacific</th>
+                            </tr>
+                        </thead>
+                        <tbody id="suite-affinity-tbody" class="divide-y divide-white/5">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB 4: PLUGIN EXPLORER -->
         <!-- ============================================================= -->
         <div id="tab-content-deepdive" class="tab-pane hidden">
             <!-- Search & Multi-Tag Matrix Ribbon -->
@@ -1030,7 +1552,6 @@ try:
                 <div class="pt-3 border-t border-white/5 flex items-center justify-between flex-wrap gap-2">
                     <div class="flex items-center gap-1.5 flex-wrap" id="tag-filter-chips">
                         <span class="text-[11px] text-slate-500 font-mono font-semibold mr-1">Tags:</span>
-                        <!-- Filled dynamically -->
                     </div>
                     <span class="text-[10px] text-slate-400 font-mono" id="matching-plugins-count">24 plugins matching</span>
                 </div>
@@ -1043,7 +1564,7 @@ try:
         </div>
 
         <!-- ============================================================= -->
-        <!-- TAB 4: FORECAST SIMULATOR -->
+        <!-- TAB 5: FORECAST SIMULATOR -->
         <!-- ============================================================= -->
         <div id="tab-content-simulator" class="tab-pane hidden">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -1056,7 +1577,7 @@ try:
                         </div>
 
                         <p class="text-xs text-slate-300 leading-relaxed mb-6">
-                            Simulate future adoption and multi-scenario confidence cones for either the **entire portfolio** or an **individual plugin**.
+                            Simulate future adoption and multi-scenario confidence cones with kinetic acceleration derivatives.
                         </p>
 
                         <!-- Select Simulator Target -->
@@ -1064,7 +1585,6 @@ try:
                             <label class="block text-xs font-semibold text-slate-400 mb-2">Target Scope</label>
                             <select id="sim-target-plugin" onchange="runSimulation()" class="w-full px-4 py-2.5 bg-obsidian-900 border border-white/10 rounded-xl text-xs focus:outline-none focus:border-cyan-400 font-mono">
                                 <option value="all">Entire Portfolio (Combined)</option>
-                                <!-- Filled by JS -->
                             </select>
                         </div>
 
@@ -1103,7 +1623,7 @@ try:
                     </div>
                 </div>
 
-                <!-- Simulation Output Chart (Multi-Scenario Cone) -->
+                <!-- Simulation Output Chart -->
                 <div class="lg:col-span-2 p-6 rounded-3xl glass-panel">
                     <div class="flex items-center justify-between mb-4">
                         <div>
@@ -1118,14 +1638,14 @@ try:
         </div>
 
         <!-- ============================================================= -->
-        <!-- TAB 5: MASTER DATA TABLE -->
+        <!-- TAB 6: MASTER DATA TABLE -->
         <!-- ============================================================= -->
         <div id="tab-content-table" class="tab-pane hidden">
             <div class="p-6 rounded-3xl glass-panel overflow-hidden">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-white/5 gap-4">
                     <div>
                         <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-table-list text-cyan-400 mr-2"></i>Master Performance & Governance Data Table</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Multi-column telemetry grid with live filtering and instant CSV export</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Multi-column telemetry grid with live filtering, Bayesian reliability, and instant CSV export</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-3">
                         <button onclick="window.print()" class="px-4 py-2 bg-obsidian-800 hover:bg-obsidian-750 text-slate-300 hover:text-white border border-white/10 rounded-xl text-xs font-bold flex items-center gap-2 transition-all">
@@ -1157,11 +1677,10 @@ try:
                                 <th class="py-3.5 px-4 font-bold cursor-pointer hover:text-white transition-colors" onclick="sortTable(0)">Plugin Name <i class="fa-solid fa-sort ml-1"></i></th>
                                 <th class="py-3.5 px-4 font-bold text-center cursor-pointer hover:text-white transition-colors" onclick="sortTable(1)">Suite <i class="fa-solid fa-sort ml-1"></i></th>
                                 <th class="py-3.5 px-4 font-bold text-center cursor-pointer hover:text-white transition-colors" onclick="sortTable(2)">Published <i class="fa-solid fa-sort ml-1"></i></th>
-                                <th class="py-3.5 px-4 font-bold text-center cursor-pointer hover:text-white transition-colors" onclick="sortTable(3)">Active Days <i class="fa-solid fa-sort ml-1"></i></th>
                                 <th class="py-3.5 px-4 font-bold text-right cursor-pointer hover:text-white transition-colors" onclick="sortTable(4)">Downloads <i class="fa-solid fa-sort ml-1"></i></th>
                                 <th class="py-3.5 px-4 font-bold text-right cursor-pointer hover:text-white transition-colors" onclick="sortTable(5)">Monthly Velocity <i class="fa-solid fa-sort ml-1"></i></th>
-                                <th class="py-3.5 px-4 font-bold text-center">Top Countries</th>
-                                <th class="py-3.5 px-4 font-bold text-center">Rating</th>
+                                <th class="py-3.5 px-4 font-bold text-center">Bayesian ★</th>
+                                <th class="py-3.5 px-4 font-bold text-center">Kinetic Regime</th>
                                 <th class="py-3.5 px-4 font-bold text-center">Security Status</th>
                             </tr>
                         </thead>
@@ -1184,11 +1703,7 @@ try:
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500"><i class="fa-solid fa-terminal text-sm"></i></span>
                 <input type="text" id="palette-search-input" onkeyup="filterCommandPalette()" placeholder="Type a command, tab, or plugin name..." class="w-full pl-10 pr-4 py-3 bg-obsidian-950 border border-white/10 rounded-2xl text-xs focus:outline-none focus:border-cyan-400 font-mono">
             </div>
-
-            <div class="max-h-72 overflow-y-auto space-y-1 pr-1 font-mono text-xs" id="palette-results-list">
-                <!-- Filled dynamically -->
-            </div>
-
+            <div class="max-h-72 overflow-y-auto space-y-1 pr-1 font-mono text-xs" id="palette-results-list"></div>
             <div class="pt-3 border-t border-white/10 flex justify-between items-center text-[10px] text-slate-500">
                 <span>Navigate with <kbd>↑</kbd> <kbd>↓</kbd> <kbd>Enter</kbd></span>
                 <span>Press <kbd>Esc</kbd> to close</span>
@@ -1197,37 +1712,42 @@ try:
     </div>
 
     <!-- ============================================================= -->
-    <!-- EXECUTIVE NARRATIVE BRIEFING MODAL -->
+    <!-- REPORTS & SOCIAL MEDIA ANNOUNCEMENT KIT MODAL -->
     <!-- ============================================================= -->
-    <div id="briefing-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden p-4">
-        <div class="bg-obsidian-900 border border-white/10 rounded-3xl max-w-3xl w-full p-6 max-h-[90vh] flex flex-col justify-between shadow-2xl">
+    <div id="storytelling-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden p-4">
+        <div class="bg-obsidian-900 border border-white/10 rounded-3xl max-w-4xl w-full p-6 max-h-[92vh] flex flex-col justify-between shadow-2xl overflow-hidden">
             <div class="flex items-center justify-between pb-4 border-b border-white/10">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg border border-emerald-500/30">
-                        <i class="fa-solid fa-newspaper"></i>
+                        <i class="fa-solid fa-bullhorn"></i>
                     </div>
                     <div>
-                        <h3 class="text-base font-bold tracking-tight">Executive Portfolio Intelligence Briefing</h3>
-                        <p class="text-xs text-slate-400">Automated portfolio synthesis & strategic state report</p>
+                        <h3 class="text-base font-bold tracking-tight">Executive Storytelling & Community Announcement Kit</h3>
+                        <p class="text-xs text-slate-400">Publication-ready ecosystem reports, LinkedIn digests, X threads, and Reddit posts</p>
                     </div>
                 </div>
-                <button onclick="closeExecutiveBriefingModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-obsidian-800 transition-colors">
+                <button onclick="closeExecutiveStorytellingModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-obsidian-800 transition-colors">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
 
-            <div class="my-4 overflow-y-auto max-h-[55vh] pr-2">
-                <div class="mb-3 flex items-center justify-between">
-                    <span class="text-xs font-semibold text-slate-400">Ready-to-Share Executive Briefing:</span>
-                    <button onclick="copyBriefingText()" class="px-3.5 py-1.5 rounded-xl text-xs font-bold btn-luxury text-white flex items-center gap-1.5">
-                        <i class="fa-solid fa-copy"></i> <span id="copy-briefing-btn-text">Copy Briefing</span>
-                    </button>
-                </div>
-                <pre class="bg-obsidian-950 p-4 rounded-2xl border border-white/5 text-xs font-mono text-slate-300 overflow-x-auto whitespace-pre-wrap leading-relaxed" id="briefing-content-area"></pre>
+            <!-- Report Format Selector Tabs -->
+            <div class="flex gap-2 my-3 font-heading overflow-x-auto pb-1">
+                <button onclick="setStorytellingFormat('ecosystem')" id="s-btn-eco" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-600 text-white whitespace-nowrap"><i class="fa-solid fa-file-lines mr-1"></i> State of Ecosystem</button>
+                <button onclick="setStorytellingFormat('linkedin')" id="s-btn-li" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5 whitespace-nowrap"><i class="fa-brands fa-linkedin mr-1"></i> LinkedIn Post</button>
+                <button onclick="setStorytellingFormat('twitter')" id="s-btn-tw" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5 whitespace-nowrap"><i class="fa-brands fa-x-twitter mr-1"></i> X / Twitter Thread</button>
+                <button onclick="setStorytellingFormat('reddit')" id="s-btn-rd" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5 whitespace-nowrap"><i class="fa-brands fa-reddit-alien mr-1"></i> Reddit r/QGIS</button>
             </div>
 
-            <div class="pt-4 border-t border-white/10 flex justify-end">
-                <button onclick="closeExecutiveBriefingModal()" class="px-5 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-white text-xs font-bold transition-all">Close</button>
+            <div class="my-2 overflow-y-auto max-h-[52vh] pr-2">
+                <pre class="bg-obsidian-950 p-4 rounded-2xl border border-white/5 text-xs font-mono text-slate-300 overflow-x-auto whitespace-pre-wrap leading-relaxed" id="storytelling-content-area"></pre>
+            </div>
+
+            <div class="pt-4 border-t border-white/10 flex justify-between items-center text-xs">
+                <button onclick="copyStorytellingText()" class="px-4 py-2 rounded-xl text-xs font-bold btn-luxury text-white flex items-center gap-1.5">
+                    <i class="fa-solid fa-copy"></i> <span id="copy-story-btn-text">Copy Selected Format</span>
+                </button>
+                <button onclick="closeExecutiveStorytellingModal()" class="px-5 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-white font-bold transition-all">Close</button>
             </div>
         </div>
     </div>
@@ -1244,7 +1764,7 @@ try:
                     </div>
                     <div>
                         <h3 class="text-base font-bold tracking-tight">3-Way Side-by-Side Plugin Benchmark</h3>
-                        <p class="text-xs text-slate-400">Head-to-head adoption, rating stability, and velocity comparator</p>
+                        <p class="text-xs text-slate-400">Head-to-head adoption, Bayesian ratings, and velocity comparator</p>
                     </div>
                 </div>
                 <button onclick="closeCompareModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-obsidian-800 transition-colors">
@@ -1252,33 +1772,22 @@ try:
                 </button>
             </div>
 
-            <!-- Plugin Selectors (3 Slots) -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-1.5 font-heading">Primary Plugin (A)</label>
-                    <select id="compare-select-a" onchange="renderComparisonView()" class="w-full px-3 py-2 bg-obsidian-950 border border-white/10 rounded-xl text-xs focus:outline-none focus:border-cyan-400 font-mono">
-                        <!-- Filled dynamically -->
-                    </select>
+                    <select id="compare-select-a" onchange="renderComparisonView()" class="w-full px-3 py-2 bg-obsidian-950 border border-white/10 rounded-xl text-xs focus:outline-none focus:border-cyan-400 font-mono"></select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-1.5 font-heading">Comparison Plugin (B)</label>
-                    <select id="compare-select-b" onchange="renderComparisonView()" class="w-full px-3 py-2 bg-obsidian-950 border border-white/10 rounded-xl text-xs focus:outline-none focus:border-indigo-400 font-mono">
-                        <!-- Filled dynamically -->
-                    </select>
+                    <select id="compare-select-b" onchange="renderComparisonView()" class="w-full px-3 py-2 bg-obsidian-950 border border-white/10 rounded-xl text-xs focus:outline-none focus:border-indigo-400 font-mono"></select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-1.5 font-heading">Comparison Plugin (C)</label>
-                    <select id="compare-select-c" onchange="renderComparisonView()" class="w-full px-3 py-2 bg-obsidian-950 border border-white/10 rounded-xl text-xs focus:outline-none focus:border-emerald-400 font-mono">
-                        <!-- Filled dynamically -->
-                    </select>
+                    <select id="compare-select-c" onchange="renderComparisonView()" class="w-full px-3 py-2 bg-obsidian-950 border border-white/10 rounded-xl text-xs focus:outline-none focus:border-emerald-400 font-mono"></select>
                 </div>
             </div>
 
-            <!-- Comparative Content Grid -->
-            <div class="overflow-y-auto max-h-[55vh] pr-1" id="compare-content-grid">
-                <!-- Dynamically populated comparison -->
-            </div>
-
+            <div class="overflow-y-auto max-h-[55vh] pr-1" id="compare-content-grid"></div>
             <div class="pt-4 border-t border-white/10 flex justify-end">
                 <button onclick="closeCompareModal()" class="px-5 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-white text-xs font-bold transition-all">Done</button>
             </div>
@@ -1286,10 +1795,10 @@ try:
     </div>
 
     <!-- ============================================================= -->
-    <!-- MULTI-CHANNEL EVIDENCE & COMPLAINT MODAL -->
+    <!-- MULTI-CHANNEL EVIDENCE & COMPLAINT MODAL (v2.0) -->
     <!-- ============================================================= -->
     <div id="evidence-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden p-4">
-        <div class="bg-obsidian-900 border border-white/10 rounded-3xl max-w-3xl w-full p-6 max-h-[90vh] flex flex-col justify-between shadow-2xl">
+        <div class="bg-obsidian-900 border border-white/10 rounded-3xl max-w-4xl w-full p-6 max-h-[92vh] flex flex-col justify-between shadow-2xl">
             <div class="flex items-center justify-between pb-4 border-b border-white/10">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg border border-rose-500/30">
@@ -1297,7 +1806,7 @@ try:
                     </div>
                     <div>
                         <h3 class="text-base font-bold tracking-tight" id="modal-plugin-title">Plugin Abuse Evidence Dossier</h3>
-                        <p class="text-xs text-slate-400">Verifiable Multi-Channel Evidence & Mathematical Proof</p>
+                        <p class="text-xs text-slate-400">Shannon Influx Entropy, Multi-Plugin Raid Correlation & SQL Directives</p>
                     </div>
                 </div>
                 <button onclick="closeEvidenceModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-obsidian-800 transition-colors">
@@ -1305,11 +1814,11 @@ try:
                 </button>
             </div>
 
-            <!-- Export Channel Tabs -->
-            <div class="flex gap-2 my-3 font-heading">
-                <button onclick="setModalChannel('github')" id="m-btn-gh" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-600 text-white"><i class="fa-brands fa-github mr-1"></i> GitHub Issue</button>
-                <button onclick="setModalChannel('discord')" id="m-btn-dc" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5"><i class="fa-brands fa-discord mr-1"></i> Discord / Slack</button>
-                <button onclick="setModalChannel('email')" id="m-btn-em" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5"><i class="fa-solid fa-envelope mr-1"></i> Formal Memo</button>
+            <div class="flex gap-2 my-3 font-heading overflow-x-auto pb-1">
+                <button onclick="setModalChannel('github')" id="m-btn-gh" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-600 text-white whitespace-nowrap"><i class="fa-brands fa-github mr-1"></i> GitHub Issue</button>
+                <button onclick="setModalChannel('psc')" id="m-btn-psc" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5 whitespace-nowrap"><i class="fa-solid fa-scale-balanced mr-1"></i> Formal PSC Memo + SQL</button>
+                <button onclick="setModalChannel('discord')" id="m-btn-dc" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5 whitespace-nowrap"><i class="fa-brands fa-discord mr-1"></i> Discord Webhook JSON</button>
+                <button onclick="setModalChannel('slack')" id="m-btn-sl" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5 whitespace-nowrap"><i class="fa-brands fa-slack mr-1"></i> Slack Block Kit</button>
             </div>
 
             <div class="my-2 overflow-y-auto max-h-[50vh] pr-2">
@@ -1327,7 +1836,7 @@ try:
 
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl bg-emerald-600 text-white text-xs font-bold shadow-2xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 border border-emerald-400/30">
-        <i class="fa-solid fa-circle-check text-base"></i> <span id="toast-text">Evidence copied to clipboard!</span>
+        <i class="fa-solid fa-circle-check text-base"></i> <span id="toast-text">Payload copied to clipboard!</span>
     </div>
 
     <!-- Footer -->
@@ -1398,6 +1907,31 @@ try:
 
     <!-- Interactive Client Logic -->
     <script>
+        // Kinetic Counter Rollup Engine
+        function animateValue(elementOrId, start, end, duration = 800, prefix = '', suffix = '') {
+            const obj = (typeof elementOrId === 'string') ? document.getElementById(elementOrId) : elementOrId;
+            if (!obj) return;
+            
+            let startTimestamp = null;
+            const isFloat = end % 1 !== 0;
+            
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+                const currentVal = start + (end - start) * ease;
+                
+                obj.innerText = prefix + (isFloat ? currentVal.toFixed(1) : Math.round(currentVal).toLocaleString()) + suffix;
+                
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    obj.innerText = prefix + (isFloat ? end.toFixed(1) : end.toLocaleString()) + suffix;
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
         // Theme Switcher Logic
         function toggleTheme() {
             const curTheme = document.documentElement.getAttribute('data-theme') || 'obsidian';
@@ -1407,8 +1941,10 @@ try:
 
             const btnText = document.getElementById('theme-toggle-text');
             if (btnText) btnText.innerText = newTheme === 'obsidian' ? 'Alabaster Mode' : 'Obsidian Mode';
+            
             initializeCharts();
-            showToast(`Switched to ${newTheme === 'obsidian' ? 'Obsidian Titanium' : 'Alabaster Platinum'} theme!`);
+            if (typeof renderChoroplethMap === 'function') renderChoroplethMap();
+            showToast(`Switched to ${newTheme === 'obsidian' ? 'Obsidian Titanium' : 'Alabaster Platinum (Swiss Mode)'}!`);
         }
 
         const savedTheme = localStorage.getItem('qgis_dashboard_theme');
@@ -1432,16 +1968,17 @@ try:
                     closeEvidenceModal();
                     closeCompareModal();
                     closeCommandPalette();
-                    closeExecutiveBriefingModal();
+                    closeExecutiveStorytellingModal();
                 }
                 return;
             }
 
             if (e.key === '1') switchTab('overview');
             else if (e.key === '2') switchTab('audit');
-            else if (e.key === '3') switchTab('deepdive');
-            else if (e.key === '4') switchTab('simulator');
-            else if (e.key === '5') switchTab('table');
+            else if (e.key === '3') switchTab('carto');
+            else if (e.key === '4') switchTab('deepdive');
+            else if (e.key === '5') switchTab('simulator');
+            else if (e.key === '6') switchTab('table');
             else if (e.key.toLowerCase() === 't') toggleTheme();
             else if (e.key === '/') {
                 e.preventDefault();
@@ -1452,7 +1989,7 @@ try:
                 closeEvidenceModal();
                 closeCompareModal();
                 closeCommandPalette();
-                closeExecutiveBriefingModal();
+                closeExecutiveStorytellingModal();
             }
         });
 
@@ -1476,12 +2013,13 @@ try:
             const defaultActions = [
                 { name: 'Switch to Executive Overview', icon: 'fa-chart-pie', action: () => { switchTab('overview'); closeCommandPalette(); } },
                 { name: 'Switch to Rating Abuse & Surveillance', icon: 'fa-shield-halved', action: () => { switchTab('audit'); closeCommandPalette(); } },
+                { name: 'Switch to Geospatial Studio', icon: 'fa-earth-americas', action: () => { switchTab('carto'); closeCommandPalette(); } },
                 { name: 'Switch to Plugin Explorer', icon: 'fa-cubes', action: () => { switchTab('deepdive'); closeCommandPalette(); } },
                 { name: 'Switch to Forecast Simulator', icon: 'fa-wand-magic-sparkles', action: () => { switchTab('simulator'); closeCommandPalette(); } },
                 { name: 'Switch to Master Data Table', icon: 'fa-table', action: () => { switchTab('table'); closeCommandPalette(); } },
                 { name: 'Toggle Theme (Obsidian / Alabaster)', icon: 'fa-circle-half-stroke', action: () => { toggleTheme(); closeCommandPalette(); } },
                 { name: 'Open 3-Way Benchmark Comparator', icon: 'fa-code-compare', action: () => { openCompareModal(); closeCommandPalette(); } },
-                { name: 'Open Executive Briefing Summary', icon: 'fa-newspaper', action: () => { openExecutiveBriefingModal(); closeCommandPalette(); } },
+                { name: 'Open Reports & Announcement Kit', icon: 'fa-bullhorn', action: () => { openExecutiveStorytellingModal(); closeCommandPalette(); } },
                 { name: 'Export Full Evidence JSON Bundle', icon: 'fa-file-code', action: () => { exportFullDossierJSON(); closeCommandPalette(); } },
                 { name: 'Export Performance Table to CSV', icon: 'fa-file-csv', action: () => { exportToCSV(); closeCommandPalette(); } }
             ];
@@ -1517,53 +2055,120 @@ try:
             });
         }
 
-        // Executive Narrative Briefing Logic
-        function openExecutiveBriefingModal() {
-            const fastest = [...appData.plugins].sort((a,b) => b.avg_monthly_downloads - a.avg_monthly_downloads)[0];
-            const leader = appData.plugins[0];
-            const topCountry = appData.summary.global_countries[0];
-            const crit = appData.summary.critical_anomalies;
+        // =============================================================
+        // EXECUTIVE STORYTELLING & ANNOUNCEMENT KIT
+        // =============================================================
+        let activeStoryFormat = 'ecosystem';
 
-            const text = `===============================================================
-QGIS PLUGIN ECOSYSTEM EXECUTIVE INTELLIGENCE BRIEFING
-Author: Yusuf Eminoğlu | Date: ${appData.summary.last_updated}
+        function openExecutiveStorytellingModal() {
+            setStorytellingFormat('ecosystem');
+            document.getElementById('storytelling-modal').classList.remove('hidden');
+        }
+
+        function closeExecutiveStorytellingModal() {
+            document.getElementById('storytelling-modal').classList.add('hidden');
+            document.getElementById('copy-story-btn-text').innerText = "Copy Selected Format";
+        }
+
+        function setStorytellingFormat(format) {
+            activeStoryFormat = format;
+            const btns = { ecosystem: 's-btn-eco', linkedin: 's-btn-li', twitter: 's-btn-tw', reddit: 's-btn-rd' };
+            Object.keys(btns).forEach(k => {
+                const btn = document.getElementById(btns[k]);
+                if (btn) btn.className = k === format ? "px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-600 text-white whitespace-nowrap" : "px-3 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5 whitespace-nowrap";
+            });
+
+            const leader = appData.plugins[0];
+            const fastest = [...appData.plugins].sort((a,b) => b.avg_monthly_downloads - a.avg_monthly_downloads)[0];
+            const topCountry = appData.summary.global_countries[0];
+
+            let text = '';
+            if (format === 'ecosystem') {
+                text = `===============================================================
+QGIS PLUGIN ECOSYSTEM ANNUAL STATE & GOVERNANCE REPORT
+Author: Yusuf Eminoğlu | Audit Timestamp: ${appData.summary.last_updated}
 ===============================================================
 
 1. PORTFOLIO VOLUME & TRAJECTORY:
-   - Cumulative Ecosystem Volume: ${appData.summary.total_downloads.toLocaleString()} downloads across ${appData.summary.total_plugins} production plugins.
-   - Current Monthly Run-Rate: ~${appData.summary.active_period_monthly_avg.toLocaleString()} downloads/month.
-   - Portfolio Milestone: ${appData.summary.total_downloads.toLocaleString()} / 100,000 (${((appData.summary.total_downloads/100000)*100).toFixed(1)}% achieved).
-   - Milestone Horizon: Estimated completion by Q4 2026.
+   - Total Cumulative Ecosystem Downloads: ${appData.summary.total_downloads.toLocaleString()} across ${appData.summary.total_plugins} production plugins.
+   - Active Monthly Adoption Velocity: ~${appData.summary.active_period_monthly_avg.toLocaleString()} downloads/month.
+   - 100k Milestone Proximity: ${appData.summary.total_downloads.toLocaleString()} / 100,000 (${((appData.summary.total_downloads/100000)*100).toFixed(1)}% achieved).
+   - Expected 100k Arrival: Estimated Q4 2026.
 
-2. TOP ADOPTION DRIVERS:
-   - Portfolio Flagship: ${leader.name} (${leader.downloads.toLocaleString()} downloads, ${((leader.downloads/appData.summary.total_downloads)*100).toFixed(1)}% market share).
-   - Velocity Champion: ${fastest.name} (~${Math.round(fastest.avg_monthly_downloads).toLocaleString()} downloads/mo adoption pace).
-   - Largest Regional Market: ${topCountry.flag} ${topCountry.country} (${topCountry.downloads.toLocaleString()} downloads, ${topCountry.percentage}% share).
+2. QUANTITATIVE ECONOMETRIC PROFILE:
+   - Gini Inequality Index (Corrected): ${appData.summary.econometrics.gini_corrected} (Optimal Pareto distribution).
+   - Effective Plugin Count (Entropy Diversity): ${appData.summary.econometrics.effective_plugin_count} active pillars.
+   - Empirical Bayes Prior Rating: ${appData.summary.econometrics.prior_mean_rating} ★.
 
-3. RATING GOVERNANCE & SECURITY AUDIT:
-   - Verified Active Attacks: ${crit} critical raid(s) flagged under active surveillance.
-   - Primary Incident: PlanX GeoStats Lab suffered 30 consecutive 1-star votes (implied influx rating: 1.000 ★).
-   - Forensic Remediation: GitHub Issue submitted to QGIS infrastructure maintainers; score rollback target established at 4.85 ★.
+3. FLAGSHIP SPOTLIGHTS:
+   - Portfolio Crown Jewel: ${leader.name} (${leader.downloads.toLocaleString()} downloads).
+   - Velocity Champion: ${fastest.name} (~${Math.round(fastest.avg_monthly_downloads).toLocaleString()} downloads/mo pace).
+   - Largest Regional Market: ${topCountry.flag} ${topCountry.country} (${topCountry.downloads.toLocaleString()} DL, ${topCountry.percentage}% share).
 
-===============================================================
-Generated automatically by QGIS Plugin Governance Studio.`;
+4. RATING GOVERNANCE & SECURITY SURVEILLANCE:
+   - Coordinated Campaign Level: ${appData.correlation.campaign_level}
+   - Critical Rating Anomalies: ${appData.summary.critical_anomalies} under active surveillance.
+   - Evidence Fingerprint: SHA256-${appData.correlation.portfolio_evidence_signature}`;
+            } else if (format === 'linkedin') {
+                text = `🚀 Excited to share an official milestone update for our QGIS Urban Analytics & Spatial Planning Ecosystem!
 
-            document.getElementById('briefing-content-area').innerText = text;
-            document.getElementById('briefing-modal').classList.remove('hidden');
+Our 24 production QGIS plugins have officially surpassed ${appData.summary.total_downloads.toLocaleString()} cumulative downloads with an active adoption velocity of ~${appData.summary.active_period_monthly_avg.toLocaleString()} downloads/month across 140+ countries.
+
+🌟 Top Ecosystem Highlights:
+• Crown Jewel: ${leader.name} leading with ${leader.downloads.toLocaleString()} downloads.
+• Velocity Champion: ${fastest.name} clocking ~${Math.round(fastest.avg_monthly_downloads).toLocaleString()}/month.
+• Macro-Regional Engine: Western Europe & North America representing over 70% of spatial analysis workflows.
+
+We've also open-sourced our dedicated Governance & Analytics Studio:
+🔗 Live Dashboard: https://yusufeminoglu.github.io/qgis-plugins-governance/
+🔗 GitHub Repository: https://github.com/YusufEminoglu/qgis-plugins-governance
+
+Thank you to the global QGIS & OSGeo community! 🌍
+
+#QGIS #GIS #UrbanPlanning #SpatialAnalytics #OpenSource #PyQGIS #Geospatial`;
+            } else if (format === 'twitter') {
+                text = `1/4 🌍 Huge milestone for our open-source GIS tools: The Yusuf Eminoğlu QGIS Plugin Ecosystem has reached ${appData.summary.total_downloads.toLocaleString()} total downloads across 24 plugins!
+
+2/4 📈 Adoption Velocity: Running at ~${appData.summary.active_period_monthly_avg.toLocaleString()} downloads/month.
+👑 Flagship: ${leader.name} (${leader.downloads.toLocaleString()} DL)
+⚡ Fastest Adoption: ${fastest.name} (~${Math.round(fastest.avg_monthly_downloads).toLocaleString()}/mo)
+
+3/4 🛡️ We built an open Governance & Analytics Studio tracking telemetry, econometric Gini diversity, and rating surveillance live via GitHub Actions:
+https://yusufeminoglu.github.io/qgis-plugins-governance/
+
+4/4 Explore the entire suite on the official QGIS Hub:
+https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/
+#QGIS #SpatialAnalytics`;
+            } else {
+                text = `**[Release & Governance Bulletin] Yusuf Eminoğlu QGIS Plugin Ecosystem: ${appData.summary.total_downloads.toLocaleString()} Downloads Milestone**
+
+Hey r/QGIS community!
+
+Wanted to share an update on our 24 spatial planning & urban analytics plugins (including PlanX suite, CAD toolset, and 02 geospatial tools).
+
+### 📊 Portfolio Telemetry Overview
+| Metric | Value |
+|---|---|
+| Total Plugins | 24 (QGIS 3.x & QGIS 4.0 Ready) |
+| Cumulative Downloads | ${appData.summary.total_downloads.toLocaleString()} |
+| Current Velocity | ~${appData.summary.active_period_monthly_avg.toLocaleString()} downloads/mo |
+| Portfolio Gini Score | ${appData.summary.econometrics.gini_corrected} |
+| Flagship Plugin | ${leader.name} (${leader.downloads.toLocaleString()} DL) |
+
+Check out the interactive live telemetry studio: https://yusufeminoglu.github.io/qgis-plugins-governance/
+Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
+            }
+
+            document.getElementById('storytelling-content-area').innerText = text;
         }
 
-        function closeExecutiveBriefingModal() {
-            document.getElementById('briefing-modal').classList.add('hidden');
-            document.getElementById('copy-briefing-btn-text').innerText = "Copy Briefing";
-        }
-
-        function copyBriefingText() {
-            const text = document.getElementById('briefing-content-area').innerText;
+        function copyStorytellingText() {
+            const text = document.getElementById('storytelling-content-area').innerText;
             navigator.clipboard.writeText(text).then(() => {
-                document.getElementById('copy-briefing-btn-text').innerText = "Copied!";
-                showToast("Executive Briefing copied to clipboard!");
+                document.getElementById('copy-story-btn-text').innerText = "Copied!";
+                showToast("Announcement kit copied to clipboard!");
                 setTimeout(() => {
-                    document.getElementById('copy-briefing-btn-text').innerText = "Copy Briefing";
+                    document.getElementById('copy-story-btn-text').innerText = "Copy Selected Format";
                 }, 2500);
             });
         }
@@ -1588,6 +2193,9 @@ Generated automatically by QGIS Plugin Governance Studio.`;
             if (tabId === 'audit') {
                 setTimeout(renderAuditHistoryChart, 100);
             }
+            if (tabId === 'carto') {
+                setTimeout(initializeGeospatialStudio, 100);
+            }
         }
 
         function renderKPIs() {
@@ -1606,7 +2214,7 @@ Generated automatically by QGIS Plugin Governance Studio.`;
                     <div class="absolute -right-4 -bottom-4 text-7xl text-slate-700/10 pointer-events-none"><i class="fa-solid fa-download"></i></div>
                     <p class="text-xs font-semibold text-slate-400 tracking-wider uppercase font-mono">Total Downloads</p>
                     <div class="flex items-baseline mt-2">
-                        <span class="text-3xl font-extrabold tracking-tight font-mono">${appData.summary.total_downloads.toLocaleString()}</span>
+                        <span class="text-3xl font-extrabold tracking-tight font-mono" id="kpi-total-dl">0</span>
                     </div>
                     <div class="flex items-center gap-1.5 mt-2.5 text-[11px] text-slate-400">
                         <span class="text-emerald-400 font-bold font-mono"><i class="fa-solid fa-chevron-up"></i> ${Math.round(appData.summary.total_downloads / appData.summary.total_plugins).toLocaleString()}</span>
@@ -1618,7 +2226,7 @@ Generated automatically by QGIS Plugin Governance Studio.`;
                     <div class="absolute -right-4 -bottom-4 text-7xl text-slate-700/10 pointer-events-none"><i class="fa-solid fa-rocket"></i></div>
                     <p class="text-xs font-semibold text-slate-400 tracking-wider uppercase font-mono">Portfolio Velocity</p>
                     <div class="flex items-baseline mt-2">
-                        <span class="text-3xl font-extrabold text-cyan-400 tracking-tight font-mono">${monthlyAvgSpeed.toLocaleString()}</span>
+                        <span class="text-3xl font-extrabold text-cyan-400 tracking-tight font-mono" id="kpi-velocity-val">0</span>
                         <span class="text-[10px] font-bold text-cyan-500 ml-1.5 font-mono">/mo</span>
                     </div>
                     <div class="flex items-center gap-1.5 mt-2.5 text-[11px] text-slate-400">
@@ -1647,6 +2255,9 @@ Generated automatically by QGIS Plugin Governance Studio.`;
                 </div>
             `;
             kpiGrid.innerHTML = html;
+
+            animateValue('kpi-total-dl', 0, appData.summary.total_downloads);
+            animateValue('kpi-velocity-val', 0, monthlyAvgSpeed);
 
             const planxPercent = ((planxDownloads / appData.summary.total_downloads) * 100).toFixed(1);
             document.getElementById('planx-share-text').innerHTML = `${planxDownloads.toLocaleString()} <strong>(${planxPercent}%)</strong>`;
@@ -1816,7 +2427,6 @@ Generated automatically by QGIS Plugin Governance Studio.`;
                             <span class="text-[10px] text-slate-500 font-mono">v${a.version}</span>
                         </div>
 
-                        <!-- Before & After Comparison Scorecard -->
                         <div class="grid grid-cols-3 gap-2 bg-obsidian-950/80 p-3 rounded-2xl border border-white/5 mb-4 text-center">
                             <div>
                                 <span class="text-[9px] uppercase font-bold text-slate-500 block font-mono">Baseline (${a.baseline_votes} votes)</span>
@@ -1828,11 +2438,10 @@ Generated automatically by QGIS Plugin Governance Studio.`;
                             </div>
                             <div>
                                 <span class="text-[9px] uppercase font-bold text-slate-500 block font-mono">Delta Votes</span>
-                                <span class="text-xs font-extrabold font-mono ${a.delta_votes > 0 ? 'text-cyan-400' : 'text-slate-400'}">+${a.delta_votes}</span>
+                                <span class="text-xs font-extrabold font-mono ${a.delta_votes > 0 ? 'text-cyan-400' : 'text-slate-500'}">+${a.delta_votes}</span>
                             </div>
                         </div>
 
-                        <!-- Mathematical Telemetry Summary -->
                         <div class="text-[11px] text-slate-300 space-y-1.5 mb-2 bg-obsidian-900/60 p-3 rounded-xl border border-white/5 font-mono">
                             <div class="flex justify-between">
                                 <span class="text-slate-400">Score Delta (ΔS):</span>
@@ -1841,6 +2450,10 @@ Generated automatically by QGIS Plugin Governance Studio.`;
                             <div class="flex justify-between">
                                 <span class="text-slate-400">Implied Influx Rating:</span>
                                 <span class="font-bold ${a.implied_new_rating <= 1.5 && a.delta_votes > 0 ? 'text-rose-400' : 'text-emerald-400'}">${a.delta_votes > 0 ? a.implied_new_rating.toFixed(2) + ' ★ avg' : 'N/A'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Shannon Entropy (H):</span>
+                                <span class="font-bold text-cyan-400">${a.shannon_entropy} bits (EAS: ${a.entropy_score}/100)</span>
                             </div>
                         </div>
 
@@ -1961,7 +2574,7 @@ Generated automatically by QGIS Plugin Governance Studio.`;
             const targetPlugin = select.value || appData.plugins[0].name;
 
             const isAlabaster = document.documentElement.getAttribute('data-theme') === 'alabaster';
-            const labelColor = isAlabaster ? '#64748b' : '#94a3b8';
+            const labelColor = isAlabaster ? '#334155' : '#94a3b8';
             const gridColor = isAlabaster ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.05)';
 
             const pluginHistory = appData.history_meta.by_plugin[targetPlugin] || { ratings: [], votes: [] };
@@ -2034,7 +2647,7 @@ Generated automatically by QGIS Plugin Governance Studio.`;
             auditChartInstance.render();
         }
 
-        // Multi-Channel Evidence Modal Logic
+        // Multi-Channel Evidence Modal Logic (v2.0)
         let activeEvidenceReport = null;
         let activeEvidenceChannel = 'github';
 
@@ -2053,9 +2666,10 @@ Generated automatically by QGIS Plugin Governance Studio.`;
             const r = activeEvidenceReport;
             if (!r) return;
 
-            const btns = { github: 'm-btn-gh', discord: 'm-btn-dc', email: 'm-btn-em' };
+            const btns = { github: 'm-btn-gh', psc: 'm-btn-psc', discord: 'm-btn-dc', slack: 'm-btn-sl' };
             Object.keys(btns).forEach(k => {
-                document.getElementById(btns[k]).className = k === channel ? "px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-600 text-white" : "px-3 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5";
+                const btn = document.getElementById(btns[k]);
+                if (btn) btn.className = k === channel ? "px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-600 text-white whitespace-nowrap" : "px-3 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5 whitespace-nowrap";
             });
 
             let content = '';
@@ -2066,7 +2680,7 @@ Generated automatically by QGIS Plugin Governance Studio.`;
 - **Target Plugin:** \\`${r.name}\\` (v${r.version})
 - **Category:** ${r.category}
 - **Official Hub URL:** https://plugins.qgis.org/plugins/${r.name.toLowerCase().replace(/\\s+/g, '_')}/
-- **Documentation:** ${r.homepage || 'https://yusufeminoglu.github.io/'}
+- **Evidence Hash Signature:** \\`SHA256-${r.evidence_hash}\\`
 - **Audit Timestamp:** ${appData.summary.last_updated}
 
 #### 📊 Mathematical Baseline Reconciliation & Audit Telemetry:
@@ -2075,7 +2689,8 @@ Generated automatically by QGIS Plugin Governance Studio.`;
 | **Total Votes Count** | ${r.baseline_votes} | ${r.current_votes} | **+${r.delta_votes} votes** |
 | **Average Rating** | ${r.baseline_rating.toFixed(3)} / 5.0 | ${r.current_rating.toFixed(3)} / 5.0 | **${r.delta_rating.toFixed(3)}** |
 | **Cumulative Score Sum** | ${r.baseline_score.toFixed(2)} pts | ${r.current_score.toFixed(2)} pts | **+${r.delta_score.toFixed(2)} pts** |
-| **Calculated Implied Rating of Influx** | - | - | **${r.implied_new_rating.toFixed(2)} / 5.0 (${r.delta_votes > 0 && r.implied_new_rating <= 1.35 ? '100% 1-Star Bombing Raid' : 'Anomalous Influx'})** |
+| **Implied Influx Average Rating** | - | - | **${r.implied_new_rating.toFixed(2)} / 5.00** |
+| **Shannon Entropy ($H$)** | 2.322 bits (Max) | - | **${r.shannon_entropy} bits (EAS: ${r.entropy_score}/100)** |
 
 #### 🔬 Remediation & Rollback Mathematics:
 - **Fair Target Rating (Purging ${r.delta_votes} Fraudulent Votes):** **${r.reconciled_after_purge.toFixed(2)} / 5.00**
@@ -2083,40 +2698,64 @@ Generated automatically by QGIS Plugin Governance Studio.`;
 - **Calculated Damage Index:** **-${r.damage_index} score points lost**
 
 #### 🚨 Requested Remediation & Infrastructure Actions:
-1. Audit vote logs and IP/timestamp patterns for **${r.name}** during the identified burst window.
+1. Audit vote logs and IP/timestamp patterns for **${r.name}** during the burst window.
 2. Invalidate and purge the fraudulent automated 1-star submissions.
 3. Recompute and restore aggregate rating baseline to **~${r.baseline_rating.toFixed(2)} / 5.0**.
-4. Enforce authenticated user verification for plugin ratings on plugins.qgis.org.
 
 *Report generated by QGIS Plugin Portfolio Governance Studio (Author: Yusuf Eminoğlu).*`;
+            } else if (channel === 'psc') {
+                content = `FORMAL MEMORANDUM TO QGIS PSC & HUB INFRASTRUCTURE MAINTAINERS
+SUBJECT: Forensic Evidence & Database Remediation Query — ${r.name}
+AUDIT TIMESTAMP: ${appData.summary.last_updated}
+MAINTAINER: Yusuf Eminoğlu
+EVIDENCE SIGNATURE: SHA256-${r.evidence_hash}
+
+1. MATHEMATICAL PROOF OF FRAUDULENT INFLUX:
+   - Target: ${r.name} (v${r.version})
+   - Influx: +${r.delta_votes} votes @ ${r.implied_new_rating.toFixed(2)} ★ implied average
+   - Shannon Influx Entropy: ${r.shannon_entropy} bits (Entropy Anomaly Score: ${r.entropy_score} / 100)
+   - Calculated Score Damage: -${r.damage_index} points
+
+2. PROPOSED DATABASE DIRECTIVE (SQL REMEDIATION FOR HUB ADMINS):
+\\`\\`\\`sql
+BEGIN;
+-- Invalidate illegitimate vote burst
+DELETE FROM plugins_rating 
+WHERE plugin_id = (SELECT id FROM plugins_plugin WHERE name = '${r.name.replace(/'/g, "''")}')
+  AND rating = 1
+  AND created >= '${r.baseline_date}';
+
+-- Recompute aggregate scores
+UPDATE plugins_plugin
+SET rating_votes = (SELECT COUNT(*) FROM plugins_rating WHERE plugin_id = plugins_plugin.id),
+    rating_average = (SELECT COALESCE(AVG(rating), 0.0) FROM plugins_rating WHERE plugin_id = plugins_plugin.id)
+WHERE name = '${r.name.replace(/'/g, "''")}';
+COMMIT;
+\\`\\`\\``;
             } else if (channel === 'discord') {
-                content = `🚨 **QGIS Hub Rating Abuse Alert: ${r.name}** 🚨
-• **Plugin:** \\`${r.name}\\` (v${r.version})
-• **Baseline:** ${r.baseline_rating.toFixed(2)} ★ (${r.baseline_votes} votes) ➔ **Current:** ${r.current_rating.toFixed(2)} ★ (${r.current_votes} votes)
-• **Attack Delta:** +${r.delta_votes} votes @ **${r.implied_new_rating.toFixed(2)} ★ implied average** (100% automated 1-star raid)
-• **Damage Index:** -${r.damage_index} points lost
-• **Required Action:** Rollback fraudulent votes to restore fair score (${r.reconciled_after_purge.toFixed(2)} ★).`;
+                content = JSON.stringify({
+                    username: "QGIS Forensic Sentinel",
+                    content: `🚨 **RATING ABUSE DETECTED: ${r.name}** 🚨`,
+                    embeds: [{
+                        title: `${r.name} Rating Manipulation Dossier`,
+                        color: r.severity === 'critical' ? 15548997 : 16744203,
+                        fields: [
+                            { name: "Baseline vs Live", value: `${r.baseline_rating.toFixed(2)}★ (${r.baseline_votes}v) ➔ ${r.current_rating.toFixed(2)}★ (${r.current_votes}v)` },
+                            { name: "Implied Influx", value: `+${r.delta_votes} votes @ ${r.implied_new_rating.toFixed(2)}★ avg (Entropy: ${r.shannon_entropy} bits)` },
+                            { name: "Rollback Target", value: `${r.reconciled_after_purge.toFixed(2)}★ (Damage: -${r.damage_index} pts)` }
+                        ],
+                        footer: { text: `Signature: SHA256-${r.evidence_hash} • Yusuf Eminoğlu` }
+                    }]
+                }, null, 2);
             } else {
-                content = `MEMORANDUM FOR QGIS PLUGIN INFRASTRUCTURE TEAM
-SUBJECT: Rating Manipulation Incident Report — ${r.name}
-DATE: ${appData.summary.last_updated}
-
-This report documents an anomalous rating influx on ${r.name} (v${r.version}).
-
-1. BASELINE COMPARISON:
-   - Verified Baseline: ${r.baseline_rating.toFixed(3)} rating across ${r.baseline_votes} votes.
-   - Current Live: ${r.current_rating.toFixed(3)} rating across ${r.current_votes} votes.
-   - Delta: +${r.delta_votes} votes, score dropped by ${r.delta_rating.toFixed(3)}.
-
-2. MATHEMATICAL PROOF:
-   - Implied Influx Average: ${r.implied_new_rating.toFixed(2)} / 5.00.
-   - Damage Index: ${r.damage_index} points.
-
-3. REMEDIATION:
-   Purging the ${r.delta_votes} automated votes will reconcile the score to ${r.reconciled_after_purge.toFixed(2)} / 5.00.
-
-Respectfully submitted,
-Yusuf Eminoğlu`;
+                content = JSON.stringify({
+                    text: `🚨 Rating Abuse Alert on ${r.name}`,
+                    blocks: [
+                        { type: "header", text: { type: "plain_text", text: `Rating Abuse Alert: ${r.name}` } },
+                        { type: "section", text: { type: "mrkdwn", text: `*Baseline:* ${r.baseline_rating.toFixed(2)}★ | *Live:* ${r.current_rating.toFixed(2)}★ | *Delta:* +${r.delta_votes} votes @ *${r.implied_new_rating.toFixed(2)}★ avg*` } },
+                        { type: "section", text: { type: "mrkdwn", text: `*Entropy Anomaly Score:* ${r.entropy_score}/100 | *Rollback Target:* ${r.reconciled_after_purge.toFixed(2)}★` } }
+                    ]
+                }, null, 2);
             }
 
             document.getElementById('modal-markdown-content').innerText = content;
@@ -2254,10 +2893,10 @@ Yusuf Eminoğlu`;
                     </div>
 
                     <div class="p-3 rounded-xl bg-obsidian-950/60 border border-white/5 grid grid-cols-4 items-center">
-                        <span class="text-slate-400 font-sans col-span-1">Star Rating:</span>
-                        <span class="text-center font-bold ${pA.average_vote === maxRating ? 'text-amber-400' : 'text-slate-300'}">${pA.average_vote.toFixed(2)} ★ (${pA.votes_count})</span>
-                        <span class="text-center font-bold ${pB.average_vote === maxRating ? 'text-amber-400' : 'text-slate-300'}">${pB.average_vote.toFixed(2)} ★ (${pB.votes_count})</span>
-                        <span class="text-center font-bold ${pC.average_vote === maxRating ? 'text-amber-400' : 'text-slate-300'}">${pC.average_vote.toFixed(2)} ★ (${pC.votes_count})</span>
+                        <span class="text-slate-400 font-sans col-span-1">Bayesian Rating:</span>
+                        <span class="text-center font-bold text-amber-400">${pA.bayesian_rating.toFixed(2)} ★</span>
+                        <span class="text-center font-bold text-amber-400">${pB.bayesian_rating.toFixed(2)} ★</span>
+                        <span class="text-center font-bold text-amber-400">${pC.bayesian_rating.toFixed(2)} ★</span>
                     </div>
 
                     <div class="p-3 rounded-xl bg-obsidian-950/60 border border-white/5 grid grid-cols-4 items-center">
@@ -2284,6 +2923,274 @@ Yusuf Eminoğlu`;
             setTimeout(() => {
                 toast.classList.add('translate-y-20', 'opacity-0');
             }, 3000);
+        }
+
+        // =============================================================
+        // GEOSPATIAL & CARTOGRAPHIC STUDIO JAVASCRIPT ENGINE
+        // =============================================================
+        let selectedCountryIso = 'US';
+        let currentMapFilter = 'all';
+
+        function initializeGeospatialStudio() {
+            renderMacroRegions();
+            renderChoroplethMap();
+            renderAffinityMatrix();
+            inspectCountryByIso('US');
+        }
+
+        function renderMacroRegions() {
+            const deck = document.getElementById('macro-regions-deck');
+            if (!deck || !appData.summary.macro_regions) return;
+
+            deck.innerHTML = '';
+            appData.summary.macro_regions.forEach(reg => {
+                const card = document.createElement('div');
+                card.className = "p-4 rounded-2xl bg-obsidian-950/80 border border-white/5 hover:border-cyan-500/30 cursor-pointer transition-all duration-200 group flex flex-col justify-between";
+                card.onclick = () => focusMacroRegion(reg.code);
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between text-[10px] font-mono mb-2">
+                            <span class="px-2 py-0.5 rounded-md bg-white/5 font-bold text-slate-400 group-hover:text-cyan-400 transition-colors">
+                                #${reg.rank} ${reg.code}
+                            </span>
+                            <span class="text-cyan-400 font-bold">${reg.percentage}%</span>
+                        </div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <i class="fa-solid ${reg.icon} text-xs text-cyan-400"></i>
+                            <h4 class="text-sm font-bold font-heading truncate text-white">${reg.region}</h4>
+                        </div>
+                        <div class="text-lg font-bold font-mono text-slate-200 mb-2">
+                            ${reg.downloads.toLocaleString()} <span class="text-[10px] text-slate-500 font-normal">DL</span>
+                        </div>
+                    </div>
+                    <div class="pt-2 border-t border-white/5 text-[10px] font-mono text-slate-400 flex items-center justify-between">
+                        <span>Top: <strong class="text-white truncate max-w-[80px]">${reg.top_plugins[0]?.name.substring(0, 10)}...</strong></span>
+                        <span class="text-cyan-400 font-bold">${reg.top_plugins[0]?.percentage}%</span>
+                    </div>
+                `;
+                deck.appendChild(card);
+            });
+        }
+
+        function renderChoroplethMap() {
+            const isAlabaster = document.documentElement.getAttribute('data-theme') === 'alabaster';
+            const countries = appData.summary.global_countries || [];
+            const maxDl = Math.max(...countries.map(c => c.downloads), 1);
+
+            function getChoroplethFill(dl) {
+                if (!dl || dl === 0) return isAlabaster ? '#e2e8f0' : '#1e293b';
+                const ratio = dl / maxDl;
+                if (ratio > 0.65) return isAlabaster ? '#0284c7' : '#38bdf8';
+                if (ratio > 0.35) return isAlabaster ? '#0369a1' : '#06b6d4';
+                if (ratio > 0.15) return isAlabaster ? '#0ea5e9' : '#0284c7';
+                if (ratio > 0.05) return isAlabaster ? '#38bdf8' : '#0369a1';
+                return isAlabaster ? '#bae6fd' : '#082f49';
+            }
+
+            const paths = document.querySelectorAll('#svg-countries-layer .country-path');
+            paths.forEach(p => {
+                const iso = p.getAttribute('data-iso');
+                const cData = countries.find(c => c.iso === iso);
+                const dl = cData ? cData.downloads : 0;
+
+                p.setAttribute('fill', getChoroplethFill(dl));
+                p.setAttribute('stroke', isAlabaster ? '#ffffff' : '#070a10');
+                p.setAttribute('stroke-width', '1');
+
+                p.onmouseenter = (e) => showMapTooltip(e, cData, iso);
+                p.onmousemove = (e) => moveMapTooltip(e);
+                p.onmouseleave = () => hideMapTooltip();
+                p.onclick = () => { if (cData) inspectCountryByIso(iso); };
+            });
+
+            const nodesLayer = document.getElementById('svg-nodes-layer');
+            if (nodesLayer) {
+                nodesLayer.innerHTML = '';
+                countries.slice(0, 8).forEach(c => {
+                    if (!c.cx || !c.cy) return;
+                    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    g.setAttribute('class', 'cursor-pointer group');
+                    g.onclick = () => inspectCountryByIso(c.iso);
+                    g.onmouseenter = (e) => showMapTooltip(e, c, c.iso);
+                    g.onmouseleave = () => hideMapTooltip();
+
+                    g.innerHTML = `
+                        <circle cx="${c.cx}" cy="${c.cy}" r="8" fill="rgba(56, 189, 248, 0.25)" class="animate-ping" />
+                        <circle cx="${c.cx}" cy="${c.cy}" r="3.5" fill="#38bdf8" stroke="#ffffff" stroke-width="1.2" filter="url(#radar-glow)" />
+                    `;
+                    nodesLayer.appendChild(g);
+                });
+            }
+        }
+
+        function showMapTooltip(e, cData, iso) {
+            const tooltip = document.getElementById('map-hud-tooltip');
+            if (!tooltip) return;
+
+            if (!cData) {
+                tooltip.innerHTML = `
+                    <div class="text-xs font-bold text-slate-400 font-mono">${iso} • Global Context</div>
+                    <div class="text-[10px] text-slate-500 font-mono">Territory under tracking</div>
+                `;
+            } else {
+                tooltip.innerHTML = `
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <span class="text-lg">${cData.flag}</span>
+                        <div>
+                            <h5 class="text-xs font-bold font-heading text-white">${cData.country} (${cData.iso})</h5>
+                            <span class="text-[9px] font-mono text-cyan-400">${cData.region}</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-[10px] font-mono mb-1.5 border-t border-b border-white/10 py-1">
+                        <div><span class="text-slate-500 block">Downloads:</span> <strong class="text-white">${cData.downloads.toLocaleString()}</strong></div>
+                        <div><span class="text-slate-500 block">Share:</span> <strong class="text-cyan-400">${cData.percentage}%</strong></div>
+                    </div>
+                    <div class="text-[9px] font-mono text-slate-400">
+                        <span>Top: <strong class="text-white">${cData.top_plugins[0]?.name || 'N/A'}</strong></span>
+                    </div>
+                `;
+            }
+            tooltip.classList.remove('opacity-0');
+            moveMapTooltip(e);
+        }
+
+        function moveMapTooltip(e) {
+            const tooltip = document.getElementById('map-hud-tooltip');
+            const wrapper = document.getElementById('world-map-wrapper');
+            if (!tooltip || !wrapper) return;
+
+            const rect = wrapper.getBoundingClientRect();
+            const x = e.clientX - rect.left + 15;
+            const y = e.clientY - rect.top + 15;
+            tooltip.style.left = `${Math.min(x, rect.width - 220)}px`;
+            tooltip.style.top = `${Math.min(y, rect.height - 120)}px`;
+        }
+
+        function hideMapTooltip() {
+            const tooltip = document.getElementById('map-hud-tooltip');
+            if (tooltip) tooltip.classList.add('opacity-0');
+        }
+
+        function inspectCountryByIso(iso) {
+            const countries = appData.summary.global_countries || [];
+            const cData = countries.find(c => c.iso === iso) || countries[0];
+            if (!cData) return;
+            selectedCountryIso = cData.iso;
+
+            document.getElementById('drilldown-flag').innerText = cData.flag;
+            document.getElementById('drilldown-country-name').innerText = cData.country;
+            document.getElementById('drilldown-region-badge').innerText = `${cData.region} • ISO: ${cData.iso}`;
+            document.getElementById('drilldown-downloads').innerText = cData.downloads.toLocaleString();
+            document.getElementById('drilldown-pct').innerText = `${cData.percentage}% of Global Portfolio`;
+            document.getElementById('drilldown-dom-suite').innerText = cData.dominant_suite;
+
+            const list = document.getElementById('drilldown-plugins-list');
+            list.innerHTML = '';
+            (cData.top_plugins || []).slice(0, 5).forEach((p, idx) => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-obsidian-900/90 border border-white/5 font-mono";
+                item.innerHTML = `
+                    <div class="flex items-center gap-2 truncate max-w-[170px]">
+                        <span class="text-slate-500 text-[10px]">#${idx + 1}</span>
+                        <span class="truncate font-sans font-medium text-white">${p.name}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-cyan-400 font-bold">${p.downloads.toLocaleString()}</span>
+                        <span class="text-[10px] text-slate-500">(${p.percentage}%)</span>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+
+            document.querySelectorAll('#svg-countries-layer .country-path').forEach(p => {
+                if (p.getAttribute('data-iso') === iso) {
+                    p.setAttribute('stroke', '#38bdf8');
+                    p.setAttribute('stroke-width', '2.5');
+                } else {
+                    p.setAttribute('stroke', document.documentElement.getAttribute('data-theme') === 'alabaster' ? '#ffffff' : '#070a10');
+                    p.setAttribute('stroke-width', '1');
+                }
+            });
+        }
+
+        function renderAffinityMatrix() {
+            const tbody = document.getElementById('suite-affinity-tbody');
+            if (!tbody || !appData.summary.suite_affinity_matrix) return;
+
+            tbody.innerHTML = '';
+            appData.summary.suite_affinity_matrix.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-white/[0.02] transition-colors";
+
+                let cellsHtml = `
+                    <td class="py-3 px-4 font-sans font-bold text-white flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full ${row.suite.includes('PlanX') ? 'bg-cyan-400' : (row.suite.includes('02') ? 'bg-indigo-400' : 'bg-emerald-400')}"></span>
+                        ${row.suite}
+                    </td>
+                    <td class="py-3 px-4 text-right font-bold text-slate-300">
+                        ${row.global_downloads.toLocaleString()} <span class="text-[10px] text-slate-500">(${row.global_share}%)</span>
+                    </td>
+                `;
+
+                row.cells.forEach(cell => {
+                    const badgeClass = cell.location_quotient >= 1.15 
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
+                        : (cell.location_quotient <= 0.85 
+                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' 
+                            : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30');
+
+                    cellsHtml += `
+                        <td class="py-3 px-4 text-center">
+                            <div class="flex flex-col items-center gap-0.5">
+                                <span class="font-bold text-white text-[11px]">${cell.downloads.toLocaleString()}</span>
+                                <span class="text-[9px] text-slate-400">${cell.regional_share}% reg / ${cell.suite_share}% ste</span>
+                                <span class="px-2 py-0.5 rounded-md text-[9px] font-bold border ${badgeClass} mt-0.5">
+                                    LQ ${cell.location_quotient.toFixed(2)}x
+                                </span>
+                            </div>
+                        </td>
+                    `;
+                });
+
+                tr.innerHTML = cellsHtml;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function setMapFilter(regCode) {
+            currentMapFilter = regCode;
+            ['all', 'WEU', 'NAM', 'LAM', 'EME', 'APAC'].forEach(code => {
+                const btn = document.getElementById(`map-btn-${code}`);
+                if (btn) {
+                    if (code === regCode) {
+                        btn.className = "px-3 py-1 rounded-xl bg-cyan-500/20 text-cyan-400 font-bold border border-cyan-500/30 transition-all";
+                    } else {
+                        btn.className = "px-3 py-1 rounded-xl text-slate-400 hover:text-white transition-all";
+                    }
+                }
+            });
+
+            const svgMap = document.getElementById('svg-world-map');
+            if (!svgMap) return;
+
+            const zoomTransforms = {
+                'all': 'matrix(1 0 0 1 0 0)',
+                'WEU': 'matrix(2.4 0 0 2.4 -680 -180)',
+                'NAM': 'matrix(1.9 0 0 1.9 -150 -100)',
+                'LAM': 'matrix(1.9 0 0 1.9 -300 -350)',
+                'EME': 'matrix(2.2 0 0 2.2 -750 -240)',
+                'APAC': 'matrix(1.8 0 0 1.8 -850 -250)'
+            };
+            svgMap.style.transform = zoomTransforms[regCode] || zoomTransforms['all'];
+        }
+
+        function focusMacroRegion(regCode) {
+            setMapFilter(regCode);
+        }
+
+        function resetMapZoom() {
+            setMapFilter('all');
         }
 
         // =============================================================
@@ -2326,36 +3233,24 @@ Yusuf Eminoğlu`;
                     statusBadge = '<span class="px-2.5 py-0.5 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-[9px] font-mono">Watch</span>';
                 }
 
-                let ratingHtml = '';
-                if (item.votes_count > 0) {
-                    const stars = Math.round(item.average_vote);
-                    for (let s = 1; s <= 5; s++) {
-                        if (s <= stars) {
-                            ratingHtml += '<i class="fa-solid fa-star text-amber-400 text-[10px]"></i>';
-                        } else {
-                            ratingHtml += '<i class="fa-regular fa-star text-slate-700 text-[10px]"></i>';
-                        }
-                    }
-                    ratingHtml += `<span class="text-slate-400 text-[10px] ml-1 font-mono">(${item.votes_count})</span>`;
-                } else {
-                    ratingHtml = '<span class="text-slate-500 text-[10px] font-mono">- Unrated -</span>';
-                }
-
-                const topCountriesHtml = item.countries.slice(0, 3).map(c => `
-                    <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-obsidian-900 border border-white/10 text-[10px] text-slate-300 font-mono" title="${c.country}: ${c.downloads.toLocaleString()} (${c.percentage}%)">
-                        ${c.flag} <span class="ml-1">${c.percentage}%</span>
-                    </span>
-                `).join(' ');
+                let honorsHtml = '';
+                (item.honors || []).forEach(h => {
+                    honorsHtml += `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-${h.color}-500/10 text-${h.color}-400 text-[9px] font-bold border border-${h.color}-500/20 font-mono"><i class="fa-solid ${h.icon}"></i> ${h.badge}</span> `;
+                });
 
                 tr.innerHTML = `
-                    <td class="py-3.5 px-4 font-semibold font-heading">${item.name}</td>
+                    <td class="py-3.5 px-4 font-semibold font-heading">
+                        <div>${item.name}</div>
+                        <div class="mt-1">${honorsHtml}</div>
+                    </td>
                     <td class="py-3.5 px-4 text-center">${catBadge}</td>
                     <td class="py-3.5 px-4 text-center text-slate-400 font-mono">${item.create_date}</td>
-                    <td class="py-3.5 px-4 text-center text-slate-400 font-mono">${item.days_active} d</td>
                     <td class="py-3.5 px-4 text-right font-bold font-mono">${item.downloads.toLocaleString()}</td>
                     <td class="py-3.5 px-4 text-right text-cyan-400 font-semibold font-mono">${Math.round(item.avg_monthly_downloads).toLocaleString()}/mo</td>
-                    <td class="py-3.5 px-4 text-center">${topCountriesHtml}</td>
-                    <td class="py-3.5 px-4 text-center">${ratingHtml}</td>
+                    <td class="py-3.5 px-4 text-center font-mono font-bold text-amber-400">${item.bayesian_rating.toFixed(2)} ★</td>
+                    <td class="py-3.5 px-4 text-center">
+                        <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-${item.kinetic_badge}-500/15 text-${item.kinetic_badge}-400 border border-${item.kinetic_badge}-500/20">${item.kinetic_regime}</span>
+                    </td>
                     <td class="py-3.5 px-4 text-center">${statusBadge}</td>
                 `;
                 tbody.appendChild(tr);
@@ -2363,21 +3258,11 @@ Yusuf Eminoğlu`;
         }
 
         function applyTablePreset(mode) {
-            const btns = {
-                'all': 'tbl-preset-all',
-                'top5': 'tbl-preset-top5',
-                'highrated': 'tbl-preset-rated',
-                'velocity': 'tbl-preset-vel',
-                'alerts': 'tbl-preset-alerts'
-            };
-
+            const btns = { 'all': 'tbl-preset-all', 'top5': 'tbl-preset-top5', 'highrated': 'tbl-preset-rated', 'velocity': 'tbl-preset-vel', 'alerts': 'tbl-preset-alerts' };
             Object.keys(btns).forEach(k => {
                 const btn = document.getElementById(btns[k]);
-                if (btn) {
-                    btn.className = (k === mode) ? "px-3 py-1 rounded-xl text-xs font-bold bg-cyan-600 text-white" : "px-3 py-1 rounded-xl text-xs font-bold bg-obsidian-900 text-slate-400 hover:text-white border border-white/5";
-                }
+                if (btn) btn.className = (k === mode) ? "px-3 py-1 rounded-xl text-xs font-bold bg-cyan-600 text-white" : "px-3 py-1 rounded-xl text-xs font-bold bg-obsidian-900 text-slate-400 hover:text-white border border-white/5";
             });
-
             renderTableData(mode);
         }
 
@@ -2431,19 +3316,10 @@ Yusuf Eminoğlu`;
                     quadBadge = '<span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-slate-500/15 text-slate-400 border border-slate-500/20 font-mono"><i class="fa-solid fa-bullseye mr-1"></i> Niche Specialist</span>';
                 }
 
-                let starsHtml = '';
-                if (p.votes_count > 0) {
-                    for (let s = 1; s <= 5; s++) {
-                        if (s <= Math.round(p.average_vote)) {
-                            starsHtml += '<i class="fa-solid fa-star text-amber-400 text-[10px]"></i>';
-                        } else {
-                            starsHtml += '<i class="fa-regular fa-star text-slate-700 text-[10px]"></i>';
-                        }
-                    }
-                    starsHtml += `<span class="text-[10px] text-slate-400 ml-1 font-mono">(${p.average_vote.toFixed(1)})</span>`;
-                } else {
-                    starsHtml = '<span class="text-slate-500 text-[10px] font-mono">Unrated</span>';
-                }
+                let honorsHtml = '';
+                (p.honors || []).forEach(h => {
+                    honorsHtml += `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-${h.color}-500/10 text-${h.color}-400 text-[9px] font-bold border border-${h.color}-500/20 font-mono"><i class="fa-solid ${h.icon}"></i> ${h.badge}</span> `;
+                });
 
                 const tagsHtml = p.tags.slice(0, 4).map(t => `<span class="bg-obsidian-900 text-slate-400 px-2 py-0.5 rounded text-[9px] border border-white/5 font-mono">${t}</span>`).join(' ');
 
@@ -2454,24 +3330,9 @@ Yusuf Eminoğlu`;
                 card.setAttribute('data-quadrant', p.quadrant);
                 card.setAttribute('data-tags', p.tags.join(' '));
 
-                const countryListHtml = p.countries.map(c => `
-                    <div class="flex items-center justify-between text-[10px] font-mono">
-                        <div class="flex items-center gap-1.5 min-w-[110px] truncate">
-                            <span>${c.flag}</span>
-                            <span class="text-slate-300">${c.country}</span>
-                        </div>
-                        <div class="flex-1 mx-2 bg-obsidian-800 h-1.5 rounded-full overflow-hidden">
-                            <div class="bg-cyan-500 h-full rounded-full" style="width: ${c.percentage}%"></div>
-                        </div>
-                        <div class="text-right min-w-[65px] text-slate-400">
-                            <span>${c.downloads.toLocaleString()} (${c.percentage}%)</span>
-                        </div>
-                    </div>
-                `).join('');
-
                 card.innerHTML = `
                     <div>
-                        <div class="flex justify-between items-start gap-2 mb-4">
+                        <div class="flex justify-between items-start gap-2 mb-3">
                             <span class="text-[9px] font-bold px-2.5 py-1 rounded-md border ${catColor} font-heading">${p.category}</span>
                             <div class="flex items-center gap-1.5">
                                 <span class="text-[10px] text-slate-500 font-mono font-semibold"><i class="fa-solid fa-code-branch"></i> v${p.version}</span>
@@ -2479,12 +3340,14 @@ Yusuf Eminoğlu`;
                             </div>
                         </div>
 
-                        <h3 class="text-base font-extrabold mb-2 group-hover:text-cyan-400 transition-colors truncate font-heading" title="${p.name}">${p.name}</h3>
+                        <h3 class="text-base font-extrabold mb-1.5 group-hover:text-cyan-400 transition-colors truncate font-heading" title="${p.name}">${p.name}</h3>
+                        <div class="flex flex-wrap gap-1 mb-3">
+                            ${honorsHtml}
+                        </div>
+
                         <div class="flex items-center justify-between mb-4">
                             ${quadBadge}
-                            <div class="flex items-center">
-                                ${starsHtml}
-                            </div>
+                            <span class="text-xs font-mono font-bold text-amber-400">${p.bayesian_rating.toFixed(2)} ★ <span class="text-[10px] text-slate-500 font-normal">(${p.votes_count})</span></span>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4 bg-obsidian-950/70 p-3 rounded-2xl border border-white/5 mb-4">
@@ -2493,7 +3356,7 @@ Yusuf Eminoğlu`;
                                 <span class="text-sm font-extrabold font-mono">${p.downloads.toLocaleString()}</span>
                             </div>
                             <div>
-                                <span class="text-[10px] text-slate-500 font-medium block font-mono">Run-Rate</span>
+                                <span class="text-[10px] text-slate-500 font-medium block font-mono">Velocity</span>
                                 <span class="text-sm font-extrabold text-cyan-400 font-mono">${Math.round(p.avg_monthly_downloads).toLocaleString()}/mo</span>
                             </div>
                         </div>
@@ -2507,24 +3370,14 @@ Yusuf Eminoğlu`;
                                 <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-1 rounded-full" style="width: ${p.milestone_progress}%"></div>
                             </div>
                         </div>
-
-                        <div class="mb-4 border-t border-white/5 pt-3">
-                            <button onclick="toggleCountries(${idx})" class="w-full flex justify-between items-center text-[10px] font-bold text-cyan-400 hover:text-cyan-300 transition-colors focus:outline-none font-heading">
-                                <span><i class="fa-solid fa-earth-americas mr-1"></i> Global Country Breakdown</span>
-                                <i id="chevron-${idx}" class="fa-solid fa-chevron-down transition-transform"></i>
-                            </button>
-                            <div id="countries-${idx}" class="hidden mt-3 space-y-2 max-h-48 overflow-y-auto pr-1">
-                                ${countryListHtml}
-                            </div>
-                        </div>
                     </div>
 
                     <div class="mt-2 pt-3 border-t border-white/5 flex flex-col gap-2">
                         <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono">
                             <span>Released: ${p.create_date}</span>
                             <div class="flex gap-2.5">
-                                ${p.homepage ? `<a href="${p.homepage}" target="_blank" class="text-slate-400 hover:text-cyan-400 transition-colors" title="Reference Manual"><i class="fa-solid fa-book text-sm"></i></a>` : ''}
-                                ${p.repository ? `<a href="${p.repository}" target="_blank" class="text-slate-400 hover:text-white transition-colors" title="Repository"><i class="fa-brands fa-github text-sm"></i></a>` : ''}
+                                ${p.homepage ? `<a href="${p.homepage}" target="_blank" class="text-slate-400 hover:text-cyan-400 transition-colors" title="Docs"><i class="fa-solid fa-book text-sm"></i></a>` : ''}
+                                ${p.repository ? `<a href="${p.repository}" target="_blank" class="text-slate-400 hover:text-white transition-colors" title="Repo"><i class="fa-brands fa-github text-sm"></i></a>` : ''}
                                 ${p.tracker ? `<a href="${p.tracker}" target="_blank" class="text-slate-400 hover:text-rose-400 transition-colors" title="Issues"><i class="fa-solid fa-bug text-sm"></i></a>` : ''}
                             </div>
                         </div>
@@ -2537,46 +3390,18 @@ Yusuf Eminoğlu`;
             });
         }
 
-        window.toggleCountries = function(idx) {
-            const el = document.getElementById(`countries-${idx}`);
-            const chev = document.getElementById(`chevron-${idx}`);
-            if (el.classList.contains('hidden')) {
-                el.classList.remove('hidden');
-                chev.classList.add('rotate-180');
-            } else {
-                el.classList.add('hidden');
-                chev.classList.remove('rotate-180');
-            }
-        };
-
         let selectedCategory = 'All';
         function filterCardsCategory(cat) {
             selectedCategory = cat;
-
-            const btns = {
-                'All': 'btn-cat-all',
-                'PlanX Suite': 'btn-cat-planx',
-                '02 Suite': 'btn-cat-02',
-                'Standalone Plugins': 'btn-cat-standalone'
-            };
-
+            const btns = { 'All': 'btn-cat-all', 'PlanX Suite': 'btn-cat-planx', '02 Suite': 'btn-cat-02', 'Standalone Plugins': 'btn-cat-standalone' };
             Object.keys(btns).forEach(key => {
                 const btn = document.getElementById(btns[key]);
-                if (btn) {
-                    if (key === cat) {
-                        btn.className = "px-4 py-2 rounded-xl text-xs font-bold bg-cyan-600 text-white whitespace-nowrap";
-                    } else {
-                        btn.className = "px-4 py-2 rounded-xl text-xs font-bold bg-obsidian-900 text-slate-400 hover:text-white border border-white/5 whitespace-nowrap";
-                    }
-                }
+                if (btn) btn.className = (key === cat) ? "px-4 py-2 rounded-xl text-xs font-bold bg-cyan-600 text-white whitespace-nowrap" : "px-4 py-2 rounded-xl text-xs font-bold bg-obsidian-900 text-slate-400 hover:text-white border border-white/5 whitespace-nowrap";
             });
-
             applyCombinedFilters();
         }
 
-        function filterCards() {
-            applyCombinedFilters();
-        }
+        function filterCards() { applyCombinedFilters(); }
 
         function applyCombinedFilters() {
             const searchVal = document.getElementById('card-search-input').value.toUpperCase();
@@ -2605,11 +3430,10 @@ Yusuf Eminoğlu`;
                     card.style.display = "none";
                 }
             }
-
             document.getElementById('matching-plugins-count').innerText = `${matching} plugins matching`;
         }
 
-        let sortDirections = [true, true, true, true, true, true, true, true, true];
+        let sortDirections = [true, true, true, true, true, true, true, true];
         function sortTable(colIndex) {
             const rows = Array.from(tbody.getElementsByTagName('tr'));
             const direction = sortDirections[colIndex];
@@ -2624,13 +3448,6 @@ Yusuf Eminoğlu`;
                 if (!isNaN(numA) && !isNaN(numB)) {
                     return direction ? numA - numB : numB - numA;
                 }
-
-                if (colIndex === 2) {
-                    const dateA = new Date(cellA);
-                    const dateB = new Date(cellB);
-                    return direction ? dateA - dateB : dateB - dateA;
-                }
-
                 return direction ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
             });
 
@@ -2657,7 +3474,7 @@ Yusuf Eminoğlu`;
 
         function exportToCSV() {
             let csvContent = "data:text/csv;charset=utf-8,\\uFEFF";
-            csvContent += "Plugin Name,Category,Release Date,Active Days,Downloads,Monthly Velocity,Rating,Votes Count\\n";
+            csvContent += "Plugin Name,Category,Release Date,Active Days,Downloads,Monthly Velocity,Bayesian Rating,Votes Count,Kinetic Regime\\n";
 
             appData.plugins.forEach(p => {
                 const row = [
@@ -2667,8 +3484,9 @@ Yusuf Eminoğlu`;
                     p.days_active,
                     p.downloads,
                     p.avg_monthly_downloads,
-                    p.average_vote,
-                    p.votes_count
+                    p.bayesian_rating,
+                    p.votes_count,
+                    `"${p.kinetic_regime}"`
                 ].join(",");
                 csvContent += row + "\\n";
             });
@@ -2776,7 +3594,7 @@ Yusuf Eminoğlu`;
             }
 
             const isAlabaster = document.documentElement.getAttribute('data-theme') === 'alabaster';
-            const labelColor = isAlabaster ? '#64748b' : '#94a3b8';
+            const labelColor = isAlabaster ? '#334155' : '#94a3b8';
             const gridColor = isAlabaster ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.05)';
 
             const chartOptions = {
@@ -2838,22 +3656,16 @@ Yusuf Eminoğlu`;
         let overviewDonutChart = null;
         let suiteRadarChart = null;
         let bcgScatterChart = null;
-        let qgisCompatibilityChart = null;
-        let regionalBarChart = null;
-        let globalCountriesChart = null;
 
         function initializeCharts() {
             const isAlabaster = document.documentElement.getAttribute('data-theme') === 'alabaster';
-            const labelColor = isAlabaster ? '#64748b' : '#94a3b8';
+            const labelColor = isAlabaster ? '#334155' : '#94a3b8';
             const gridColor = isAlabaster ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.05)';
 
             if (overviewBarChart) overviewBarChart.destroy();
             if (overviewDonutChart) overviewDonutChart.destroy();
             if (suiteRadarChart) suiteRadarChart.destroy();
             if (bcgScatterChart) bcgScatterChart.destroy();
-            if (qgisCompatibilityChart) qgisCompatibilityChart.destroy();
-            if (regionalBarChart) regionalBarChart.destroy();
-            if (globalCountriesChart) globalCountriesChart.destroy();
 
             // 1. Horizontal Bar Chart
             const names = appData.plugins.map(p => p.name);
@@ -2984,7 +3796,7 @@ Yusuf Eminoğlu`;
             overviewDonutChart = new ApexCharts(document.querySelector("#overview-donut-chart"), donutOptions);
             overviewDonutChart.render();
 
-            // 3. BCG Scatter Matrix (Downloads vs Velocity)
+            // 3. BCG Scatter Matrix
             const scatterSeries = [
                 {
                     name: 'PlanX Suite',
@@ -3081,208 +3893,6 @@ Yusuf Eminoğlu`;
 
             suiteRadarChart = new ApexCharts(document.querySelector("#suite-radar-chart"), radarOptions);
             suiteRadarChart.render();
-
-            // 5. QGIS Compatibility
-            const qgisVersions = appData.summary.qgis_compatibility.map(q => q.version + "+");
-            const qgisCounts = appData.summary.qgis_compatibility.map(q => q.count);
-
-            const qgisOptions = {
-                series: [{
-                    name: 'Supported Plugins',
-                    data: qgisCounts
-                }],
-                chart: {
-                    type: 'bar',
-                    height: 310,
-                    toolbar: { show: false },
-                    foreColor: labelColor
-                },
-                colors: ['#0ea5e9'],
-                plotOptions: {
-                    bar: {
-                        borderRadius: 4,
-                        columnWidth: '45%'
-                    }
-                },
-                grid: { borderColor: gridColor },
-                xaxis: {
-                    categories: qgisVersions,
-                    labels: { style: { fontFamily: 'JetBrains Mono' } }
-                },
-                yaxis: {
-                    labels: {
-                        formatter: function(val) { return Math.round(val); },
-                        style: { fontFamily: 'JetBrains Mono' }
-                    }
-                },
-                tooltip: {
-                    theme: isAlabaster ? 'light' : 'dark',
-                    y: {
-                        formatter: function(val) { return val + " plugins"; }
-                    }
-                }
-            };
-
-            qgisCompatibilityChart = new ApexCharts(document.querySelector("#qgis-compatibility-chart"), qgisOptions);
-            qgisCompatibilityChart.render();
-
-            // 6. Regional Distribution Bar Chart
-            const regionNames = appData.summary.regional_distribution.map(r => r.region);
-            const regionDownloads = appData.summary.regional_distribution.map(r => r.downloads);
-
-            const regionalOptions = {
-                series: [{
-                    name: 'Regional Downloads',
-                    data: regionDownloads
-                }],
-                chart: {
-                    type: 'bar',
-                    height: 310,
-                    toolbar: { show: false },
-                    foreColor: labelColor
-                },
-                colors: ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6'],
-                plotOptions: {
-                    bar: {
-                        borderRadius: 5,
-                        columnWidth: '45%',
-                        distributed: true
-                    }
-                },
-                grid: { borderColor: gridColor },
-                xaxis: {
-                    categories: regionNames,
-                    labels: { style: { fontFamily: 'Inter', fontSize: '9px' } }
-                },
-                yaxis: {
-                    labels: {
-                        formatter: function(v) { return Math.round(v).toLocaleString(); },
-                        style: { fontFamily: 'JetBrains Mono' }
-                    }
-                },
-                legend: { show: false },
-                tooltip: {
-                    theme: isAlabaster ? 'light' : 'dark',
-                    y: {
-                        formatter: function(v) { return v.toLocaleString() + " downloads"; }
-                    }
-                }
-            };
-
-            regionalBarChart = new ApexCharts(document.querySelector("#regional-bar-chart"), regionalOptions);
-            regionalBarChart.render();
-
-            // 7. Global Countries Chart
-            const countryNames = appData.summary.global_countries.map(c => c.country);
-            const countryDownloads = appData.summary.global_countries.map(c => c.downloads);
-
-            const countryChartOptions = {
-                series: [{
-                    name: 'Total Downloads',
-                    data: countryDownloads
-                }],
-                chart: {
-                    type: 'bar',
-                    height: 240,
-                    toolbar: { show: false },
-                    foreColor: labelColor,
-                    events: {
-                        dataPointSelection: function(event, chartContext, config) {
-                            const cIndex = config.dataPointIndex;
-                            if (cIndex >= 0 && cIndex < appData.summary.global_countries.length) {
-                                inspectCountry(appData.summary.global_countries[cIndex].country);
-                            }
-                        }
-                    }
-                },
-                colors: [
-                    '#0284c7', '#0ea5e9', '#38bdf8', '#60a5fa', '#818cf8',
-                    '#10b981', '#34d399', '#f59e0b', '#fbbf24', '#f43f5e'
-                ],
-                plotOptions: {
-                    bar: {
-                        borderRadius: 5,
-                        columnWidth: '48%',
-                        distributed: true
-                    }
-                },
-                grid: { borderColor: gridColor },
-                xaxis: {
-                    categories: countryNames,
-                    labels: { style: { fontFamily: 'Inter', fontSize: '10px' } }
-                },
-                yaxis: {
-                    labels: {
-                        formatter: function(val) { return Math.round(val).toLocaleString(); },
-                        style: { fontFamily: 'JetBrains Mono' }
-                    }
-                },
-                legend: { show: false },
-                tooltip: {
-                    theme: isAlabaster ? 'light' : 'dark',
-                    y: {
-                        formatter: function(val) { return val.toLocaleString() + " downloads"; }
-                    }
-                }
-            };
-
-            globalCountriesChart = new ApexCharts(document.querySelector("#global-countries-chart"), countryChartOptions);
-            globalCountriesChart.render();
-        }
-
-        function renderGlobalCountries() {
-            const listContainer = document.getElementById('global-countries-list');
-            listContainer.innerHTML = '';
-
-            appData.summary.global_countries.forEach(c => {
-                const item = document.createElement('div');
-                item.className = "flex items-center justify-between text-xs py-1 px-2.5 rounded-xl hover:bg-obsidian-850 cursor-pointer transition-colors font-mono";
-                item.onclick = () => inspectCountry(c.country);
-                item.innerHTML = `
-                    <div class="flex items-center gap-2 min-w-[130px] truncate">
-                        <span class="text-base">${c.flag}</span>
-                        <span class="font-medium font-sans">${c.country}</span>
-                    </div>
-                    <div class="flex-1 mx-2 bg-obsidian-800 h-1.5 rounded-full overflow-hidden">
-                        <div class="bg-cyan-500 h-full rounded-full" style="width: ${c.percentage}%"></div>
-                    </div>
-                    <div class="text-right min-w-[75px] text-slate-400">
-                        <strong>${c.downloads.toLocaleString()}</strong> <span class="text-[10px]">(${c.percentage}%)</span>
-                    </div>
-                `;
-                listContainer.appendChild(item);
-            });
-
-            inspectCountry("United States");
-        }
-
-        function inspectCountry(countryName) {
-            const country = appData.summary.global_countries.find(c => c.country === countryName) || appData.summary.global_countries[0];
-            if (!country) return;
-
-            document.getElementById('country-drilldown-badge').innerText = `${country.flag} ${country.country} Selected (${country.downloads.toLocaleString()} DL)`;
-            document.getElementById('country-drilldown-title').innerText = `Top 5 Plugins in ${country.country}:`;
-
-            const container = document.getElementById('country-top-plugins-container');
-            container.innerHTML = '';
-
-            country.top_plugins.forEach((p, idx) => {
-                const el = document.createElement('div');
-                el.className = "p-3 rounded-xl bg-obsidian-950/80 border border-white/5 flex flex-col justify-between";
-                el.innerHTML = `
-                    <div>
-                        <div class="flex justify-between items-center text-[9px] text-slate-500 font-mono mb-1">
-                            <span>#${idx + 1}</span>
-                            <span class="text-cyan-400 font-bold">${p.percentage}%</span>
-                        </div>
-                        <h4 class="text-xs font-bold truncate font-heading" title="${p.name}">${p.name}</h4>
-                    </div>
-                    <div class="mt-2 text-[10px] text-slate-400 font-mono font-semibold">
-                        ${p.downloads.toLocaleString()} DL
-                    </div>
-                `;
-                container.appendChild(el);
-            });
         }
 
         document.addEventListener("DOMContentLoaded", function() {
@@ -3292,7 +3902,6 @@ Yusuf Eminoğlu`;
             renderTagFilterChips();
             renderTableData('all');
             renderCards();
-            renderGlobalCountries();
             populateSimDropdown();
             initializeCharts();
             runSimulation();
@@ -3313,7 +3922,7 @@ Yusuf Eminoğlu`;
     with open(index_output_path, "w", encoding="utf-8") as f:
         f.write(html_output)
 
-    print(f"[5/5] Success: Clean, pristine dashboard generated at: {local_output_path} and {index_output_path}")
+    print(f"[5/5] Success: Clean, elite studio generated at: {local_output_path} and {index_output_path}")
 
 except Exception as e:
     import traceback

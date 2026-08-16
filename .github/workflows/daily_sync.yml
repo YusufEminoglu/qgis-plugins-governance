@@ -1,0 +1,58 @@
+name: Daily Plugin Analytics & Security Audit
+
+on:
+  schedule:
+    # Runs every 6 hours (00:00, 06:00, 12:00, 18:00 UTC)
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  sync-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate Analytics Dashboard & Security Audit
+        run: |
+          python generate_dashboard.py
+
+      - name: Commit and Push Updated History
+        run: |
+          git config user.name "Yusuf Eminoğlu"
+          git config user.email "yusufeminoglu@gmail.com"
+          git add plugins_history.json index.html qgis_plugins_dashboard.html
+          if git diff --staged --quiet; then
+            echo "No changes in telemetry detected."
+          else
+            git commit -m "chore(telemetry): sync live QGIS metrics & security audit [skip ci]"
+            git push origin main
+          fi
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

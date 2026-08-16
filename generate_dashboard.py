@@ -548,22 +548,22 @@ try:
     }
 
     country_iso_atlas = {
-        "United States": {"iso": "US", "cx": 220, "cy": 185, "reg": "North America"},
-        "Canada": {"iso": "CA", "cx": 200, "cy": 120, "reg": "North America"},
-        "Germany": {"iso": "DE", "cx": 505, "cy": 155, "reg": "Western Europe"},
-        "France": {"iso": "FR", "cx": 485, "cy": 175, "reg": "Western Europe"},
-        "United Kingdom": {"iso": "GB", "cx": 470, "cy": 145, "reg": "Western Europe"},
-        "Spain": {"iso": "ES", "cx": 465, "cy": 205, "reg": "Western Europe"},
-        "Italy": {"iso": "IT", "cx": 510, "cy": 195, "reg": "Western Europe"},
-        "Netherlands": {"iso": "NL", "cx": 490, "cy": 148, "reg": "Western Europe"},
-        "Turkey": {"iso": "TR", "cx": 565, "cy": 200, "reg": "Eastern Europe & Middle East"},
-        "Poland": {"iso": "PL", "cx": 530, "cy": 150, "reg": "Eastern Europe & Middle East"},
-        "Brazil": {"iso": "BR", "cx": 340, "cy": 330, "reg": "Latin America"},
-        "Mexico": {"iso": "MX", "cx": 190, "cy": 230, "reg": "Latin America"},
-        "India": {"iso": "IN", "cx": 690, "cy": 240, "reg": "Asia-Pacific"},
-        "China": {"iso": "CN", "cx": 770, "cy": 200, "reg": "Asia-Pacific"},
-        "Japan": {"iso": "JP", "cx": 855, "cy": 190, "reg": "Asia-Pacific"},
-        "Australia": {"iso": "AU", "cx": 840, "cy": 370, "reg": "Asia-Pacific"}
+        "United States": {"iso": "US", "iso3": "USA", "cx": 274.7, "cy": 180.8, "reg": "North America"},
+        "Canada": {"iso": "CA", "iso3": "CAN", "cx": 278.1, "cy": 158.5, "reg": "North America"},
+        "Germany": {"iso": "DE", "iso3": "DEU", "cx": 515.7, "cy": 135.0, "reg": "Western Europe"},
+        "France": {"iso": "FR", "iso3": "FRA", "cx": 486.3, "cy": 147.0, "reg": "Western Europe"},
+        "United Kingdom": {"iso": "GB", "iso3": "GBR", "cx": 479.7, "cy": 138.2, "reg": "Western Europe"},
+        "Spain": {"iso": "ES", "iso3": "ESP", "cx": 470.1, "cy": 175.7, "reg": "Western Europe"},
+        "Italy": {"iso": "IT", "iso3": "ITA", "cx": 513.3, "cy": 170.8, "reg": "Western Europe"},
+        "Netherlands": {"iso": "NL", "iso3": "NLD", "cx": 493.1, "cy": 135.3, "reg": "Western Europe"},
+        "Turkey": {"iso": "TR", "iso3": "TUR", "cx": 567.6, "cy": 177.3, "reg": "Eastern Europe & Middle East"},
+        "Poland": {"iso": "PL", "iso3": "POL", "cx": 536.0, "cy": 136.0, "reg": "Eastern Europe & Middle East"},
+        "Brazil": {"iso": "BR", "iso3": "BRA", "cx": 352.3, "cy": 360.5, "reg": "Latin America"},
+        "Mexico": {"iso": "MX", "iso3": "MEX", "cx": 215.7, "cy": 244.6, "reg": "Latin America"},
+        "India": {"iso": "IN", "iso3": "IND", "cx": 685.9, "cy": 214.2, "reg": "Asia-Pacific"},
+        "China": {"iso": "CN", "iso3": "CHN", "cx": 790.4, "cy": 177.4, "reg": "Asia-Pacific"},
+        "Japan": {"iso": "JP", "iso3": "JPN", "cx": 852.5, "cy": 191.2, "reg": "Asia-Pacific"},
+        "Australia": {"iso": "AU", "iso3": "AUS", "cx": 877.6, "cy": 424.3, "reg": "Asia-Pacific"}
     }
 
     country_data_map = {}
@@ -756,9 +756,100 @@ try:
     }
 
     # =============================================================
-    # [4/5] MASTER DUAL-THEME ANALYTICS & GOVERNANCE STUDIO TEMPLATE
+    # [4/5] REAL WORLD GEOJSON VECTOR CARTOGRAPHY ENGINE
     # =============================================================
-    print("[4/5] Assembling master dual-theme analytics, cartography, and governance studio...")
+    print("[4/5] Processing real world GeoJSON boundaries and generating SVG cartography...")
+
+    geojson_path = os.path.join(os.path.dirname(__file__), "world_map.geojson")
+    if not os.path.exists(geojson_path):
+        geojson_path = r"C:\Users\YE\Downloads\world_map.geojson"
+
+    world_svg_layer_elements = []
+
+    if os.path.exists(geojson_path):
+        try:
+            with open(geojson_path, "r", encoding="utf-8") as gf:
+                world_geojson = json.load(gf)
+
+            W_map = 960.0
+            H_map = 500.0
+
+            def project_equirectangular(lon, lat):
+                lat = max(-75.0, min(83.0, lat))
+                x = (lon + 180.0) * (W_map / 360.0)
+                y = (90.0 - lat) * (H_map / 180.0) * 0.92 + 18.0
+                return round(x, 1), round(y, 1)
+
+            def simplify_points(pts, tolerance=0.28):
+                if len(pts) <= 3:
+                    return pts
+                simplified = [pts[0]]
+                for p in pts[1:-1]:
+                    prev = simplified[-1]
+                    dist = math.hypot(p[0] - prev[0], p[1] - prev[1])
+                    if dist >= tolerance:
+                        simplified.append(p)
+                simplified.append(pts[-1])
+                return simplified
+
+            def coords_to_svg_path(coords, geom_type, tolerance=0.28):
+                paths = []
+                if geom_type == 'Polygon':
+                    polys = [coords]
+                elif geom_type == 'MultiPolygon':
+                    polys = coords
+                else:
+                    return ""
+                
+                for poly in polys:
+                    for ring in poly:
+                        if not ring or len(ring) < 3:
+                            continue
+                        projected = [project_equirectangular(pt[0], pt[1]) for pt in ring]
+                        simplified = simplify_points(projected, tolerance)
+                        if len(simplified) < 3:
+                            continue
+                        ring_str = [f"M{simplified[0][0]},{simplified[0][1]}"]
+                        for pt in simplified[1:]:
+                            ring_str.append(f"L{pt[0]},{pt[1]}")
+                        ring_str.append("Z")
+                        paths.append("".join(ring_str))
+                return " ".join(paths)
+
+            iso3_to_iso2 = {
+                'USA': 'US', 'CAN': 'CA', 'DEU': 'DE', 'FRA': 'FR', 'GBR': 'GB',
+                'ESP': 'ES', 'ITA': 'IT', 'NLD': 'NL', 'TUR': 'TR', 'POL': 'PL',
+                'BRA': 'BR', 'MEX': 'MX', 'IND': 'IND', 'CHN': 'CN', 'JPN': 'JP',
+                'AUS': 'AU', 'RUS': 'RU', 'ZAF': 'ZA', 'ARG': 'AR', 'KOR': 'KR',
+                'SWE': 'SE', 'NOR': 'NO', 'FIN': 'FI', 'DNK': 'DK', 'CHE': 'CH',
+                'AUT': 'AT', 'BEL': 'BE', 'PRT': 'PT', 'GRC': 'GR', 'CZE': 'CZ',
+                'ROU': 'RO', 'HUN': 'HU', 'NZL': 'NZ', 'SGP': 'SG', 'IDN': 'ID',
+                'MYS': 'MY', 'PHL': 'PH', 'THA': 'TH', 'VNM': 'VN', 'EGY': 'EG',
+                'SAU': 'SA', 'ARE': 'AE', 'ISR': 'IL', 'COL': 'CO', 'CHL': 'CL',
+                'PER': 'PE', 'VEN': 'VE', 'UKR': 'UA', 'IRL': 'IE'
+            }
+
+            for feat in world_geojson.get('features', []):
+                props = feat.get('properties', {})
+                geom = feat.get('geometry', {})
+                name = props.get('name', '')
+                iso3 = props.get('iso', '')
+                if name == 'Antarctica':
+                    continue
+                iso2 = iso3_to_iso2.get(iso3, iso3[:2] if iso3 else 'XX')
+                d_path = coords_to_svg_path(geom.get('coordinates', []), geom.get('type', ''), tolerance=0.28)
+                if not d_path:
+                    continue
+                clean_name = name.replace('"', '&quot;')
+                world_svg_layer_elements.append(
+                    f'<path id="geo-{iso2}" data-iso="{iso2}" data-iso3="{iso3}" data-name="{clean_name}" '
+                    f'class="country-path cursor-pointer transition-all duration-200" d="{d_path}" />'
+                )
+            print(f"[4/5] Processed {len(world_svg_layer_elements)} real-world sovereign country polygons.")
+        except Exception as ge:
+            print(f"Warning: Failed to load world_map.geojson: {ge}")
+
+    world_svg_layer_html = "\\n".join(world_svg_layer_elements)
 
     html_template = """<!DOCTYPE html>
 <html lang="en" data-theme="obsidian">
@@ -1425,34 +1516,9 @@ try:
                             <line x1="0" y1="250" x2="960" y2="250" stroke="rgba(56, 189, 248, 0.15)" stroke-width="1" stroke-dasharray="4,4"/>
                             <line x1="480" y1="0" x2="480" y2="500" stroke="rgba(56, 189, 248, 0.15)" stroke-width="1" stroke-dasharray="4,4"/>
 
-                            <!-- Base Continent Outlines -->
-                            <g id="svg-basemap-continents" fill="rgba(30, 41, 59, 0.4)" stroke="rgba(255, 255, 255, 0.06)" stroke-width="0.75">
-                                <path d="M120,60 L240,50 L340,70 L280,140 L210,145 L200,240 L160,260 L140,200 L90,160 Z" />
-                                <path d="M270,270 L380,290 L400,380 L350,470 L300,450 L270,350 Z" />
-                                <path d="M440,80 L560,70 L600,140 L530,220 L440,210 L430,140 Z" />
-                                <path d="M430,220 L580,210 L610,320 L540,430 L480,410 L440,300 Z" />
-                                <path d="M570,70 L870,80 L890,240 L780,310 L680,280 L600,160 Z" />
-                                <path d="M770,340 L880,330 L900,420 L780,430 Z" />
-                            </g>
-
-                            <!-- Interactive Tracked Country Polygons Layer -->
+                            <!-- Real-World Vector Country Polygons Layer (GeoJSON Source) -->
                             <g id="svg-countries-layer" class="transition-all duration-300">
-                                <path id="geo-US" data-iso="US" class="country-path cursor-pointer transition-all duration-200" d="M140,140 L280,135 L270,220 L160,230 L135,170 Z M90,80 L160,70 L150,110 L100,120 Z" />
-                                <path id="geo-CA" data-iso="CA" class="country-path cursor-pointer transition-all duration-200" d="M130,70 L310,60 L330,125 L150,135 Z" />
-                                <path id="geo-MX" data-iso="MX" class="country-path cursor-pointer transition-all duration-200" d="M160,230 L230,225 L210,280 L175,270 Z" />
-                                <path id="geo-BR" data-iso="BR" class="country-path cursor-pointer transition-all duration-200" d="M290,280 L380,290 L390,360 L330,390 L290,330 Z" />
-                                <path id="geo-GB" data-iso="GB" class="country-path cursor-pointer transition-all duration-200" d="M455,130 L480,125 L475,160 L450,155 Z" />
-                                <path id="geo-FR" data-iso="FR" class="country-path cursor-pointer transition-all duration-200" d="M465,165 L500,160 L505,195 L465,195 Z" />
-                                <path id="geo-DE" data-iso="DE" class="country-path cursor-pointer transition-all duration-200" d="M495,140 L525,140 L525,170 L495,170 Z" />
-                                <path id="geo-ES" data-iso="ES" class="country-path cursor-pointer transition-all duration-200" d="M440,195 L480,195 L475,225 L440,225 Z" />
-                                <path id="geo-IT" data-iso="IT" class="country-path cursor-pointer transition-all duration-200" d="M500,185 L525,185 L530,220 L510,225 Z" />
-                                <path id="geo-NL" data-iso="NL" class="country-path cursor-pointer transition-all duration-200" d="M485,140 L498,140 L498,150 L485,150 Z" />
-                                <path id="geo-PL" data-iso="PL" class="country-path cursor-pointer transition-all duration-200" d="M525,140 L555,140 L555,165 L525,165 Z" />
-                                <path id="geo-TR" data-iso="TR" class="country-path cursor-pointer transition-all duration-200" d="M545,190 L595,185 L590,210 L545,210 Z" />
-                                <path id="geo-IN" data-iso="IN" class="country-path cursor-pointer transition-all duration-200" d="M665,215 L720,215 L705,280 L675,260 Z" />
-                                <path id="geo-CN" data-iso="CN" class="country-path cursor-pointer transition-all duration-200" d="M710,150 L830,145 L820,225 L720,225 Z" />
-                                <path id="geo-JP" data-iso="JP" class="country-path cursor-pointer transition-all duration-200" d="M845,170 L865,170 L860,210 L840,200 Z" />
-                                <path id="geo-AU" data-iso="AU" class="country-path cursor-pointer transition-all duration-200" d="M790,340 L880,340 L870,410 L800,410 Z" />
+##WORLD_SVG_LAYER##
                             </g>
 
                             <!-- Radar Pulse Hubs Layer -->
@@ -2991,7 +3057,7 @@ COMMIT;
             const maxDl = Math.max(...countries.map(c => c.downloads), 1);
 
             function getChoroplethFill(dl) {
-                if (!dl || dl === 0) return isAlabaster ? '#e2e8f0' : '#1e293b';
+                if (!dl || dl === 0) return isAlabaster ? 'rgba(226, 232, 240, 0.65)' : 'rgba(20, 32, 54, 0.75)';
                 const ratio = dl / maxDl;
                 if (ratio > 0.65) return isAlabaster ? '#0284c7' : '#38bdf8';
                 if (ratio > 0.35) return isAlabaster ? '#0369a1' : '#06b6d4';
@@ -3003,32 +3069,34 @@ COMMIT;
             const paths = document.querySelectorAll('#svg-countries-layer .country-path');
             paths.forEach(p => {
                 const iso = p.getAttribute('data-iso');
-                const cData = countries.find(c => c.iso === iso);
+                const iso3 = p.getAttribute('data-iso3');
+                const name = p.getAttribute('data-name');
+                const cData = countries.find(c => c.iso === iso || c.iso === iso3 || c.country === name || (iso === 'US' && c.iso === 'US'));
                 const dl = cData ? cData.downloads : 0;
 
                 p.setAttribute('fill', getChoroplethFill(dl));
-                p.setAttribute('stroke', isAlabaster ? '#ffffff' : '#070a10');
-                p.setAttribute('stroke-width', '1');
+                p.setAttribute('stroke', isAlabaster ? 'rgba(255, 255, 255, 0.9)' : 'rgba(7, 10, 16, 0.85)');
+                p.setAttribute('stroke-width', '0.6');
 
-                p.onmouseenter = (e) => showMapTooltip(e, cData, iso);
+                p.onmouseenter = (e) => showMapTooltip(e, cData, iso, name);
                 p.onmousemove = (e) => moveMapTooltip(e);
                 p.onmouseleave = () => hideMapTooltip();
-                p.onclick = () => { if (cData) inspectCountryByIso(iso); };
+                p.onclick = () => { if (cData) inspectCountryByIso(cData.iso); };
             });
 
             const nodesLayer = document.getElementById('svg-nodes-layer');
             if (nodesLayer) {
                 nodesLayer.innerHTML = '';
-                countries.slice(0, 8).forEach(c => {
+                countries.slice(0, 12).forEach(c => {
                     if (!c.cx || !c.cy) return;
                     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
                     g.setAttribute('class', 'cursor-pointer group');
                     g.onclick = () => inspectCountryByIso(c.iso);
-                    g.onmouseenter = (e) => showMapTooltip(e, c, c.iso);
+                    g.onmouseenter = (e) => showMapTooltip(e, c, c.iso, c.country);
                     g.onmouseleave = () => hideMapTooltip();
 
                     g.innerHTML = `
-                        <circle cx="${c.cx}" cy="${c.cy}" r="8" fill="rgba(56, 189, 248, 0.25)" class="animate-ping" />
+                        <circle cx="${c.cx}" cy="${c.cy}" r="9" fill="rgba(56, 189, 248, 0.22)" class="animate-ping" />
                         <circle cx="${c.cx}" cy="${c.cy}" r="3.5" fill="#38bdf8" stroke="#ffffff" stroke-width="1.2" filter="url(#radar-glow)" />
                     `;
                     nodesLayer.appendChild(g);
@@ -3036,14 +3104,15 @@ COMMIT;
             }
         }
 
-        function showMapTooltip(e, cData, iso) {
+        function showMapTooltip(e, cData, iso, name) {
             const tooltip = document.getElementById('map-hud-tooltip');
             if (!tooltip) return;
 
             if (!cData) {
                 tooltip.innerHTML = `
-                    <div class="text-xs font-bold text-slate-400 font-mono">${iso} • Global Context</div>
-                    <div class="text-[10px] text-slate-500 font-mono">Territory under tracking</div>
+                    <div class="text-xs font-bold text-slate-200 font-heading mb-0.5">${name || iso}</div>
+                    <div class="text-[10px] text-cyan-400 font-mono">Global Organic Discovery Tier</div>
+                    <div class="text-[9px] text-slate-400 font-mono mt-1">Autonomous QGIS user community</div>
                 `;
             } else {
                 tooltip.innerHTML = `
@@ -3923,7 +3992,7 @@ COMMIT;
 </html>
 """
 
-    html_output = html_template.replace("##DATA_INJECTION##", json.dumps(embedded_data, ensure_ascii=False, indent=2))
+    html_output = html_template.replace("##WORLD_SVG_LAYER##", world_svg_layer_html).replace("##DATA_INJECTION##", json.dumps(embedded_data, ensure_ascii=False, indent=2))
 
     local_output_path = os.path.join(os.path.dirname(__file__), "qgis_plugins_dashboard.html")
     index_output_path = os.path.join(os.path.dirname(__file__), "index.html")

@@ -46,70 +46,186 @@ try:
         else:
             return "Standalone Plugins"
 
-    def get_country_downloads(plugin_name, total_downloads):
-        import random
-        rng = random.Random(plugin_name)
+    # ------------------------------------------------------------------
+    # Real per-country download data (Metabase public API).
+    # The QGIS plugin site records per-country download stats in a Metabase
+    # dashboard (recording started 2024-05-30). We fetch real counts here
+    # instead of the old synthetic distribution over 16 hardcoded countries.
+    # ------------------------------------------------------------------
+    _MB_DASH = "2c2d25b4-5288-43da-8247-8122a2395476"
+    _MB_BASE = f"https://plugins.qgis.org/metabase/api/public/dashboard/{_MB_DASH}"
 
-        core_countries = [
-            ("United States", "🇺🇸", "North America"),
-            ("Germany", "🇩🇪", "Western Europe"),
-            ("Brazil", "🇧🇷", "Latin America"),
-            ("France", "🇫🇷", "Western Europe"),
-            ("Spain", "🇪🇸", "Western Europe"),
-            ("Turkey", "🇹🇷", "Eastern Europe & Middle East")
+    def _iso2_to_flag(iso2):
+        if not iso2 or len(iso2) != 2:
+            return ""
+        return "".join(chr(0x1F1E6 + (ord(c.upper()) - ord("A"))) for c in iso2)
+
+    _ISO2_REGION = {
+        'AD': 'Western Europe', 'AE': 'Eastern Europe & Middle East', 'AF': 'Asia-Pacific', 'AG': 'Latin America', 'AI': 'Latin America',
+        'AL': 'Western Europe', 'AM': 'Eastern Europe & Middle East', 'AO': 'Africa', 'AR': 'Latin America', 'AS': 'Asia-Pacific',
+        'AT': 'Western Europe', 'AU': 'Asia-Pacific', 'AW': 'Latin America', 'AX': 'Western Europe', 'AZ': 'Eastern Europe & Middle East',
+        'BA': 'Western Europe', 'BB': 'Latin America', 'BD': 'Asia-Pacific', 'BE': 'Western Europe', 'BF': 'Africa',
+        'BG': 'Eastern Europe & Middle East', 'BH': 'Eastern Europe & Middle East', 'BI': 'Africa', 'BJ': 'Africa', 'BL': 'Latin America',
+        'BM': 'North America', 'BN': 'Asia-Pacific', 'BO': 'Latin America', 'BQ': 'Latin America', 'BR': 'Latin America',
+        'BS': 'Latin America', 'BT': 'Asia-Pacific', 'BV': 'Latin America', 'BW': 'Africa', 'BY': 'Eastern Europe & Middle East',
+        'BZ': 'Latin America', 'CA': 'North America', 'CC': 'Asia-Pacific', 'CD': 'Africa', 'CF': 'Africa',
+        'CG': 'Africa', 'CH': 'Western Europe', 'CI': 'Africa', 'CK': 'Asia-Pacific', 'CL': 'Latin America',
+        'CM': 'Africa', 'CN': 'Asia-Pacific', 'CO': 'Latin America', 'CR': 'Latin America', 'CU': 'Latin America',
+        'CV': 'Africa', 'CW': 'Latin America', 'CX': 'Asia-Pacific', 'CY': 'Eastern Europe & Middle East', 'CZ': 'Eastern Europe & Middle East',
+        'DE': 'Western Europe', 'DJ': 'Africa', 'DK': 'Western Europe', 'DM': 'Latin America', 'DO': 'Latin America',
+        'DZ': 'Africa', 'EC': 'Latin America', 'EE': 'Western Europe', 'EG': 'Africa', 'EH': 'Africa',
+        'ER': 'Africa', 'ES': 'Western Europe', 'ET': 'Africa', 'FI': 'Western Europe', 'FJ': 'Asia-Pacific',
+        'FK': 'Latin America', 'FM': 'Asia-Pacific', 'FO': 'Western Europe', 'FR': 'Western Europe', 'GA': 'Africa',
+        'GB': 'Western Europe', 'GD': 'Latin America', 'GE': 'Eastern Europe & Middle East', 'GF': 'Latin America', 'GG': 'Western Europe',
+        'GH': 'Africa', 'GI': 'Western Europe', 'GL': 'North America', 'GM': 'Africa', 'GN': 'Africa',
+        'GP': 'Latin America', 'GQ': 'Africa', 'GR': 'Western Europe', 'GS': 'Latin America', 'GT': 'Latin America',
+        'GU': 'Asia-Pacific', 'GW': 'Africa', 'GY': 'Latin America', 'HK': 'Asia-Pacific', 'HM': 'Asia-Pacific',
+        'HN': 'Latin America', 'HR': 'Western Europe', 'HT': 'Latin America', 'HU': 'Eastern Europe & Middle East', 'ID': 'Asia-Pacific',
+        'IE': 'Western Europe', 'IL': 'Eastern Europe & Middle East', 'IM': 'Western Europe', 'IN': 'Asia-Pacific', 'IO': 'Africa',
+        'IQ': 'Eastern Europe & Middle East', 'IR': 'Asia-Pacific', 'IS': 'Western Europe', 'IT': 'Western Europe', 'JE': 'Western Europe',
+        'JM': 'Latin America', 'JO': 'Eastern Europe & Middle East', 'JP': 'Asia-Pacific', 'KE': 'Africa', 'KG': 'Asia-Pacific',
+        'KH': 'Asia-Pacific', 'KI': 'Asia-Pacific', 'KM': 'Africa', 'KN': 'Latin America', 'KP': 'Asia-Pacific',
+        'KR': 'Asia-Pacific', 'KW': 'Eastern Europe & Middle East', 'KY': 'Latin America', 'KZ': 'Asia-Pacific', 'LA': 'Asia-Pacific',
+        'LB': 'Eastern Europe & Middle East', 'LC': 'Latin America', 'LI': 'Western Europe', 'LK': 'Asia-Pacific', 'LR': 'Africa',
+        'LS': 'Africa', 'LT': 'Western Europe', 'LU': 'Western Europe', 'LV': 'Western Europe', 'LY': 'Africa',
+        'MA': 'Africa', 'MC': 'Western Europe', 'MD': 'Eastern Europe & Middle East', 'ME': 'Western Europe', 'MF': 'Latin America',
+        'MG': 'Africa', 'MH': 'Asia-Pacific', 'MK': 'Western Europe', 'ML': 'Africa', 'MM': 'Asia-Pacific',
+        'MN': 'Asia-Pacific', 'MO': 'Asia-Pacific', 'MP': 'Asia-Pacific', 'MQ': 'Latin America', 'MR': 'Africa',
+        'MS': 'Latin America', 'MT': 'Western Europe', 'MU': 'Africa', 'MV': 'Asia-Pacific', 'MW': 'Africa',
+        'MX': 'Latin America', 'MY': 'Asia-Pacific', 'MZ': 'Africa', 'NA': 'Africa', 'NC': 'Asia-Pacific',
+        'NE': 'Africa', 'NF': 'Asia-Pacific', 'NG': 'Africa', 'NI': 'Latin America', 'NL': 'Western Europe',
+        'NO': 'Western Europe', 'NP': 'Asia-Pacific', 'NR': 'Asia-Pacific', 'NU': 'Asia-Pacific', 'NZ': 'Asia-Pacific',
+        'OM': 'Eastern Europe & Middle East', 'PA': 'Latin America', 'PE': 'Latin America', 'PF': 'Asia-Pacific', 'PG': 'Asia-Pacific',
+        'PH': 'Asia-Pacific', 'PK': 'Asia-Pacific', 'PL': 'Eastern Europe & Middle East', 'PM': 'North America', 'PN': 'Asia-Pacific',
+        'PR': 'Latin America', 'PS': 'Eastern Europe & Middle East', 'PT': 'Western Europe', 'PW': 'Asia-Pacific', 'PY': 'Latin America',
+        'QA': 'Eastern Europe & Middle East', 'RE': 'Africa', 'RO': 'Eastern Europe & Middle East', 'RS': 'Western Europe', 'RU': 'Eastern Europe & Middle East',
+        'RW': 'Africa', 'SA': 'Eastern Europe & Middle East', 'SB': 'Asia-Pacific', 'SC': 'Africa', 'SD': 'Africa',
+        'SE': 'Western Europe', 'SG': 'Asia-Pacific', 'SH': 'Africa', 'SI': 'Western Europe', 'SJ': 'Western Europe',
+        'SK': 'Eastern Europe & Middle East', 'SL': 'Africa', 'SM': 'Western Europe', 'SN': 'Africa', 'SO': 'Africa',
+        'SR': 'Latin America', 'SS': 'Africa', 'ST': 'Africa', 'SV': 'Latin America', 'SX': 'Latin America',
+        'SY': 'Eastern Europe & Middle East', 'SZ': 'Africa', 'TC': 'Latin America', 'TD': 'Africa', 'TF': 'Africa',
+        'TG': 'Africa', 'TH': 'Asia-Pacific', 'TJ': 'Asia-Pacific', 'TK': 'Asia-Pacific', 'TL': 'Asia-Pacific',
+        'TM': 'Asia-Pacific', 'TN': 'Africa', 'TO': 'Asia-Pacific', 'TR': 'Eastern Europe & Middle East', 'TT': 'Latin America',
+        'TV': 'Asia-Pacific', 'TZ': 'Africa', 'UA': 'Eastern Europe & Middle East', 'UG': 'Africa', 'UM': 'Asia-Pacific',
+        'US': 'North America', 'UY': 'Latin America', 'UZ': 'Asia-Pacific', 'VA': 'Western Europe', 'VC': 'Latin America',
+        'VE': 'Latin America', 'VG': 'Latin America', 'VI': 'Latin America', 'VN': 'Asia-Pacific', 'VU': 'Asia-Pacific',
+        'WF': 'Asia-Pacific', 'WS': 'Asia-Pacific', 'YE': 'Eastern Europe & Middle East', 'YT': 'Africa', 'ZA': 'Africa',
+        'ZM': 'Africa', 'ZW': 'Africa',
+    }
+
+    # ISO3 -> ISO2 for the countries whose 3-letter code does not simply start
+    # with their 2-letter code (CHN->CN, TUR->TR, SWZ->SZ, ...). Fallback: iso3[:2].
+    _ISO3_TO_ISO2 = {
+        'ABW': 'AW', 'AFG': 'AF', 'AGO': 'AO', 'AIA': 'AI', 'ALA': 'AX', 'ALB': 'AL',
+        'AND': 'AD', 'ARE': 'AE', 'ARG': 'AR', 'ARM': 'AM', 'ASM': 'AS', 'ATA': 'AQ',
+        'ATF': 'TF', 'ATG': 'AG', 'AUS': 'AU', 'AUT': 'AT', 'AZE': 'AZ', 'BDI': 'BI',
+        'BEL': 'BE', 'BEN': 'BJ', 'BES': 'BQ', 'BFA': 'BF', 'BGD': 'BD', 'BGR': 'BG',
+        'BHR': 'BH', 'BHS': 'BS', 'BIH': 'BA', 'BLM': 'BL', 'BLR': 'BY', 'BLZ': 'BZ',
+        'BMU': 'BM', 'BOL': 'BO', 'BRA': 'BR', 'BRB': 'BB', 'BRN': 'BN', 'BTN': 'BT',
+        'BVT': 'BV', 'BWA': 'BW', 'CAF': 'CF', 'CAN': 'CA', 'CCK': 'CC', 'CHE': 'CH',
+        'CHL': 'CL', 'CHN': 'CN', 'CIV': 'CI', 'CMR': 'CM', 'COD': 'CD', 'COG': 'CG',
+        'COK': 'CK', 'COL': 'CO', 'COM': 'KM', 'CPV': 'CV', 'CRI': 'CR', 'CUB': 'CU',
+        'CUW': 'CW', 'CXR': 'CX', 'CYM': 'KY', 'CYP': 'CY', 'CZE': 'CZ', 'DEU': 'DE',
+        'DJI': 'DJ', 'DMA': 'DM', 'DNK': 'DK', 'DOM': 'DO', 'DZA': 'DZ', 'ECU': 'EC',
+        'EGY': 'EG', 'ERI': 'ER', 'ESH': 'EH', 'ESP': 'ES', 'EST': 'EE', 'ETH': 'ET',
+        'FIN': 'FI', 'FJI': 'FJ', 'FLK': 'FK', 'FRA': 'FR', 'FRO': 'FO', 'FSM': 'FM',
+        'GAB': 'GA', 'GBR': 'GB', 'GEO': 'GE', 'GGY': 'GG', 'GHA': 'GH', 'GIB': 'GI',
+        'GIN': 'GN', 'GLP': 'GP', 'GMB': 'GM', 'GNB': 'GW', 'GNQ': 'GQ', 'GRC': 'GR',
+        'GRD': 'GD', 'GRL': 'GL', 'GTM': 'GT', 'GUF': 'GF', 'GUM': 'GU', 'GUY': 'GY',
+        'HKG': 'HK', 'HMD': 'HM', 'HND': 'HN', 'HRV': 'HR', 'HTI': 'HT', 'HUN': 'HU',
+        'IDN': 'ID', 'IMN': 'IM', 'IND': 'IN', 'IOT': 'IO', 'IRL': 'IE', 'IRN': 'IR',
+        'IRQ': 'IQ', 'ISL': 'IS', 'ISR': 'IL', 'ITA': 'IT', 'JAM': 'JM', 'JEY': 'JE',
+        'JOR': 'JO', 'JPN': 'JP', 'KAZ': 'KZ', 'KEN': 'KE', 'KGZ': 'KG', 'KHM': 'KH',
+        'KIR': 'KI', 'KNA': 'KN', 'KOR': 'KR', 'KWT': 'KW', 'LAO': 'LA', 'LBN': 'LB',
+        'LBR': 'LR', 'LBY': 'LY', 'LCA': 'LC', 'LIE': 'LI', 'LKA': 'LK', 'LSO': 'LS',
+        'LTU': 'LT', 'LUX': 'LU', 'LVA': 'LV', 'MAC': 'MO', 'MAF': 'MF', 'MAR': 'MA',
+        'MCO': 'MC', 'MDA': 'MD', 'MDG': 'MG', 'MDV': 'MV', 'MEX': 'MX', 'MHL': 'MH',
+        'MKD': 'MK', 'MLI': 'ML', 'MLT': 'MT', 'MMR': 'MM', 'MNE': 'ME', 'MNG': 'MN',
+        'MNP': 'MP', 'MOZ': 'MZ', 'MRT': 'MR', 'MSR': 'MS', 'MTQ': 'MQ', 'MUS': 'MU',
+        'MWI': 'MW', 'MYS': 'MY', 'MYT': 'YT', 'NAM': 'NA', 'NCL': 'NC', 'NER': 'NE',
+        'NFK': 'NF', 'NGA': 'NG', 'NIC': 'NI', 'NIU': 'NU', 'NLD': 'NL', 'NOR': 'NO',
+        'NPL': 'NP', 'NRU': 'NR', 'NZL': 'NZ', 'OMN': 'OM', 'PAK': 'PK', 'PAN': 'PA',
+        'PCN': 'PN', 'PER': 'PE', 'PHL': 'PH', 'PLW': 'PW', 'PNG': 'PG', 'POL': 'PL',
+        'PRI': 'PR', 'PRK': 'KP', 'PRT': 'PT', 'PRY': 'PY', 'PSE': 'PS', 'PYF': 'PF',
+        'QAT': 'QA', 'REU': 'RE', 'ROU': 'RO', 'RUS': 'RU', 'RWA': 'RW', 'SAU': 'SA',
+        'SDN': 'SD', 'SEN': 'SN', 'SGP': 'SG', 'SGS': 'GS', 'SHN': 'SH', 'SJM': 'SJ',
+        'SLB': 'SB', 'SLE': 'SL', 'SLV': 'SV', 'SMR': 'SM', 'SOM': 'SO', 'SPM': 'PM',
+        'SRB': 'RS', 'SSD': 'SS', 'STP': 'ST', 'SUR': 'SR', 'SVK': 'SK', 'SVN': 'SI',
+        'SWE': 'SE', 'SWZ': 'SZ', 'SXM': 'SX', 'SYC': 'SC', 'SYR': 'SY', 'TCA': 'TC',
+        'TCD': 'TD', 'TGO': 'TG', 'THA': 'TH', 'TJK': 'TJ', 'TKL': 'TK', 'TKM': 'TM',
+        'TLS': 'TL', 'TON': 'TO', 'TTO': 'TT', 'TUN': 'TN', 'TUR': 'TR', 'TUV': 'TV',
+        'TWN': 'TW', 'TZA': 'TZ', 'UGA': 'UG', 'UKR': 'UA', 'UMI': 'UM', 'URY': 'UY',
+        'USA': 'US', 'UZB': 'UZ', 'VAT': 'VA', 'VCT': 'VC', 'VEN': 'VE', 'VGB': 'VG',
+        'VIR': 'VI', 'VNM': 'VN', 'VUT': 'VU', 'WLF': 'WF', 'WSM': 'WS', 'YEM': 'YE',
+        'ZAF': 'ZA', 'ZMB': 'ZM', 'ZWE': 'ZW',
+    }
+
+    _ISO2_NAME = {}
+    _ISO2_TO_ISO3 = {}
+    _gj_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "world_map.geojson")
+    if not os.path.exists(_gj_path):
+        _gj_path = r"C:\Users\YE\Downloads\world_map.geojson"
+    if os.path.exists(_gj_path):
+        try:
+            with open(_gj_path, "r", encoding="utf-8") as _gf:
+                for _feat in json.load(_gf).get("features", []):
+                    _p = _feat.get("properties", {})
+                    _iso3 = _p.get("iso", "") or ""
+                    _nm = _p.get("name", "") or ""
+                    if _iso3:
+                        _iso2 = _ISO3_TO_ISO2.get(_iso3, _iso3[:2])
+                        _ISO2_NAME[_iso2] = _nm
+                        _ISO2_TO_ISO3[_iso2] = _iso3
+        except Exception:
+            pass
+
+    def get_country_downloads(package_name, total_downloads):
+        """Real per-country downloads for one plugin, cumulative since 2025-01-01.
+
+        Queries the site's own Metabase "Download Stats" dashboard ("Download by
+        Country" card), which returns {ISO2: count}. Falls back to an empty list
+        if the fetch fails (e.g. transient network) so generation never crashes.
+        """
+        if not package_name:
+            return []
+        end = reference_date.strftime("%Y-%m-%d")
+        params = [
+            {"id": "193f985e", "type": "string/=", "value": package_name},
+            {"id": "ce07c624", "type": "date/all-options", "value": f"2025-01-01~{end}"},
         ]
+        try:
+            req = urllib.request.Request(
+                f"{_MB_BASE}/dashcard/28/card/26/json",
+                data=json.dumps({"parameters": params}).encode("utf-8"),
+                headers={"User-Agent": "Mozilla/5.0", "Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=40) as _resp:
+                rows = json.load(_resp)
+        except Exception as _e:
+            print(f"    [warn] country data fetch failed for {package_name}: {_e}")
+            return []
 
-        variety_pool = [
-            ("Italy", "🇮🇹", "Western Europe"),
-            ("United Kingdom", "🇬🇧", "Western Europe"),
-            ("Canada", "🇨🇦", "North America"),
-            ("Australia", "🇦🇺", "Asia-Pacific"),
-            ("India", "🇮🇳", "Asia-Pacific"),
-            ("Poland", "🇵🇱", "Eastern Europe & Middle East"),
-            ("Japan", "🇯🇵", "Asia-Pacific"),
-            ("China", "🇨🇳", "Asia-Pacific"),
-            ("Netherlands", "🇳🇱", "Western Europe"),
-            ("Mexico", "🇲🇽", "Latin America")
-        ]
+        counts = {}
+        for _r in rows:
+            _iso2 = _r.get("Country Code")
+            _cnt = int(_r.get("Sum of Download Count", 0) or 0)
+            if _iso2 and _cnt > 0:
+                counts[_iso2] = counts.get(_iso2, 0) + _cnt
 
-        selected_variety = rng.sample(variety_pool, 4)
-        selected = core_countries + selected_variety
-
-        weights = {}
-        for c_name, flag, reg in selected:
-            if c_name == "United States":
-                weights[c_name] = rng.uniform(27.0, 35.0)
-            elif c_name == "Germany":
-                weights[c_name] = rng.uniform(13.0, 18.0)
-            elif c_name in ["Brazil", "France", "Spain"]:
-                weights[c_name] = rng.uniform(8.0, 14.0)
-            elif c_name == "Turkey":
-                weights[c_name] = rng.uniform(6.0, 10.0)
-            else:
-                weights[c_name] = rng.uniform(1.5, 5.0)
-
-        total_weight = sum(weights.values())
-        shares = {c_name: w / total_weight for c_name, w in weights.items()}
-
-        country_data = []
-        for c_name, flag, reg in selected:
-            share = shares[c_name]
-            d_count = int(total_downloads * share)
-            country_data.append((c_name, flag, reg, d_count))
-
-        country_data.sort(key=lambda x: x[3], reverse=True)
-
-        res = []
-        for c_name, flag, reg, d in country_data:
-            pct = (d / total_downloads) * 100.0 if total_downloads > 0 else 0.0
-            res.append({
-                'country': c_name,
-                'flag': flag,
-                'region': reg,
-                'downloads': d,
-                'percentage': round(pct, 1)
+        _sum = sum(counts.values()) or total_downloads or 1
+        _out = []
+        for _iso2, _cnt in sorted(counts.items(), key=lambda kv: kv[1], reverse=True):
+            _out.append({
+                "country": _ISO2_NAME.get(_iso2, _iso2),
+                "flag": _iso2_to_flag(_iso2),
+                "region": _ISO2_REGION.get(_iso2, "Asia-Pacific"),
+                "iso": _iso2,
+                "iso3": _ISO2_TO_ISO3.get(_iso2, ""),
+                "downloads": _cnt,
+                "percentage": round((_cnt / _sum) * 100, 1),
             })
-        return res
+        return _out
 
     all_tags = []
     min_qgis_versions = []
@@ -118,6 +234,10 @@ try:
         author = plugin.find('author_name')
         if author is not None and "Yusuf Eminoglu" in author.text:
             name = plugin.attrib.get('name')
+            download_url = plugin.find('download_url').text if plugin.find('download_url') is not None else None
+            package_name = name
+            if download_url and '/plugins/' in download_url:
+                package_name = download_url.split('/plugins/')[1].split('/')[0]
             downloads = int(plugin.find('downloads').text) if plugin.find('downloads') is not None else 0
             create_date_str = plugin.find('create_date').text if plugin.find('create_date') is not None else None
             update_date_str = plugin.find('update_date').text if plugin.find('update_date') is not None else None
@@ -180,7 +300,7 @@ try:
                 quadrant = "Niche Specialist"
                 quadrant_color = "slate"
 
-            plugin_countries = get_country_downloads(name, downloads)
+            plugin_countries = get_country_downloads(package_name, downloads)
             calculated_score = round(votes_count * avg_vote, 4)
 
             yusuf_plugins.append({
@@ -566,7 +686,8 @@ try:
         "North America": {"code": "NAM", "icon": "fa-city", "rank_title": "High-Volume Engine", "color": "#38bdf8"},
         "Latin America": {"code": "LAM", "icon": "fa-mountain-sun", "rank_title": "Rapid Growth Frontier", "color": "#10b981"},
         "Eastern Europe & Middle East": {"code": "EME", "icon": "fa-mosque", "rank_title": "Strategic Core Hub", "color": "#f59e0b"},
-        "Asia-Pacific": {"code": "APAC", "icon": "fa-satellite-dish", "rank_title": "High-Velocity Tech Hub", "color": "#818cf8"}
+        "Asia-Pacific": {"code": "APAC", "icon": "fa-satellite-dish", "rank_title": "High-Velocity Tech Hub", "color": "#818cf8"},
+        "Africa": {"code": "AFR", "icon": "fa-earth-africa", "rank_title": "Emerging Market", "color": "#14b8a6"}
     }
 
     country_iso_atlas = {
@@ -610,15 +731,14 @@ try:
             d = c['downloads']
 
             if c_name not in country_data_map:
-                iso_meta = country_iso_atlas.get(c_name, {"iso": "XX", "cx": 500, "cy": 250})
                 country_data_map[c_name] = {
                     'country': c_name,
                     'flag': c_flag,
                     'region': c_reg,
-                    'iso': iso_meta['iso'],
-                    'iso3': iso_meta.get('iso3', ''),
-                    'cx': iso_meta['cx'],
-                    'cy': iso_meta['cy'],
+                    'iso': c.get('iso', 'XX'),
+                    'iso3': c.get('iso3', ''),
+                    'cx': 500,
+                    'cy': 250,
                     'downloads': 0,
                     'suite_downloads': {},
                     'top_plugins': []

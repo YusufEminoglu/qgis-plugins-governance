@@ -1108,7 +1108,7 @@ try:
     world_svg_layer_html = "\\n".join(world_svg_layer_elements)
 
     html_template = """<!DOCTYPE html>
-<html lang="en" data-theme="obsidian">
+<html lang="en" data-theme="alabaster">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1417,7 +1417,7 @@ try:
 
                 <!-- Theme Switcher Button -->
                 <button onclick="toggleTheme()" id="theme-toggle-btn" class="px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-1.5 transition-all" title="Toggle Theme (Obsidian / Alabaster) [T]">
-                    <i class="fa-solid fa-circle-half-stroke text-amber-400"></i> <span id="theme-toggle-text">Alabaster Mode</span> <kbd>T</kbd>
+                    <i class="fa-solid fa-circle-half-stroke text-amber-400"></i> <span id="theme-toggle-text">Obsidian Mode</span> <kbd>T</kbd>
                 </button>
 
                 <!-- 3-Way Benchmark Comparator -->

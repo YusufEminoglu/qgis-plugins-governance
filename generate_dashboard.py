@@ -965,6 +965,8 @@ try:
             'total_votes': total_votes,
             'active_plugins': active_count,
             'portfolio_monthly_velocity': round(portfolio_monthly_velocity),
+            'active_period_monthly_avg': round(active_period_monthly_avg),
+            'portfolio_overall_monthly_avg': round(portfolio_overall_monthly_avg),
             'sum_individual_monthly_avgs': round(sum_individual_monthly_avgs),
             'categories': categories_stats,
             'top_tags': top_tags,
@@ -2699,8 +2701,11 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             const targetBtn = document.getElementById(`tab-btn-${tabId}`);
             if (targetBtn) targetBtn.className = "px-5 py-3 text-sm font-bold border-b-2 border-cyan-400 text-cyan-400 flex items-center gap-2 whitespace-nowrap";
 
-            if (tabId === 'overview' || tabId === 'simulator' || tabId === 'deepdive') {
+            if (tabId === 'overview' || tabId === 'deepdive') {
                 setTimeout(initializeCharts, 100);
+            }
+            if (tabId === 'simulator') {
+                setTimeout(runSimulation, 100);
             }
             if (tabId === 'audit') {
                 setTimeout(renderAuditHistoryChart, 100);
@@ -4398,6 +4403,7 @@ COMMIT;
             };
 
             const container = document.querySelector("#sim-line-chart");
+            if (simLineChart) { try { simLineChart.destroy(); } catch (e) {} }
             container.innerHTML = '';
             simLineChart = new ApexCharts(container, chartOptions);
             simLineChart.render();

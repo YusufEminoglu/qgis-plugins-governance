@@ -36,7 +36,7 @@ jobs:
       - name: Commit and Push Updated History
         run: |
           git config user.name "Yusuf Eminoğlu"
-          git config user.email "yusufeminoglu@gmail.com"
+          git config user.email "geospacephilo@gmail.com"
           git add plugins_history.json index.html qgis_plugins_dashboard.html
           if git diff --staged --quiet; then
             echo "No changes in telemetry detected."

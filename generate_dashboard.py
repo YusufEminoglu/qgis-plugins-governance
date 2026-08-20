@@ -5015,11 +5015,11 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
             const catColors = { 'PlanX Suite': '#6366f1', '02 Suite': '#0ea5e9', 'Standalone Plugins': '#64748b' };
             const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-            const W = 820, H = 320, padL = 62, padR = 20, padT = 18, padB = 44;
+            const W = 860, H = 340, padL = 74, padR = 30, padT = 24, padB = 48;
             const dlVals = plugins.map(p => p.downloads);
             const vVals = plugins.map(p => Math.max(p.avg_monthly_downloads, 1));
-            const minDl = Math.max(Math.min(...dlVals), 1), maxDl = Math.max(...dlVals);
-            const minV = Math.max(Math.min(...vVals), 1), maxV = Math.max(...vVals);
+            const minDl = Math.max(Math.min(...dlVals) * 0.6, 1), maxDl = Math.max(...dlVals) * 1.35;
+            const minV = Math.max(Math.min(...vVals) * 0.6, 1), maxV = Math.max(...vVals) * 1.35;
             const lx = d => padL + (Math.log(d) - Math.log(minDl)) / ((Math.log(maxDl) - Math.log(minDl)) || 1) * (W - padL - padR);
             const ly = v => padT + (1 - (Math.log(v) - Math.log(minV)) / ((Math.log(maxV) - Math.log(minV)) || 1)) * (H - padT - padB);
             const fmt = t => t >= 1000 ? (Math.round(t / 100) / 10) + 'k' : Math.round(t);
@@ -5033,7 +5033,7 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
             const med = arr => arr.slice().sort((a, b) => a - b)[Math.floor(arr.length / 2)];
             const mx = lx(med(dlVals)), my = ly(med(vVals));
 
-            let s = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">`;
+            let s = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="width:100%;height:100%">`;
 
             // Ambient Quadrant Zoning
             s += `<rect x="${padL}" y="${padT}" width="${mx - padL}" height="${my - padT}" fill="rgba(244, 63, 94, 0.035)" />`; // High Velocity
@@ -5064,17 +5064,20 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
             s += `<line x1="${mx}" y1="${padT}" x2="${mx}" y2="${H - padB}" stroke="${labelColor}" stroke-dasharray="4 5" opacity="0.45"/>`;
             s += `<line x1="${padL}" y1="${my}" x2="${W - padR}" y2="${my}" stroke="${labelColor}" stroke-dasharray="4 5" opacity="0.45"/>`;
 
-            plugins.forEach(p => {
-                const px = lx(p.downloads), py = ly(Math.max(p.avg_monthly_downloads, 1));
+            // Sort plugins by downloads ascending so smaller/newer plugins render cleanly on top
+            const sortedPlugins = [...plugins].sort((a, b) => a.downloads - b.downloads);
+
+            sortedPlugins.forEach(p => {
+                const px = lx(Math.max(p.downloads, 1)), py = ly(Math.max(p.avg_monthly_downloads, 1));
                 const color = catColors[p.category] || '#64748b';
                 const tip = `${esc(p.name)} · ${p.downloads.toLocaleString()} downloads · ${Math.round(p.avg_monthly_downloads).toLocaleString()}/mo · ${p.category} · ${p.bayesian_rating.toFixed(2)} ★`;
                 const isMatch = (activeBcgSuite === 'all' || p.category === activeBcgSuite);
                 const nodeOpacity = isMatch ? "1.0" : "0.15";
 
                 if (p.icon) {
-                    s += `<g transform="translate(${(px - 16).toFixed(1)} ${(py - 16).toFixed(1)})" style="cursor:pointer;opacity:${nodeOpacity}" onclick="switchTab('deepdive');document.getElementById('card-search-input').value='${esc(p.name)}';filterCards();"><title>${tip}</title><circle cx="16" cy="16" r="19" fill="${color}" opacity="0.18"/><image href="${p.icon}" x="4" y="4" width="24" height="24" preserveAspectRatio="xMidYMid meet"/><circle cx="16" cy="16" r="19" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.65"/></g>`;
+                    s += `<g transform="translate(${(px - 16).toFixed(1)} ${(py - 16).toFixed(1)})" style="cursor:pointer;opacity:${nodeOpacity}" onclick="switchTab('deepdive');document.getElementById('card-search-input').value='${esc(p.name)}';filterCards();"><title>${tip}</title><circle cx="16" cy="16" r="19" fill="${color}" opacity="0.22"/><image href="${p.icon}" xlink:href="${p.icon}" x="4" y="4" width="24" height="24" preserveAspectRatio="xMidYMid meet"/><circle cx="16" cy="16" r="19" fill="none" stroke="${color}" stroke-width="1.8" opacity="0.8"/></g>`;
                 } else {
-                    s += `<g transform="translate(${px} ${py})" style="cursor:pointer;opacity:${nodeOpacity}" onclick="switchTab('deepdive');document.getElementById('card-search-input').value='${esc(p.name)}';filterCards();"><title>${tip}</title><circle r="7" fill="${color}" stroke="#fff" stroke-width="1"/></g>`;
+                    s += `<g transform="translate(${px} ${py})" style="cursor:pointer;opacity:${nodeOpacity}" onclick="switchTab('deepdive');document.getElementById('card-search-input').value='${esc(p.name)}';filterCards();"><title>${tip}</title><circle r="8" fill="${color}" stroke="#fff" stroke-width="1.5"/></g>`;
                 }
             });
             s += '</svg>';

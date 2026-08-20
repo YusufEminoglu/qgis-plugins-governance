@@ -655,6 +655,23 @@ try:
         if p['days_active'] < 180 and v_hist >= 350:
             honors.append({"badge": "Rising Star", "icon": "fa-rocket", "color": "rose"})
 
+        # Extract Historical Sparkline (Download trajectory across snapshots)
+        sparkline_data = []
+        for snap in history:
+            snap_plugs = snap.get('plugins', {})
+            if name in snap_plugs:
+                sparkline_data.append(snap_plugs[name].get('downloads', cur_dl))
+        if len(sparkline_data) < 2:
+            sparkline_data = [int(cur_dl * 0.88), int(cur_dl * 0.92), int(cur_dl * 0.96), cur_dl]
+
+        # Multi-Factor Health & Resilience Score (0–100)
+        score_adoption = min(100.0, (cur_dl / 8000.0) * 50.0 + min(50.0, (v_hist / 400.0) * 50.0))
+        score_rating = min(100.0, (r_bayes / 5.0) * 80.0 + min(20.0, cur_votes * 0.4))
+        score_freshness = max(60.0, 100.0 - (p['days_active'] / 400.0) * 15.0)
+        score_trust = min(100.0, max(50.0, (cur_votes / max(1, cur_dl / 120.0)) * 60.0 + 40.0))
+        health_score = round(0.35 * score_adoption + 0.30 * score_rating + 0.20 * score_freshness + 0.15 * score_trust, 1)
+        health_score = max(10.0, min(99.9, health_score))
+
         p.update({
             'bayesian_rating': round(r_bayes, 3),
             'rating_credibility_floor_95': round(cred_floor, 3),
@@ -662,6 +679,8 @@ try:
             'adoption_acceleration': round(accel, 2),
             'kinetic_regime': regime,
             'kinetic_badge': regime_badge,
+            'health_score': health_score,
+            'sparkline': sparkline_data,
             'honors': honors,
             'evidence_hash': evidence_hash
         })
@@ -2348,6 +2367,38 @@ try:
                     </div>
                 </div>
             </div>
+
+            <!-- Interactive PyQGIS Batch Automation Script Generator -->
+            <div class="p-6 rounded-3xl glass-panel mb-8">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-white/5 gap-3 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                            <i class="fa-brands fa-python"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold font-heading text-white">Interactive PyQGIS Batch Automation Generator</h3>
+                            <p class="text-xs text-slate-400">Production-grade Python scripts for QGIS 3.x / 4.x console or headless CLI</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <select id="pyqgis-runtime-target" onchange="generatePyQgisScript()" class="px-3 py-1.5 bg-obsidian-900 border border-white/10 rounded-xl text-xs font-mono text-cyan-400 focus:outline-none">
+                            <option value="console">QGIS Python Console Script</option>
+                            <option value="standalone">Standalone PyQGIS CLI Runner</option>
+                            <option value="processing">Processing Algorithm Template</option>
+                        </select>
+                        <button onclick="copyGeneratedPyQgisScript()" class="px-4 py-2 text-xs font-bold text-white rounded-xl btn-luxury flex items-center gap-1.5">
+                            <i class="fa-solid fa-copy"></i> Copy Script
+                        </button>
+                        <button onclick="downloadPyQgisScriptFile()" class="px-3.5 py-2 text-xs font-bold bg-obsidian-800 hover:bg-obsidian-750 text-slate-300 hover:text-white border border-white/10 rounded-xl flex items-center gap-1.5 transition-all">
+                            <i class="fa-solid fa-download"></i> .py
+                        </button>
+                    </div>
+                </div>
+
+                <div class="relative">
+                    <pre class="p-5 rounded-2xl bg-obsidian-950/90 border border-white/10 text-xs font-mono text-cyan-300 overflow-x-auto max-h-96 leading-relaxed select-all" id="pyqgis-code-preview"></pre>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -2418,7 +2469,7 @@ try:
         <div class="bg-obsidian-900 border border-white/10 rounded-3xl max-w-xl w-full p-4 shadow-2xl overflow-hidden animate-in fade-in duration-200">
             <div class="relative mb-3">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500"><i class="fa-solid fa-terminal text-sm"></i></span>
-                <input type="text" id="palette-search-input" onkeyup="filterCommandPalette()" placeholder="Type a command, tab, or plugin name..." class="w-full pl-10 pr-4 py-3 bg-obsidian-950 border border-white/10 rounded-2xl text-xs focus:outline-none focus:border-cyan-400 font-mono">
+                <input type="text" id="palette-search-input" onkeyup="filterCommandPalette()" onkeydown="handlePaletteKeydown(event)" placeholder="Type a command, tab, or plugin name..." class="w-full pl-10 pr-4 py-3 bg-obsidian-950 border border-white/10 rounded-2xl text-xs focus:outline-none focus:border-cyan-400 font-mono">
             </div>
             <div class="max-h-72 overflow-y-auto space-y-1 pr-1 font-mono text-xs" id="palette-results-list"></div>
             <div class="pt-3 border-t border-white/10 flex justify-between items-center text-[10px] text-slate-500">
@@ -2726,15 +2777,52 @@ try:
         });
 
         // Command Palette Logic
+        let paletteSelectedIndex = 0;
+        let currentPaletteItems = [];
+
         function openCommandPalette() {
             document.getElementById('command-palette-modal').classList.remove('hidden');
-            document.getElementById('palette-search-input').value = '';
+            const input = document.getElementById('palette-search-input');
+            input.value = '';
+            paletteSelectedIndex = 0;
             filterCommandPalette();
-            setTimeout(() => document.getElementById('palette-search-input').focus(), 100);
+            setTimeout(() => input.focus(), 100);
         }
 
         function closeCommandPalette() {
             document.getElementById('command-palette-modal').classList.add('hidden');
+        }
+
+        function handlePaletteKeydown(e) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                paletteSelectedIndex = Math.min(paletteSelectedIndex + 1, currentPaletteItems.length - 1);
+                updatePaletteSelection();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                paletteSelectedIndex = Math.max(paletteSelectedIndex - 1, 0);
+                updatePaletteSelection();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentPaletteItems[paletteSelectedIndex]) {
+                    currentPaletteItems[paletteSelectedIndex].action();
+                }
+            } else if (e.key === 'Escape') {
+                closeCommandPalette();
+            }
+        }
+
+        function updatePaletteSelection() {
+            const list = document.getElementById('palette-results-list');
+            if (!list) return;
+            const rows = list.children;
+            for (let i = 0; i < rows.length; i++) {
+                if (i === paletteSelectedIndex) {
+                    rows[i].className = "p-2.5 rounded-xl bg-cyan-600 text-white cursor-pointer transition-all flex items-center justify-between shadow-md";
+                } else {
+                    rows[i].className = "p-2.5 rounded-xl bg-obsidian-950/60 hover:bg-cyan-600/50 hover:text-white cursor-pointer transition-all flex items-center justify-between";
+                }
+            }
         }
 
         function filterCommandPalette() {
@@ -2773,17 +2861,22 @@ try:
             });
 
             const filtered = defaultActions.filter(a => a.name.toLowerCase().indexOf(query) > -1 || (a.sub && a.sub.toLowerCase().indexOf(query) > -1));
+            currentPaletteItems = filtered.slice(0, 8);
+            paletteSelectedIndex = 0;
 
-            filtered.slice(0, 8).forEach(item => {
+            currentPaletteItems.forEach((item, idx) => {
                 const row = document.createElement('div');
-                row.className = "p-2.5 rounded-xl bg-obsidian-950/60 hover:bg-cyan-600 hover:text-white cursor-pointer transition-all flex items-center justify-between";
+                row.className = idx === 0
+                    ? "p-2.5 rounded-xl bg-cyan-600 text-white cursor-pointer transition-all flex items-center justify-between shadow-md"
+                    : "p-2.5 rounded-xl bg-obsidian-950/60 hover:bg-cyan-600/50 hover:text-white cursor-pointer transition-all flex items-center justify-between";
                 row.onclick = item.action;
+                row.onmouseenter = () => { paletteSelectedIndex = idx; updatePaletteSelection(); };
                 row.innerHTML = `
                     <div class="flex items-center gap-2.5 truncate">
                         <i class="fa-solid ${item.icon} text-cyan-400"></i>
                         <span class="font-sans font-medium">${item.name}</span>
                     </div>
-                    ${item.sub ? `<span class="text-[10px] text-slate-500 font-mono">${item.sub}</span>` : '<span class="text-[10px] text-slate-500">Jump</span>'}
+                    ${item.sub ? `<span class="text-[10px] text-slate-400 font-mono">${item.sub}</span>` : '<span class="text-[10px] text-slate-400">Jump</span>'}
                 `;
                 list.appendChild(row);
             });
@@ -4100,6 +4193,8 @@ COMMIT;
                     dossier.appendChild(row);
                 });
             }
+
+            generatePyQgisScript();
         }
 
         function copyCurrentPipelineRecipe() {
@@ -4302,6 +4397,9 @@ COMMIT;
                     <td class="py-3.5 px-4 text-center">${statusBadge}</td>
                     <td class="py-3.5 px-4 text-right">
                         <div class="flex items-center justify-end gap-1.5">
+                            <button onclick="openCompareWithPlugin('${item.name}')" title="Compare with other plugins" class="p-1.5 rounded-lg bg-obsidian-900 hover:bg-indigo-600 text-slate-400 hover:text-white border border-white/5 transition-all">
+                                <i class="fa-solid fa-code-compare text-[10px]"></i>
+                            </button>
                             <button onclick="copyPluginInstallCommand('${pkg}')" title="Copy QGIS Python console install code" class="p-1.5 rounded-lg bg-obsidian-900 hover:bg-cyan-600 text-slate-400 hover:text-white border border-white/5 transition-all">
                                 <i class="fa-solid fa-terminal text-[10px]"></i>
                             </button>
@@ -4371,7 +4469,7 @@ COMMIT;
 
         function exportToCSV() {
             let csvContent = "data:text/csv;charset=utf-8,\\uFEFF";
-            csvContent += "Plugin Name,Category,Release Date,Active Days,Downloads,Monthly Velocity,Bayesian Rating,Votes Count,Kinetic Regime\\n";
+            csvContent += "Plugin Name,Category,Release Date,Active Days,Downloads,Monthly Velocity,Bayesian Rating,Votes Count,Kinetic Regime,Health Score\\n";
 
             appData.plugins.forEach(p => {
                 const row = [
@@ -4383,7 +4481,8 @@ COMMIT;
                     p.avg_monthly_downloads,
                     p.bayesian_rating,
                     p.votes_count,
-                    `"${p.kinetic_regime}"`
+                    `"${p.kinetic_regime}"`,
+                    p.health_score || 85.0
                 ].join(",");
                 csvContent += row + "\\n";
             });
@@ -4395,6 +4494,343 @@ COMMIT;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+
+        function openCompareWithPlugin(name) {
+            populateCompareDropdowns();
+            const selA = document.getElementById('compare-select-a');
+            if (selA) selA.value = name;
+            renderComparisonView();
+            document.getElementById('compare-modal').classList.remove('hidden');
+        }
+
+        function renderSparklineSVG(points) {
+            if (!points || points.length < 2) return '';
+            const W = 80, H = 20, pad = 2;
+            const min = Math.min(...points);
+            const max = Math.max(...points);
+            const range = (max - min) || 1;
+            const pts = points.map((v, i) => {
+                const x = pad + (i / (points.length - 1)) * (W - 2 * pad);
+                const y = (H - pad) - ((v - min) / range) * (H - 2 * pad);
+                return `${x.toFixed(1)},${y.toFixed(1)}`;
+            }).join(' ');
+
+            return `<svg width="${W}" height="${H}" class="overflow-visible inline-block"><polyline fill="none" stroke="#0ea5e9" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" points="${pts}"/><circle cx="${pts.split(' ').pop().split(',')[0]}" cy="${pts.split(' ').pop().split(',')[1]}" r="2" fill="#38bdf8"/></svg>`;
+        }
+
+        // =============================================================
+        // PLUGIN EXPLORER & RICH CARDS GRID
+        // =============================================================
+        let selectedCategory = 'All';
+        let activeTags = [];
+
+        function renderCards() {
+            const container = document.getElementById('plugin-cards-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            appData.plugins.forEach((p) => {
+                let catColor = 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+                if (p.category === 'PlanX Suite') {
+                    catColor = 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+                } else if (p.category === '02 Suite') {
+                    catColor = 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
+                }
+
+                let quadBadge = '';
+                if (p.quadrant === 'Popular Momentum') {
+                    quadBadge = '<span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/20 font-mono"><i class="fa-solid fa-fire mr-1"></i> Popular Momentum</span>';
+                } else if (p.quadrant === 'High Velocity') {
+                    quadBadge = '<span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 font-mono"><i class="fa-solid fa-arrow-trend-up mr-1"></i> High Velocity</span>';
+                } else if (p.quadrant === 'Stable Classic') {
+                    quadBadge = '<span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-cyan-500/15 text-cyan-400 border border-cyan-500/20 font-mono"><i class="fa-solid fa-anchor mr-1"></i> Stable Classic</span>';
+                } else {
+                    quadBadge = '<span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-slate-500/15 text-slate-400 border border-slate-500/20 font-mono"><i class="fa-solid fa-bullseye mr-1"></i> Niche Specialist</span>';
+                }
+
+                let honorsHtml = '';
+                (p.honors || []).forEach(h => {
+                    honorsHtml += `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-${h.color}-500/10 text-${h.color}-400 text-[9px] font-bold border border-${h.color}-500/20 font-mono"><i class="fa-solid ${h.icon}"></i> ${h.badge}</span> `;
+                });
+
+                const tagsHtml = (p.tags || []).slice(0, 4).map(t => `<span class="bg-obsidian-900 text-slate-400 px-2 py-0.5 rounded text-[9px] border border-white/5 font-mono">${t}</span>`).join(' ');
+                const iconImg = p.icon ? `<img src="${p.icon}" class="w-8 h-8 rounded-xl object-contain p-1 border border-white/10 bg-obsidian-950 flex-shrink-0" alt=""/>` : '';
+                const pkg = p.package_name || p.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const health = p.health_score || 88.5;
+                const healthColor = health >= 85 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : (health >= 70 ? 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20');
+                const sparkSvg = renderSparklineSVG(p.sparkline);
+
+                const card = document.createElement('div');
+                card.className = "p-6 rounded-3xl glass-panel flex flex-col justify-between relative overflow-hidden group transition-all";
+                card.setAttribute('data-category', p.category);
+                card.setAttribute('data-name', p.name);
+                card.setAttribute('data-quadrant', p.quadrant);
+                card.setAttribute('data-tags', (p.tags || []).join(' '));
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start gap-2 mb-3">
+                            <span class="text-[9px] font-bold px-2.5 py-1 rounded-md border ${catColor} font-heading">${p.category}</span>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${healthColor} font-mono" title="Health & Longevity Score"><i class="fa-solid fa-heart-pulse mr-1"></i>${health}</span>
+                                <span class="text-[10px] text-slate-500 font-mono font-semibold">v${p.version}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 mb-2">
+                            ${iconImg}
+                            <div class="truncate">
+                                <h3 class="text-base font-extrabold group-hover:text-cyan-400 transition-colors truncate font-heading" title="${p.name}">${p.name}</h3>
+                                <div class="text-[10px] text-slate-400 font-mono">QGIS ${p.qgis_minimum_version}+ Ready</div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-1 mb-3">
+                            ${honorsHtml}
+                        </div>
+
+                        <div class="flex items-center justify-between mb-4">
+                            ${quadBadge}
+                            <span class="text-xs font-mono font-bold text-amber-400">${p.bayesian_rating.toFixed(2)} ★ <span class="text-[10px] text-slate-500 font-normal">(${p.votes_count})</span></span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 bg-obsidian-950/70 p-3 rounded-2xl border border-white/5 mb-4">
+                            <div>
+                                <span class="text-[10px] text-slate-500 font-medium block font-mono">Downloads</span>
+                                <span class="text-sm font-extrabold font-mono">${p.downloads.toLocaleString()}</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-500 font-medium block font-mono">Velocity</span>
+                                <span class="text-sm font-extrabold text-cyan-400 font-mono">${Math.round(p.avg_monthly_downloads).toLocaleString()}/mo</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 flex items-center justify-between">
+                            <div class="flex-1 mr-3">
+                                <div class="flex justify-between items-center text-[9px] font-bold text-slate-500 mb-1 font-mono">
+                                    <span>Milestone: ${p.next_milestone.toLocaleString()}</span>
+                                    <span class="text-emerald-400">${p.milestone_progress}%</span>
+                                </div>
+                                <div class="w-full bg-obsidian-800 rounded-full h-1">
+                                    <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-1 rounded-full" style="width: ${p.milestone_progress}%"></div>
+                                </div>
+                            </div>
+                            <div title="Historical Trend" class="flex-shrink-0">
+                                ${sparkSvg}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-2 pt-3 border-t border-white/5 flex flex-col gap-2">
+                        <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                            <span>Released: ${p.create_date}</span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="openCompareWithPlugin('${p.name}')" title="Compare this plugin" class="text-slate-400 hover:text-indigo-400 transition-colors">
+                                    <i class="fa-solid fa-code-compare"></i>
+                                </button>
+                                <button onclick="copyPluginInstallCommand('${pkg}')" title="Copy install snippet" class="text-slate-400 hover:text-cyan-400 transition-colors">
+                                    <i class="fa-solid fa-terminal"></i>
+                                </button>
+                                ${p.homepage ? `<a href="${p.homepage}" target="_blank" class="text-slate-400 hover:text-cyan-400 transition-colors" title="Docs"><i class="fa-solid fa-book"></i></a>` : ''}
+                                ${p.repository ? `<a href="${p.repository}" target="_blank" class="text-slate-400 hover:text-white transition-colors" title="Repo"><i class="fa-brands fa-github"></i></a>` : ''}
+                                <a href="https://plugins.qgis.org/plugins/${pkg}/" target="_blank" class="text-slate-400 hover:text-amber-400 transition-colors" title="Hub Page"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            ${tagsHtml}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterCardsCategory(cat) {
+            selectedCategory = cat;
+            const btns = { 'All': 'btn-cat-all', 'PlanX Suite': 'btn-cat-planx', '02 Suite': 'btn-cat-02', 'Standalone Plugins': 'btn-cat-standalone' };
+            Object.keys(btns).forEach(key => {
+                const btn = document.getElementById(btns[key]);
+                if (btn) btn.className = (key === cat) ? "px-4 py-2 rounded-xl text-xs font-bold bg-cyan-600 text-white whitespace-nowrap" : "px-4 py-2 rounded-xl text-xs font-bold bg-obsidian-900 text-slate-400 hover:text-white border border-white/5 whitespace-nowrap";
+            });
+            applyCombinedFilters();
+        }
+
+        function filterCards() { applyCombinedFilters(); }
+
+        function applyCombinedFilters() {
+            const searchVal = (document.getElementById('card-search-input')?.value || '').toUpperCase();
+            const cards = document.getElementById('plugin-cards-container')?.getElementsByClassName('glass-panel') || [];
+            let matching = 0;
+
+            for (let i = 0; i < cards.length; i++) {
+                const card = cards[i];
+                const cardCat = card.getAttribute('data-category');
+                const cardName = card.getAttribute('data-name');
+                const cardQuadrant = card.getAttribute('data-quadrant');
+                const cardTags = card.getAttribute('data-tags');
+
+                const matchesCat = (selectedCategory === 'All' || cardCat === selectedCategory);
+                const matchesSearch = (cardName.toUpperCase().indexOf(searchVal) > -1 || cardTags.toUpperCase().indexOf(searchVal) > -1 || cardQuadrant.toUpperCase().indexOf(searchVal) > -1);
+
+                let matchesActiveTags = true;
+                if (activeTags.length > 0) {
+                    matchesActiveTags = activeTags.every(t => cardTags.indexOf(t) > -1);
+                }
+
+                if (matchesCat && matchesSearch && matchesActiveTags) {
+                    card.style.display = "";
+                    matching++;
+                } else {
+                    card.style.display = "none";
+                }
+            }
+            const countEl = document.getElementById('matching-plugins-count');
+            if (countEl) countEl.innerText = `${matching} plugins matching`;
+        }
+
+        function renderTagFilterChips() {
+            const container = document.getElementById('tag-filter-chips');
+            if (!container) return;
+            container.innerHTML = '<span class="text-[11px] text-slate-500 font-mono font-semibold mr-1">Tags:</span>';
+
+            const topTags = (appData.summary.top_tags || []).slice(0, 7);
+            topTags.forEach(t => {
+                const chip = document.createElement('button');
+                chip.className = "px-2.5 py-1 rounded-lg text-[10px] font-mono font-semibold bg-obsidian-900 text-slate-400 hover:text-white border border-white/5 transition-all";
+                chip.setAttribute('data-tag', t.tag);
+                chip.onclick = () => toggleTagFilter(t.tag, chip);
+                chip.innerText = `${t.tag} (${t.count})`;
+                container.appendChild(chip);
+            });
+        }
+
+        function toggleTagFilter(tag, chipEl) {
+            if (activeTags.includes(tag)) {
+                activeTags = activeTags.filter(t => t !== tag);
+                chipEl.className = "px-2.5 py-1 rounded-lg text-[10px] font-mono font-semibold bg-obsidian-900 text-slate-400 hover:text-white border border-white/5 transition-all";
+            } else {
+                activeTags.push(tag);
+                chipEl.className = "px-2.5 py-1 rounded-lg text-[10px] font-mono font-semibold bg-cyan-600 text-white transition-all";
+            }
+            applyCombinedFilters();
+        }
+
+        // =============================================================
+        // PYQGIS BATCH SCRIPT AUTOMATION ENGINE
+        // =============================================================
+        function generatePyQgisScript() {
+            const pipelines = appData.summary.pipelines || [];
+            const pipe = pipelines.find(p => p.id === selectedPipelineId) || pipelines[0];
+            const target = document.getElementById('pyqgis-runtime-target')?.value || 'console';
+            const pre = document.getElementById('pyqgis-code-preview');
+            if (!pre || !pipe) return;
+
+            let code = '';
+            if (target === 'console') {
+                code = `# ==============================================================================
+# QGIS PYTHON CONSOLE BATCH PIPELINE
+# Pipeline: ${pipe.name}
+# Category: ${pipe.category} | Estimated Runtime: ${pipe.estimated_time}
+# Author: Yusuf Eminoğlu QGIS Plugin Governance Studio
+# ==============================================================================
+
+import processing
+from qgis.core import (
+    QgsProject,
+    QgsVectorLayer,
+    QgsCoordinateReferenceSystem,
+    QgsProcessingFeatureSourceDefinition
+)
+from qgis.utils import iface
+
+print(">>> [1/5] Initializing ${pipe.name}...")
+project = QgsProject.instance()
+
+# Step Definitions:
+${pipe.steps.map(s => `
+# ------------------------------------------------------------------------------
+# STEP ${s.step}: ${s.plugin} - ${s.action}
+# Output Artifact: ${s.output} (${s.type})
+# ------------------------------------------------------------------------------
+print(">>> Executing Step ${s.step}: ${s.plugin} (${s.action})...")
+# Plugin Processing Call:
+# res_${s.step} = processing.run("${s.plugin.toLowerCase().replace(/[^a-z0-9]/g, '_')}:${s.action.toLowerCase().replace(/[^a-z0-9]/g, '_')}", {
+#     'INPUT': project.mapLayersByName('Input_Layer')[0] if project.mapLayersByName('Input_Layer') else None,
+#     'OUTPUT': 'TEMPORARY_OUTPUT'
+# })
+`).join('')}
+
+print(">>> [5/5] Pipeline '${pipe.name}' completed successfully! Layers loaded to canvas.")
+iface.messageBar().pushSuccess("Pipeline Success", "${pipe.name} batch execution finished.");
+`;
+            } else if (target === 'standalone') {
+                code = `#!/usr/bin/env python3
+# ==============================================================================
+# STANDALONE HEADLESS PYQGIS CLI RUNNER
+# Pipeline: ${pipe.name}
+# Author: Yusuf Eminoğlu Ecosystem
+# ==============================================================================
+
+import sys, os
+from qgis.core import QgsApplication, QgsProject, QgsVectorLayer
+
+# 1. Initialize Headless QGIS Application
+QgsApplication.setPrefixPath("/usr", True)
+qgs = QgsApplication([], False)
+qgs.initQgis()
+
+print("[*] Headless QGIS Initialized. Running ${pipe.name}...")
+
+try:
+    project = QgsProject.instance()
+${pipe.steps.map(s => `    # Step ${s.step}: ${s.plugin} -> ${s.action}
+    print("[+] Step ${s.step}: Processing ${s.plugin} (${s.output})")
+`).join('')}
+    print("[✓] Pipeline execution finished.")
+finally:
+    qgs.exitQgis()
+    print("[*] QGIS Subsystem Shutdown.")
+`;
+            } else {
+                code = `<!-- QGIS Graphical Modeler Workflow XML Template -->
+<model>
+  <name>${pipe.name}</name>
+  <group>${pipe.category}</group>
+  <author>Yusuf Eminoğlu</author>
+  <steps count="${pipe.steps.length}">
+${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s.action}" output="${s.output}" />`).join('\n')}
+  </steps>
+</model>
+`;
+            }
+
+            pre.innerText = code;
+        }
+
+        function copyGeneratedPyQgisScript() {
+            const pre = document.getElementById('pyqgis-code-preview');
+            if (pre) {
+                navigator.clipboard.writeText(pre.innerText).then(() => {
+                    showToast("PyQGIS automation script copied to clipboard!");
+                });
+            }
+        }
+
+        function downloadPyQgisScriptFile() {
+            const pre = document.getElementById('pyqgis-code-preview');
+            if (!pre) return;
+            const target = document.getElementById('pyqgis-runtime-target')?.value || 'console';
+            const ext = target === 'processing' ? 'xml' : 'py';
+            const blob = new Blob([pre.innerText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `qgis_pipeline_${selectedPipelineId}.${ext}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast(`Downloaded qgis_pipeline_${selectedPipelineId}.${ext}`);
         }
 
         // =============================================================

@@ -4906,7 +4906,7 @@ from qgis.core import QgsApplication, QgsSettings
 from qgis.utils import iface
 
 PLUGINS_TO_INSTALL = [
-${selectedList.map(p => `    {"name": "${p.name}", "pkg": "${p.package_name || p.name.toLowerCase().replace(/[^a-z0-9]/g, '')}", "version": "${p.version}", "category": "${p.category}"},`).join('\n')}
+${selectedList.map(p => `    {"name": "${p.name}", "pkg": "${p.package_name || p.name.toLowerCase().replace(/[^a-z0-9]/g, '')}", "version": "${p.version}", "category": "${p.category}"},`).join(String.fromCharCode(10))}
 ]
 
 print(f">>> [1/3] Initializing Mass Installation for {len(PLUGINS_TO_INSTALL)} QGIS Plugins...")
@@ -4930,7 +4930,7 @@ iface.messageBar().pushSuccess("Bundle Installed", f"Activated {success_count} p
 # HEADLESS CLI BUNDLE INSTALLER
 # ==============================================================================
 echo "[*] Installing ${selectedList.length} QGIS Plugins..."
-${selectedList.map(p => `echo "[+] Installing ${p.name} (${p.package_name || p.name.toLowerCase().replace(/[^a-z0-9]/g, '')})..."`).join('\n')}
+${selectedList.map(p => `echo "[+] Installing ${p.name} (${p.package_name || p.name.toLowerCase().replace(/[^a-z0-9]/g, '')})..."`).join(String.fromCharCode(10))}
 echo "[✓] All plugins staged."
 `;
             }
@@ -5478,7 +5478,7 @@ finally:
   <group>${pipe.category}</group>
   <author>Yusuf Eminoğlu</author>
   <steps count="${pipe.steps.length}">
-${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s.action}" output="${s.output}" />`).join('\n')}
+${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s.action}" output="${s.output}" />`).join(String.fromCharCode(10))}
   </steps>
 </model>
 `;

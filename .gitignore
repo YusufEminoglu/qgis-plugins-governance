@@ -15,7 +15,7 @@ ENV/
 *.swo
 
 # Unrelated
-deu_akreditasyon_plugin/
+../deu_akreditasyon_plugin/
 download_all.ps1
 download_most_updated.ps1
 

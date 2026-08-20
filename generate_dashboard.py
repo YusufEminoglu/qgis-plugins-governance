@@ -41,7 +41,7 @@ try:
         name_lower = name.lower()
         if "planx" in name_lower:
             return "PlanX Suite"
-        elif name_lower.startswith("02") or "zero2" in name_lower:
+        elif name_lower.startswith("02") or "zero2" in name_lower or "02agent" in name_lower:
             return "02 Suite"
         else:
             return "Standalone Plugins"
@@ -328,31 +328,39 @@ try:
                 'is_experimental': is_experimental,
                 'quadrant': quadrant,
                 'quadrant_color': quadrant_color,
-                'countries': plugin_countries
+                'countries': plugin_countries,
+                'package_name': package_name
             })
 
     yusuf_plugins.sort(key=lambda x: x['downloads'], reverse=True)
 
     # Resolve each plugin's main icon (from assets/plugin_icons/, keyed by the GitHub
-    # repo slug) and inline it as a base64 data URI, so the static dashboard can draw
-    # the real plugin icon in the BCG matrix with zero external requests. The icons are
-    # committed in this repo because CI regenerates the page without the sibling dirs.
+    # repo slug or package name) and inline it as a base64 data URI, so the static dashboard
+    # can draw the real plugin icon in the BCG matrix with zero external requests. The icons
+    # are committed in this repo because CI regenerates the page without the sibling dirs.
     _icon_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "plugin_icons")
 
-    def resolve_plugin_icon(repository):
-        if not repository:
-            return None
-        slug = repository.rstrip("/").split("/")[-1].lower()
-        for ext, mime in ((".png", "image/png"), (".svg", "image/svg+xml")):
-            path = os.path.join(_icon_dir, slug + ext)
-            if os.path.exists(path):
-                with open(path, "rb") as _f:
-                    _b64 = base64.b64encode(_f.read()).decode("ascii")
-                return f"data:{mime};base64,{_b64}"
+    def resolve_plugin_icon(repository, package_name=None, name=None):
+        slugs = []
+        if repository:
+            slugs.append(repository.rstrip("/").split("/")[-1].lower())
+        if package_name:
+            slugs.append(package_name.lower().replace("_", "-"))
+            slugs.append(package_name.lower())
+        if name:
+            slugs.append(name.lower().replace(" ", "-").replace("_", "-"))
+            slugs.append(name.lower().replace(" ", "_"))
+        for slug in slugs:
+            for ext, mime in ((".png", "image/png"), (".svg", "image/svg+xml")):
+                path = os.path.join(_icon_dir, slug + ext)
+                if os.path.exists(path):
+                    with open(path, "rb") as _f:
+                        _b64 = base64.b64encode(_f.read()).decode("ascii")
+                    return f"data:{mime};base64,{_b64}"
         return None
 
     for _p in yusuf_plugins:
-        _p['icon'] = resolve_plugin_icon(_p.get('repository', ''))
+        _p['icon'] = resolve_plugin_icon(_p.get('repository', ''), _p.get('package_name', ''), _p.get('name', ''))
 
     # Portfolio calculations
     total_downloads = sum(p['downloads'] for p in yusuf_plugins)
@@ -452,7 +460,7 @@ try:
     base_date = datetime.fromisoformat(base_timestamp_str) if base_timestamp_str else None
     delta_days = (reference_date - base_date).days if base_date else 0
 
-    # 1. Advanced Econometric Modeling: Gini, Diversity, and Bayesian Reliability
+    # 1. Advanced Econometric Modeling: Gini, Theil, Palma, Pietra, Subgroup Decomposition, and Empirical Bayes
     downloads_list = [p['downloads'] for p in yusuf_plugins]
     n_plugins = len(downloads_list)
     sorted_dl = sorted(downloads_list)
@@ -465,10 +473,52 @@ try:
     shannon_entropy_portfolio = -sum(s * math.log(s) for s in shares)
     n_effective = math.exp(shannon_entropy_portfolio)
 
+    # Palma Ratio (Top 10% share / Bottom 40% share) & Pietra (Robin Hood) Index
+    top_10_count = max(1, int(math.ceil(0.10 * n_plugins)))
+    bottom_40_count = max(1, int(math.floor(0.40 * n_plugins)))
+    top_10_share = sum(sorted_dl[-top_10_count:]) / total_downloads if total_downloads > 0 else 0.0
+    bottom_40_share = sum(sorted_dl[:bottom_40_count]) / total_downloads if total_downloads > 0 else 0.0
+    palma_ratio = (top_10_share / bottom_40_share) if bottom_40_share > 0 else 0.0
+    pietra_index = 0.5 * sum(abs(s - (1.0 / n_plugins)) for s in shares) if n_plugins > 0 else 0.0
+
+    # Generalized Entropy (Theil T & Theil L)
+    mean_dl = total_downloads / n_plugins if n_plugins > 0 else 1.0
+    theil_t = sum((d / total_downloads) * math.log(max(1e-9, (d / mean_dl))) for d in downloads_list if d > 0)
+    theil_l = sum(math.log(max(1e-9, (mean_dl / d))) for d in downloads_list if d > 0) / n_plugins if n_plugins > 0 else 0.0
+
+    # Suite Subgroup Gini Decomposition
+    suite_groups = {}
+    for p in yusuf_plugins:
+        suite_groups.setdefault(p['category'], []).append(p['downloads'])
+
+    suite_decomp = {}
+    within_gini_weighted = 0.0
+    for cat_name, dl_list in suite_groups.items():
+        nj = len(dl_list)
+        dj_sum = sum(dl_list)
+        pj = nj / n_plugins
+        sj = dj_sum / total_downloads if total_downloads > 0 else 0.0
+        sorted_j = sorted(dl_list)
+        idx_sum_j = sum((k + 1) * d for k, d in enumerate(sorted_j))
+        gj_raw = ((2.0 * idx_sum_j) / (nj * dj_sum) - ((nj + 1.0) / nj)) if (nj > 0 and dj_sum > 0) else 0.0
+        gj_corr = (nj / (nj - 1.0)) * gj_raw if nj > 1 else gj_raw
+        within_gini_weighted += gj_corr * pj * sj
+        suite_decomp[cat_name] = {
+            'count': nj,
+            'downloads': dj_sum,
+            'share_pct': round(sj * 100, 1),
+            'sub_gini': round(gj_corr, 4)
+        }
+
+    within_gini_pct = round((within_gini_weighted / gini_corrected) * 100, 1) if gini_corrected > 0 else 0.0
+
+    # Empirical Bayes Hyperpriors (Two-Level Hierarchical Model)
     total_portfolio_votes = sum(p['votes_count'] for p in yusuf_plugins)
     prior_mean_rating = (sum(p['average_vote'] * p['votes_count'] for p in yusuf_plugins) / total_portfolio_votes) if total_portfolio_votes > 0 else 4.80
-    m_bayesian = 5.0
-    prior_var = 0.25
+    valid_ratings = [p['average_vote'] for p in yusuf_plugins if p['votes_count'] > 0]
+    rating_variance = (sum((r - prior_mean_rating) ** 2 for r in valid_ratings) / len(valid_ratings)) if len(valid_ratings) > 1 else 0.25
+    tau_sq = max(0.04, rating_variance - 0.05)
+    sigma_within_sq = 0.35
 
     # 2. Forensic Surveillance & Shannon Influx Entropy Engine
     H_MAX_ENTROPY = math.log2(5.0)  # 2.321928 bits
@@ -483,10 +533,16 @@ try:
         cur_dl = p['downloads']
         v_hist = p['avg_monthly_downloads']
 
-        # Bayesian Rating
-        z_weight = cur_votes / (cur_votes + m_bayesian)
-        r_bayes = z_weight * cur_avg + (1.0 - z_weight) * prior_mean_rating
-        cred_floor = max(1.0, r_bayes - 1.96 * math.sqrt(prior_var / (cur_votes + m_bayesian)))
+        # Hierarchical Empirical Bayes Rating with Dynamic Shrinkage Factor (b_i)
+        if cur_votes > 0:
+            b_i = (sigma_within_sq / cur_votes) / (tau_sq + (sigma_within_sq / cur_votes))
+            r_bayes = (1.0 - b_i) * cur_avg + b_i * prior_mean_rating
+            se_theta = math.sqrt(1.0 / ((1.0 / tau_sq) + (cur_votes / sigma_within_sq)))
+            cred_floor = max(1.0, r_bayes - 1.96 * se_theta)
+        else:
+            b_i = 1.0
+            r_bayes = prior_mean_rating
+            cred_floor = 1.0
 
         # Baseline Reconciliation
         base_data = baseline.get(name, {
@@ -958,6 +1014,7 @@ try:
         'summary': {
             'total_plugins': len(yusuf_plugins),
             'total_downloads': total_downloads,
+            'last_updated': reference_date.strftime('%b %d, %Y %H:%M UTC'),
             'community_hours_saved': round(total_hours_saved),
             'economic_value_usd': round(total_economic_val_usd),
             'overall_raw_rating': round(overall_rating, 2),
@@ -981,7 +1038,13 @@ try:
                 'herfindahl_index_hhi': round(hhi, 4),
                 'shannon_entropy': round(shannon_entropy_portfolio, 4),
                 'effective_plugin_count': round(n_effective, 2),
-                'prior_mean_rating': round(prior_mean_rating, 3)
+                'prior_mean_rating': round(prior_mean_rating, 3),
+                'palma_ratio': round(palma_ratio, 3),
+                'pietra_robin_hood_index': round(pietra_index, 4),
+                'theil_t_index': round(theil_t, 4),
+                'theil_l_index': round(theil_l, 4),
+                'suite_decomposition': suite_decomp,
+                'within_suite_inequality_pct': within_gini_pct
             },
             'critical_anomalies': critical_count,
             'warning_anomalies': warning_count,
@@ -1115,7 +1178,7 @@ try:
     <title>QGIS Plugin Portfolio Analytics & Governance Studio — Yusuf Eminoğlu</title>
     
     <!-- Comprehensive SEO Keywords & Metadata -->
-    <meta name="description" content="Enterprise analytics, telemetry, growth forecasting, and rating abuse forensic surveillance studio for Yusuf Eminoğlu's 24 production QGIS plugins across urban analytics, spatial statistics, CAD, and 3D GIS.">
+    <meta name="description" content="Enterprise analytics, telemetry, growth forecasting, and rating abuse forensic surveillance studio for Yusuf Eminoğlu's ##TOTAL_PLUGINS## production QGIS plugins across urban analytics, spatial statistics, CAD, and 3D GIS.">
     <meta name="keywords" content="QGIS, QGIS Plugins, Yusuf Eminoğlu, PlanX, Urban Analytics, Spatial Statistics, Space Syntax, GIS, Remote Sensing, Urban Planning, Cartography, PyQGIS, GeoPackage, Three.js, OpenStreetMap, Rating Governance, Forensic Telemetry, Open Source GIS, Python GIS">
     <meta name="author" content="Yusuf Eminoğlu">
     <meta name="robots" content="index, follow">
@@ -1125,14 +1188,14 @@ try:
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://yusufeminoglu.github.io/qgis-plugins-governance/">
     <meta property="og:title" content="QGIS Plugin Portfolio Analytics & Governance Studio — Yusuf Eminoğlu">
-    <meta property="og:description" content="Enterprise telemetry, adoption forecasting, and rating abuse forensic surveillance for 24 QGIS urban analytics plugins.">
+    <meta property="og:description" content="Enterprise telemetry, adoption forecasting, and rating abuse forensic surveillance for ##TOTAL_PLUGINS## QGIS urban analytics plugins.">
     <meta property="og:image" content="https://yusufeminoglu.github.io/qgis-plugins-governance/preview.png">
 
     <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://yusufeminoglu.github.io/qgis-plugins-governance/">
     <meta name="twitter:title" content="QGIS Plugin Portfolio Analytics & Governance Studio">
-    <meta name="twitter:description" content="Enterprise analytics, telemetry, and rating abuse forensic surveillance for 24 QGIS urban analytics plugins.">
+    <meta name="twitter:description" content="Enterprise analytics, telemetry, and rating abuse forensic surveillance for ##TOTAL_PLUGINS## QGIS urban analytics plugins.">
 
     <!-- JSON-LD Structured Data (Schema.org) -->
     <script type="application/ld+json">
@@ -1145,7 +1208,7 @@ try:
         "name": "Yusuf Eminoğlu",
         "url": "https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/"
       },
-      "description": "Enterprise analytics, telemetry, growth forecasting, and rating abuse forensic surveillance studio for 24 production QGIS plugins.",
+      "description": "Enterprise analytics, telemetry, growth forecasting, and rating abuse forensic surveillance studio for ##TOTAL_PLUGINS## production QGIS plugins.",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "Cross-platform",
       "offers": {
@@ -1194,26 +1257,32 @@ try:
         /* =========================================================================
            MASTER DESIGN SYSTEM & SEMANTIC TOKEN ARCHITECTURE
            ========================================================================= */
-        :root {
+        :root, [data-theme="obsidian"] {
             --bg-canvas: #070a10;
             --bg-canvas-subtle: #0b111e;
             --text-main: #f8fafc;
             --text-sub: #94a3b8;
             --text-muted: #64748b;
             --text-accent: #38bdf8;
+            --text-success: #34d399;
+            --text-warning: #fbbf24;
+            --text-danger: #fb7185;
 
             --panel-bg: rgba(16, 24, 40, 0.72);
-            --panel-bg-hover: rgba(20, 32, 54, 0.82);
+            --panel-bg-hover: rgba(20, 32, 54, 0.85);
             --panel-border: rgba(255, 255, 255, 0.08);
             --panel-border-hover: rgba(56, 189, 248, 0.35);
-            --panel-specular: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.00) 100%);
-            --panel-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.05);
-            --panel-shadow-hover: 0 20px 40px -8px rgba(0, 0, 0, 0.7), 0 0 24px -2px rgba(56, 189, 248, 0.12);
+            --panel-specular: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.00) 100%);
+            --panel-shadow: 0 12px 35px -5px rgba(0, 0, 0, 0.60), 0 0 0 1px rgba(255, 255, 255, 0.06), inset 0 1px 1px 0 rgba(255, 255, 255, 0.10);
+            --panel-shadow-hover: 0 20px 45px -8px rgba(0, 0, 0, 0.75), 0 0 24px -2px rgba(56, 189, 248, 0.15), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
 
-            --nested-bg: rgba(7, 10, 16, 0.75);
+            --nested-bg: rgba(7, 10, 16, 0.80);
             --nested-border: rgba(255, 255, 255, 0.06);
+            --nested-specular: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.00) 100%);
+
             --input-bg: #0b111e;
             --input-border: rgba(255, 255, 255, 0.12);
+            --modal-bg: rgba(11, 17, 30, 0.95);
 
             --font-heading: 'Plus Jakarta Sans', sans-serif;
             --font-body: 'Inter', sans-serif;
@@ -1225,21 +1294,27 @@ try:
             --bg-canvas-subtle: #e2e8f0;
             --text-main: #0f172a;
             --text-sub: #334155;
-            --text-muted: #475569;
+            --text-muted: #64748b;
             --text-accent: #0284c7;
+            --text-success: #059669;
+            --text-warning: #d97706;
+            --text-danger: #e11d48;
 
-            --panel-bg: rgba(255, 255, 255, 0.88);
+            --panel-bg: rgba(255, 255, 255, 0.92);
             --panel-bg-hover: rgba(255, 255, 255, 0.98);
-            --panel-border: rgba(15, 23, 42, 0.08);
+            --panel-border: rgba(15, 23, 42, 0.09);
             --panel-border-hover: rgba(2, 132, 199, 0.45);
-            --panel-specular: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.4) 100%);
-            --panel-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.04);
-            --panel-shadow-hover: 0 12px 30px -4px rgba(15, 23, 42, 0.12), 0 0 20px 0 rgba(2, 132, 199, 0.15);
+            --panel-specular: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.4) 100%);
+            --panel-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.06), 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(15, 23, 42, 0.06);
+            --panel-shadow-hover: 0 14px 35px -6px rgba(15, 23, 42, 0.12), 0 0 20px 0 rgba(2, 132, 199, 0.14), 0 0 0 1px rgba(2, 132, 199, 0.25);
 
-            --nested-bg: rgba(248, 250, 252, 0.85);
+            --nested-bg: rgba(248, 250, 252, 0.90);
             --nested-border: rgba(15, 23, 42, 0.08);
+            --nested-specular: linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.15) 100%);
+
             --input-bg: #ffffff;
-            --input-border: rgba(15, 23, 42, 0.16);
+            --input-border: rgba(15, 23, 42, 0.18);
+            --modal-bg: rgba(255, 255, 255, 0.98);
         }
 
         body {
@@ -1254,7 +1329,7 @@ try:
             font-family: var(--font-heading);
             letter-spacing: -0.028em;
         }
-        .font-mono {
+        .font-mono, .metric-value, table td {
             font-family: var(--font-mono);
             font-feature-settings: "tnum" 1, "zero" 1, "cv05" 1;
         }
@@ -1280,11 +1355,12 @@ try:
             padding-right: clamp(1rem, 2.5vw, 2.5rem);
         }
 
+        /* 4-Tier Elevation Glassmorphism System */
         .glass-panel {
             position: relative;
             background: var(--panel-bg);
-            backdrop-filter: blur(24px) saturate(180%);
-            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            backdrop-filter: blur(24px) saturate(190%) contrast(102%);
+            -webkit-backdrop-filter: blur(24px) saturate(190%) contrast(102%);
             border: 1px solid var(--panel-border);
             box-shadow: var(--panel-shadow);
             border-radius: 1.5rem;
@@ -1307,6 +1383,23 @@ try:
             border-color: var(--panel-border-hover);
             box-shadow: var(--panel-shadow-hover);
             background: var(--panel-bg-hover);
+        }
+
+        .glass-card-nested {
+            position: relative;
+            background: var(--nested-bg);
+            border: 1px solid var(--nested-border);
+            border-radius: 1rem;
+            transition: all 0.22s ease;
+        }
+        .glass-card-nested::before {
+            content: '';
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 1px;
+            background: var(--nested-specular);
+            border-radius: 1rem 1rem 0 0;
+            pointer-events: none;
         }
 
         .glass-panel-danger {
@@ -1342,13 +1435,77 @@ try:
             transform: translateY(-1px);
         }
 
-        @keyframes pulse-ring {
+        /* Standardized Status Pills with Live Radar Pulse Beacons */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.2rem 0.55rem;
+            border-radius: 9999px;
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            line-height: 1;
+            border-width: 1px;
+            white-space: nowrap;
+        }
+        .status-pill-dot {
+            width: 0.4375rem;
+            height: 0.4375rem;
+            border-radius: 9999px;
+            flex-shrink: 0;
+        }
+        .status-pill-critical {
+            background: rgba(244, 63, 94, 0.14);
+            color: #f43f5e;
+            border-color: rgba(244, 63, 94, 0.35);
+        }
+        .status-pill-critical .status-pill-dot {
+            background: #f43f5e;
+            box-shadow: 0 0 8px rgba(244, 63, 94, 0.8);
+            animation: radar-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .status-pill-warning {
+            background: rgba(245, 158, 11, 0.14);
+            color: #f59e0b;
+            border-color: rgba(245, 158, 11, 0.35);
+        }
+        .status-pill-warning .status-pill-dot {
+            background: #f59e0b;
+        }
+        .status-pill-success {
+            background: rgba(16, 185, 129, 0.14);
+            color: #10b981;
+            border-color: rgba(16, 185, 129, 0.35);
+        }
+        .status-pill-success .status-pill-dot {
+            background: #10b981;
+        }
+        .status-pill-info {
+            background: rgba(56, 189, 248, 0.14);
+            color: #38bdf8;
+            border-color: rgba(56, 189, 248, 0.35);
+        }
+        .status-pill-info .status-pill-dot {
+            background: #38bdf8;
+        }
+
+        @keyframes radar-pulse {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(244, 63, 94, 0); }
+            70% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(244, 63, 94, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
         }
         .pulse-live {
-            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            animation: radar-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* Fluid Tab Slide-Up Animation */
+        .tab-pane {
+            animation: tabSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes tabSlideUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -1357,18 +1514,27 @@ try:
         ::-webkit-scrollbar-thumb:hover { background: var(--text-accent); }
 
         kbd {
+            display: inline-block;
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 4px;
-            padding: 1px 5px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.22);
+            border-radius: 5px;
+            padding: 1px 6px;
             font-size: 10px;
             font-family: var(--font-mono);
             color: var(--text-sub);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            transition: all 0.1s ease;
         }
         [data-theme="alabaster"] kbd {
             background: rgba(15, 23, 42, 0.06);
-            border-color: rgba(15, 23, 42, 0.14);
+            border: 1px solid rgba(15, 23, 42, 0.14);
+            border-bottom: 2px solid rgba(15, 23, 42, 0.22);
             color: var(--text-sub);
+        }
+        kbd:active {
+            transform: translateY(1px);
+            border-bottom-width: 1px;
         }
 
         @media print {
@@ -1487,7 +1653,7 @@ try:
                 <div class="p-4 rounded-2xl bg-obsidian-950/80 border border-white/5 flex items-center justify-between">
                     <div>
                         <span class="text-[10px] text-slate-400 uppercase font-mono font-semibold block">QGIS 4 & Qt6 Compatibility</span>
-                        <span class="text-xl font-bold font-mono text-indigo-400">24 / 24 Ready</span>
+                        <span class="text-xl font-bold font-mono text-indigo-400">##TOTAL_PLUGINS## / ##TOTAL_PLUGINS## Ready</span>
                     </div>
                     <div class="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-sm border border-indigo-500/20">
                         <i class="fa-solid fa-cube"></i>
@@ -1505,29 +1671,61 @@ try:
             </div>
 
             <!-- Econometric Summary Ribbon -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8" id="econometric-ribbon">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" id="econometric-ribbon">
                 <div class="p-4 rounded-2xl bg-obsidian-950/80 border border-white/5 flex items-center justify-between">
                     <div>
-                        <span class="text-[10px] text-slate-400 uppercase font-mono font-semibold block">Gini Inequality Coefficient</span>
-                        <span class="text-lg font-bold font-mono text-white" id="eco-gini-val">0.4676 (Corrected)</span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] text-slate-400 uppercase font-mono font-semibold block">Gini Inequality (G*)</span>
+                            <span title="Finite-sample corrected Gini coefficient measuring ecosystem concentration. Subgroup decomposition measures within-suite vs between-suite inequality." class="cursor-help text-slate-500 hover:text-cyan-400"><i class="fa-solid fa-circle-info text-[10px]"></i></span>
+                        </div>
+                        <span class="text-lg font-bold font-mono text-white" id="eco-gini-val">0.4676</span>
                     </div>
-                    <span class="text-xs px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-bold">Optimal Pareto</span>
+                    <div class="text-right">
+                        <span class="text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-bold">Optimal Pareto</span>
+                        <span class="block text-[9px] text-slate-500 font-mono mt-0.5" id="eco-within-gini">Within: 34.2%</span>
+                    </div>
                 </div>
 
                 <div class="p-4 rounded-2xl bg-obsidian-950/80 border border-white/5 flex items-center justify-between">
                     <div>
-                        <span class="text-[10px] text-slate-400 uppercase font-mono font-semibold block">Portfolio Entropy Diversity (N_eff)</span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] text-slate-400 uppercase font-mono font-semibold block">Palma Ratio & Pietra</span>
+                            <span title="Palma Ratio = Top 10% download share / Bottom 40% download share. Pietra Index = exact percentage to redistribute for uniform downloads." class="cursor-help text-slate-500 hover:text-cyan-400"><i class="fa-solid fa-circle-info text-[10px]"></i></span>
+                        </div>
+                        <span class="text-lg font-bold font-mono text-indigo-400" id="eco-palma-val">2.84x</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[11px] px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono font-bold">Balanced</span>
+                        <span class="block text-[9px] text-slate-500 font-mono mt-0.5" id="eco-pietra-val">Pietra: 0.33</span>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-obsidian-950/80 border border-white/5 flex items-center justify-between">
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] text-slate-400 uppercase font-mono font-semibold block">Theil & Entropy (N_eff)</span>
+                            <span title="Generalized Theil T entropy index and exponential Shannon diversity (effective species richness)." class="cursor-help text-slate-500 hover:text-cyan-400"><i class="fa-solid fa-circle-info text-[10px]"></i></span>
+                        </div>
                         <span class="text-lg font-bold font-mono text-cyan-400" id="eco-entropy-val">14.8 Plugins</span>
                     </div>
-                    <span class="text-xs px-2.5 py-1 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono font-bold">High Multi-Pillar</span>
+                    <div class="text-right">
+                        <span class="text-[11px] px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono font-bold">Multi-Pillar</span>
+                        <span class="block text-[9px] text-slate-500 font-mono mt-0.5" id="eco-theil-val">Theil T: 0.38</span>
+                    </div>
                 </div>
 
                 <div class="p-4 rounded-2xl bg-obsidian-950/80 border border-white/5 flex items-center justify-between">
                     <div>
-                        <span class="text-[10px] text-slate-400 uppercase font-mono font-semibold block">Empirical Bayes Rating Prior (μ₀)</span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] text-slate-400 uppercase font-mono font-semibold block">Hierarchical Bayes (μ₀)</span>
+                            <span title="Two-Level Empirical Bayes hyperprior with sample-variance shrinkage B_i and 95% credibility intervals." class="cursor-help text-slate-500 hover:text-amber-400"><i class="fa-solid fa-circle-info text-[10px]"></i></span>
+                        </div>
                         <span class="text-lg font-bold font-mono text-amber-400" id="eco-prior-val">4.84 ★</span>
                     </div>
-                    <span class="text-xs px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono font-bold">m = 5.0 Weight</span>
+                    <div class="text-right">
+                        <span class="text-[11px] px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono font-bold">Dynamic B_i</span>
+                        <span class="block text-[9px] text-slate-500 font-mono mt-0.5">CredFloor: 95%</span>
+                    </div>
                 </div>
             </div>
 
@@ -1569,12 +1767,17 @@ try:
             <!-- BCG Growth-Share Quadrant Scatter Matrix & Suite Radar -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 <div class="p-6 rounded-3xl glass-panel">
-                    <div class="flex items-center justify-between mb-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
                         <div>
                             <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-shapes text-cyan-400 mr-2"></i>BCG Adoption & Velocity Matrix</h2>
                             <p class="text-xs text-slate-400">Downloads (X) vs Monthly Velocity (Y) across portfolio</p>
                         </div>
-                        <span class="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">Scatter Matrix</span>
+                        <div class="flex items-center gap-1.5 font-mono text-[10px]">
+                            <button onclick="setBcgSuiteFilter('all')" id="bcg-btn-all" class="px-2 py-0.5 rounded bg-cyan-600 text-white font-bold">All</button>
+                            <button onclick="setBcgSuiteFilter('PlanX Suite')" id="bcg-btn-planx" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">PlanX</button>
+                            <button onclick="setBcgSuiteFilter('02 Suite')" id="bcg-btn-02" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">02 Suite</button>
+                            <button onclick="setBcgSuiteFilter('Standalone Plugins')" id="bcg-btn-std" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">Standalone</button>
+                        </div>
                     </div>
                     <div id="bcg-scatter-chart" class="w-full h-80"></div>
                 </div>
@@ -1937,7 +2140,7 @@ try:
                     <div class="flex items-center gap-1.5 flex-wrap" id="tag-filter-chips">
                         <span class="text-[11px] text-slate-500 font-mono font-semibold mr-1">Tags:</span>
                     </div>
-                    <span class="text-[10px] text-slate-400 font-mono" id="matching-plugins-count">24 plugins matching</span>
+                    <span class="text-[10px] text-slate-400 font-mono" id="matching-plugins-count">##TOTAL_PLUGINS## plugins matching</span>
                 </div>
             </div>
 
@@ -2047,7 +2250,7 @@ try:
 
                 <!-- Quick Filter Presets -->
                 <div class="flex flex-wrap gap-2 pt-4 pb-2 border-b border-white/5 font-heading">
-                    <button onclick="applyTablePreset('all')" id="tbl-preset-all" class="px-3 py-1 rounded-xl text-xs font-bold bg-cyan-600 text-white">All (24)</button>
+                    <button onclick="applyTablePreset('all')" id="tbl-preset-all" class="px-3 py-1 rounded-xl text-xs font-bold bg-cyan-600 text-white">All (##TOTAL_PLUGINS##)</button>
                     <button onclick="applyTablePreset('top5')" id="tbl-preset-top5" class="px-3 py-1 rounded-xl text-xs font-bold bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">🔥 Top 5 Volume</button>
                     <button onclick="applyTablePreset('highrated')" id="tbl-preset-rated" class="px-3 py-1 rounded-xl text-xs font-bold bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">⭐ High Rated (≥4.5★)</button>
                     <button onclick="applyTablePreset('velocity')" id="tbl-preset-vel" class="px-3 py-1 rounded-xl text-xs font-bold bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">🚀 High Velocity (≥500/mo)</button>
@@ -2061,17 +2264,21 @@ try:
                                 <th class="py-3.5 px-4 font-bold cursor-pointer hover:text-white transition-colors" onclick="sortTable(0)">Plugin Name <i class="fa-solid fa-sort ml-1"></i></th>
                                 <th class="py-3.5 px-4 font-bold text-center cursor-pointer hover:text-white transition-colors" onclick="sortTable(1)">Suite <i class="fa-solid fa-sort ml-1"></i></th>
                                 <th class="py-3.5 px-4 font-bold text-center cursor-pointer hover:text-white transition-colors" onclick="sortTable(2)">Published <i class="fa-solid fa-sort ml-1"></i></th>
-                                <th class="py-3.5 px-4 font-bold text-right cursor-pointer hover:text-white transition-colors" onclick="sortTable(4)">Downloads <i class="fa-solid fa-sort ml-1"></i></th>
-                                <th class="py-3.5 px-4 font-bold text-right cursor-pointer hover:text-white transition-colors" onclick="sortTable(5)">Monthly Velocity <i class="fa-solid fa-sort ml-1"></i></th>
-                                <th class="py-3.5 px-4 font-bold text-center">Bayesian ★</th>
+                                <th class="py-3.5 px-4 font-bold text-right cursor-pointer hover:text-white transition-colors" onclick="sortTable(3)">Downloads <i class="fa-solid fa-sort ml-1"></i></th>
+                                <th class="py-3.5 px-4 font-bold text-right cursor-pointer hover:text-white transition-colors" onclick="sortTable(4)">Monthly Velocity <i class="fa-solid fa-sort ml-1"></i></th>
+                                <th class="py-3.5 px-4 font-bold text-center cursor-pointer hover:text-white transition-colors" onclick="sortTable(5)">Bayesian ★ <i class="fa-solid fa-sort ml-1"></i></th>
                                 <th class="py-3.5 px-4 font-bold text-center">Kinetic Regime</th>
                                 <th class="py-3.5 px-4 font-bold text-center">Security Status</th>
+                                <th class="py-3.5 px-4 font-bold text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="tab-table-body" class="divide-y divide-white/5">
                             <!-- Filled dynamically by JS -->
                         </tbody>
                     </table>
+                </div>
+                <div id="table-pagination-container" class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-mono text-slate-400">
+                    <!-- Dynamic Pagination -->
                 </div>
             </div>
         </div>
@@ -2360,7 +2567,7 @@ try:
         const appData = ##DATA_INJECTION##;
     </script>
 
-    <!-- Canvas Constellation Animation -->
+    <!-- Canvas Constellation Animation (Optimized with Visibility & Reduced Motion Checks) -->
     <script>
         const canvas = document.getElementById('bg-canvas');
         const ctx = canvas.getContext('2d');
@@ -2370,6 +2577,8 @@ try:
 
         const particles = [];
         const maxParticles = 65;
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        let isConstellationActive = false;
 
         class Particle {
             constructor() {
@@ -2400,6 +2609,11 @@ try:
         }
 
         function animate() {
+            if (prefersReducedMotion || document.hidden) {
+                isConstellationActive = false;
+                return;
+            }
+            isConstellationActive = true;
             ctx.clearRect(0, 0, width, height);
             for (let i = 0; i < particles.length; i++) {
                 particles[i].update();
@@ -2407,7 +2621,13 @@ try:
             }
             requestAnimationFrame(animate);
         }
-        animate();
+        if (!prefersReducedMotion) animate();
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && !prefersReducedMotion && !isConstellationActive) {
+                animate();
+            }
+        });
 
         window.addEventListener('resize', () => {
             width = canvas.width = window.innerWidth;
@@ -2626,7 +2846,7 @@ Author: Yusuf Eminoğlu | Audit Timestamp: ${appData.summary.last_updated}
             } else if (format === 'linkedin') {
                 text = `🚀 Excited to share an official milestone update for our QGIS Urban Analytics & Spatial Planning Ecosystem!
 
-Our 24 production QGIS plugins have officially surpassed ${appData.summary.total_downloads.toLocaleString()} cumulative downloads with an active adoption velocity of ~${appData.summary.active_period_monthly_avg.toLocaleString()} downloads/month across 140+ countries.
+Our ${appData.summary.total_plugins} production QGIS plugins have officially surpassed ${appData.summary.total_downloads.toLocaleString()} cumulative downloads with an active adoption velocity of ~${appData.summary.active_period_monthly_avg.toLocaleString()} downloads/month across 140+ countries.
 
 🌟 Top Ecosystem Highlights:
 • Crown Jewel: ${leader.name} leading with ${leader.downloads.toLocaleString()} downloads.
@@ -2641,7 +2861,7 @@ Thank you to the global QGIS & OSGeo community! 🌍
 
 #QGIS #GIS #UrbanPlanning #SpatialAnalytics #OpenSource #PyQGIS #Geospatial`;
             } else if (format === 'twitter') {
-                text = `1/4 🌍 Huge milestone for our open-source GIS tools: The Yusuf Eminoğlu QGIS Plugin Ecosystem has reached ${appData.summary.total_downloads.toLocaleString()} total downloads across 24 plugins!
+                text = `1/4 🌍 Huge milestone for our open-source GIS tools: The Yusuf Eminoğlu QGIS Plugin Ecosystem has reached ${appData.summary.total_downloads.toLocaleString()} total downloads across ${appData.summary.total_plugins} plugins!
 
 2/4 📈 Adoption Velocity: Running at ~${appData.summary.active_period_monthly_avg.toLocaleString()} downloads/month.
 👑 Flagship: ${leader.name} (${leader.downloads.toLocaleString()} DL)
@@ -2658,12 +2878,12 @@ https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/
 
 Hey r/QGIS community!
 
-Wanted to share an update on our 24 spatial planning & urban analytics plugins (including PlanX suite, CAD toolset, and 02 geospatial tools).
+Wanted to share an update on our ${appData.summary.total_plugins} spatial planning & urban analytics plugins (including PlanX suite, CAD toolset, and 02 geospatial tools).
 
 ### 📊 Portfolio Telemetry Overview
 | Metric | Value |
 |---|---|
-| Total Plugins | 24 (QGIS 3.x & QGIS 4.0 Ready) |
+| Total Plugins | ${appData.summary.total_plugins} (QGIS 3.x & QGIS 4.0 Ready) |
 | Cumulative Downloads | ${appData.summary.total_downloads.toLocaleString()} |
 | Current Velocity | ~${appData.summary.active_period_monthly_avg.toLocaleString()} downloads/mo |
 | Portfolio Gini Score | ${appData.summary.econometrics.gini_corrected} |
@@ -2780,7 +3000,16 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             animateValue('kpi-velocity-val', 0, Math.round(monthlyAvgSpeed));
             animateValue('impact-hours-saved', 0, appData.summary.community_hours_saved || 34800, 800, '', ' hrs');
             animateValue('impact-econ-val', 0, Math.round((appData.summary.economic_value_usd || 1740000) / 1000), 800, '$', 'k+ USD');
-            animateValue('kpi-velocity-val', 0, monthlyAvgSpeed);
+
+            // Econometrics Ribbon Dynamic Updates
+            const eco = appData.summary.econometrics || {};
+            if (document.getElementById('eco-gini-val')) document.getElementById('eco-gini-val').innerText = eco.gini_corrected || '0.4676';
+            if (document.getElementById('eco-within-gini')) document.getElementById('eco-within-gini').innerText = `Within: ${eco.within_suite_inequality_pct || 34.2}%`;
+            if (document.getElementById('eco-palma-val')) document.getElementById('eco-palma-val').innerText = `${eco.palma_ratio || 2.84}x`;
+            if (document.getElementById('eco-pietra-val')) document.getElementById('eco-pietra-val').innerText = `Pietra: ${eco.pietra_robin_hood_index || 0.33}`;
+            if (document.getElementById('eco-entropy-val')) document.getElementById('eco-entropy-val').innerText = `${eco.effective_plugin_count || 14.8} Plugins`;
+            if (document.getElementById('eco-theil-val')) document.getElementById('eco-theil-val').innerText = `Theil T: ${eco.theil_t_index || 0.38}`;
+            if (document.getElementById('eco-prior-val')) document.getElementById('eco-prior-val').innerText = `${eco.prior_mean_rating || 4.84} ★`;
 
             const planxPercent = ((planxDownloads / appData.summary.total_downloads) * 100).toFixed(1);
             document.getElementById('planx-share-text').innerHTML = `${planxDownloads.toLocaleString()} <strong>(${planxPercent}%)</strong>`;
@@ -3920,6 +4149,7 @@ COMMIT;
 
             const dlCount = p.downloads >= 1000 ? (p.downloads / 1000).toFixed(1) + 'k' : p.downloads;
             const cleanName = encodeURIComponent(p.name);
+            const hubUrl = `https://plugins.qgis.org/plugins/${p.package_name || p.name}/`;
             
             const badgeDL = `https://img.shields.io/badge/${cleanName}-${dlCount}%20Downloads-0284c7?style=flat-square&logo=qgis`;
             const badgeRating = `https://img.shields.io/badge/Rating-${p.average_vote.toFixed(1)}%20★-amber?style=flat-square`;
@@ -3936,8 +4166,8 @@ COMMIT;
                 `;
             }
 
-            const mdSnippet = `[![${p.name} Downloads](${badgeDL})](${p.url}) [![Rating](${badgeRating})](${p.url}) [![QGIS 4 Ready](${badgeQgis})](https://yusufeminoglu.github.io/qgis-plugins-governance/)`;
-            const htmlSnippet = `<a href="${p.url}"><img src="${badgeDL}" alt="${p.name} Downloads" /></a> <a href="${p.url}"><img src="${badgeRating}" alt="Rating" /></a>`;
+            const mdSnippet = `[![${p.name} Downloads](${badgeDL})](${hubUrl}) [![Rating](${badgeRating})](${hubUrl}) [![QGIS 4 Ready](${badgeQgis})](https://yusufeminoglu.github.io/qgis-plugins-governance/)`;
+            const htmlSnippet = `<a href="${hubUrl}"><img src="${badgeDL}" alt="${p.name} Downloads" /></a> <a href="${hubUrl}"><img src="${badgeRating}" alt="Rating" /></a>`;
 
             const mdBox = document.getElementById('badge-code-markdown');
             const htmlBox = document.getElementById('badge-code-html');
@@ -3955,67 +4185,160 @@ COMMIT;
         }
 
         // =============================================================
-        // MASTER TABLE & EXPLORER RENDERING
+        // MASTER TABLE & EXPLORER RENDERING (HIGH-PERFORMANCE DATA-DRIVEN)
         // =============================================================
-        const tbody = document.getElementById('tab-table-body');
-        function renderTableData(filterMode = 'all') {
-            tbody.innerHTML = '';
+        let tableCurrentPage = 1;
+        let tablePageSize = 10;
+        let currentTablePreset = 'all';
+        let currentTableQuery = '';
+        let tableSortCol = 'downloads';
+        let tableSortAsc = false;
 
+        function copyPluginInstallCommand(pkgName) {
+            const cmd = `# In QGIS Python Console:\nimport pyplugin_installer\npyplugin_installer.instance().installPlugin("${pkgName}")`;
+            navigator.clipboard.writeText(cmd).then(() => {
+                showToast(`QGIS Python installer code for '${pkgName}' copied!`);
+            });
+        }
+
+        function getFilteredTableData() {
             let list = [...appData.plugins];
-            if (filterMode === 'top5') {
-                list = list.slice(0, 5);
-            } else if (filterMode === 'highrated') {
+            if (currentTablePreset === 'top5') {
+                list = list.sort((a,b) => b.downloads - a.downloads).slice(0, 5);
+            } else if (currentTablePreset === 'highrated') {
                 list = list.filter(p => p.average_vote >= 4.5);
-            } else if (filterMode === 'velocity') {
+            } else if (currentTablePreset === 'velocity') {
                 list = list.filter(p => p.avg_monthly_downloads >= 500);
-            } else if (filterMode === 'alerts') {
+            } else if (currentTablePreset === 'alerts') {
                 const raidNames = appData.anomalies.filter(a => a.severity === 'critical' || a.severity === 'high').map(a => a.name);
                 list = list.filter(p => raidNames.includes(p.name));
             }
 
-            list.forEach(item => {
+            if (currentTableQuery) {
+                const q = currentTableQuery.toLowerCase();
+                list = list.filter(p => 
+                    p.name.toLowerCase().includes(q) || 
+                    p.category.toLowerCase().includes(q) || 
+                    (p.package_name && p.package_name.toLowerCase().includes(q))
+                );
+            }
+
+            list.sort((a, b) => {
+                let vA = a[tableSortCol];
+                let vB = b[tableSortCol];
+                if (typeof vA === 'string') {
+                    return tableSortAsc ? vA.localeCompare(vB) : vB.localeCompare(vA);
+                }
+                return tableSortAsc ? ((vA || 0) - (vB || 0)) : ((vB || 0) - (vA || 0));
+            });
+
+            return list;
+        }
+
+        function renderTableData(presetMode) {
+            if (presetMode !== undefined) {
+                currentTablePreset = presetMode;
+                tableCurrentPage = 1;
+            }
+            const tbody = document.getElementById('tab-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const list = getFilteredTableData();
+            const totalCount = list.length;
+            const totalPages = Math.max(1, Math.ceil(totalCount / tablePageSize));
+            if (tableCurrentPage > totalPages) tableCurrentPage = totalPages;
+
+            const startIdx = (tableCurrentPage - 1) * tablePageSize;
+            const pagedList = tablePageSize === -1 ? list : list.slice(startIdx, startIdx + tablePageSize);
+
+            pagedList.forEach(item => {
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-obsidian-850/60 transition-colors border-b border-white/5 text-xs";
+                tr.className = "hover:bg-cyan-500/5 transition-colors border-b border-white/5 text-xs group";
 
                 let catBadge = '';
                 if (item.category === 'PlanX Suite') {
-                    catBadge = '<span class="px-2.5 py-0.5 rounded-md bg-indigo-500/15 text-indigo-400 font-semibold text-[10px] border border-indigo-500/20 font-heading">PlanX Suite</span>';
+                    catBadge = '<span class="status-pill status-pill-info font-heading">PlanX Suite</span>';
                 } else if (item.category === '02 Suite') {
-                    catBadge = '<span class="px-2.5 py-0.5 rounded-md bg-cyan-500/15 text-cyan-400 font-semibold text-[10px] border border-cyan-500/20 font-heading">02 Suite</span>';
+                    catBadge = '<span class="status-pill status-pill-info font-heading">02 Suite</span>';
                 } else {
-                    catBadge = '<span class="px-2.5 py-0.5 rounded-md bg-slate-500/15 text-slate-400 font-semibold text-[10px] border border-slate-500/20 font-heading">Standalone</span>';
+                    catBadge = '<span class="status-pill font-mono bg-slate-500/10 text-slate-400 border-slate-500/20 font-heading">Standalone</span>';
                 }
 
                 const audit = appData.anomalies.find(a => a.name === item.name);
                 let statusBadge = '<span class="text-slate-500 text-[10px] font-mono">Normal</span>';
                 if (audit && audit.severity === 'critical') {
-                    statusBadge = '<span class="px-2.5 py-0.5 rounded-md bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold text-[9px] font-mono pulse-live"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Raid Alert</span>';
+                    statusBadge = '<span class="status-pill status-pill-critical"><span class="status-pill-dot"></span>Raid Alert</span>';
                 } else if (audit && audit.severity === 'high') {
-                    statusBadge = '<span class="px-2.5 py-0.5 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-[9px] font-mono">Watch</span>';
+                    statusBadge = '<span class="status-pill status-pill-warning"><span class="status-pill-dot"></span>Watch</span>';
                 }
 
                 let honorsHtml = '';
                 (item.honors || []).forEach(h => {
-                    honorsHtml += `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-${h.color}-500/10 text-${h.color}-400 text-[9px] font-bold border border-${h.color}-500/20 font-mono"><i class="fa-solid ${h.icon}"></i> ${h.badge}</span> `;
+                    honorsHtml += `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-${h.color}-500/10 text-${h.color}-400 text-[9px] font-bold border border-${h.color}-500/20 font-mono"><i class="fa-solid ${h.icon}"></i> ${h.badge}</span> `;
                 });
+
+                const iconImg = item.icon ? `<img src="${item.icon}" class="w-5 h-5 rounded-md object-contain p-0.5 border border-white/10 bg-obsidian-950 flex-shrink-0" alt=""/>` : '';
+                const pkg = item.package_name || item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
                 tr.innerHTML = `
                     <td class="py-3.5 px-4 font-semibold font-heading">
-                        <div>${item.name}</div>
-                        <div class="mt-1">${honorsHtml}</div>
+                        <div class="flex items-center gap-2.5">
+                            ${iconImg}
+                            <div>
+                                <div class="group-hover:text-cyan-400 transition-colors">${item.name}</div>
+                                <div class="mt-0.5">${honorsHtml}</div>
+                            </div>
+                        </div>
                     </td>
                     <td class="py-3.5 px-4 text-center">${catBadge}</td>
                     <td class="py-3.5 px-4 text-center text-slate-400 font-mono">${item.create_date}</td>
-                    <td class="py-3.5 px-4 text-right font-bold font-mono">${item.downloads.toLocaleString()}</td>
+                    <td class="py-3.5 px-4 text-right font-bold font-mono text-white">${item.downloads.toLocaleString()}</td>
                     <td class="py-3.5 px-4 text-right text-cyan-400 font-semibold font-mono">${Math.round(item.avg_monthly_downloads).toLocaleString()}/mo</td>
-                    <td class="py-3.5 px-4 text-center font-mono font-bold text-amber-400">${item.bayesian_rating.toFixed(2)} ★</td>
+                    <td class="py-3.5 px-4 text-center font-mono font-bold text-amber-400">${item.bayesian_rating.toFixed(2)} ★ <span class="text-[9px] text-slate-500 font-normal">(${item.votes_count})</span></td>
                     <td class="py-3.5 px-4 text-center">
                         <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-${item.kinetic_badge}-500/15 text-${item.kinetic_badge}-400 border border-${item.kinetic_badge}-500/20">${item.kinetic_regime}</span>
                     </td>
                     <td class="py-3.5 px-4 text-center">${statusBadge}</td>
+                    <td class="py-3.5 px-4 text-right">
+                        <div class="flex items-center justify-end gap-1.5">
+                            <button onclick="copyPluginInstallCommand('${pkg}')" title="Copy QGIS Python console install code" class="p-1.5 rounded-lg bg-obsidian-900 hover:bg-cyan-600 text-slate-400 hover:text-white border border-white/5 transition-all">
+                                <i class="fa-solid fa-terminal text-[10px]"></i>
+                            </button>
+                            <a href="https://plugins.qgis.org/plugins/${pkg}/" target="_blank" title="Official QGIS Hub Page" class="p-1.5 rounded-lg bg-obsidian-900 hover:bg-cyan-600 text-slate-400 hover:text-white border border-white/5 transition-all">
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            </a>
+                        </div>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
+
+            renderTablePagination(totalCount, tableCurrentPage, totalPages);
+        }
+
+        function renderTablePagination(totalCount, currentPage, totalPages) {
+            const container = document.getElementById('table-pagination-container');
+            if (!container) return;
+
+            const startNum = totalCount === 0 ? 0 : (currentPage - 1) * tablePageSize + 1;
+            const endNum = Math.min(currentPage * tablePageSize, totalCount);
+
+            container.innerHTML = `
+                <div>
+                    Showing <strong>${startNum}–${endNum}</strong> of <strong>${totalCount}</strong> plugins
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="changeTablePage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled class="opacity-30 cursor-not-allowed px-3 py-1 rounded-lg bg-obsidian-900 border border-white/5"' : 'class="px-3 py-1 rounded-lg bg-obsidian-900 hover:bg-cyan-600 text-white border border-white/5 transition-all"'}>Previous</button>
+                    <span>Page <strong>${currentPage}</strong> of <strong>${totalPages}</strong></span>
+                    <button onclick="changeTablePage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled class="opacity-30 cursor-not-allowed px-3 py-1 rounded-lg bg-obsidian-900 border border-white/5"' : 'class="px-3 py-1 rounded-lg bg-obsidian-900 hover:bg-cyan-600 text-white border border-white/5 transition-all"'}>Next</button>
+                </div>
+            `;
+        }
+
+        function changeTablePage(newPage) {
+            tableCurrentPage = newPage;
+            renderTableData();
         }
 
         function applyTablePreset(mode) {
@@ -4027,210 +4350,23 @@ COMMIT;
             renderTableData(mode);
         }
 
-        function renderTagFilterChips() {
-            const container = document.getElementById('tag-filter-chips');
-            container.innerHTML = '<span class="text-[11px] text-slate-500 font-mono font-semibold mr-1">Tags:</span>';
-
-            const topTags = appData.summary.top_tags.slice(0, 7);
-            topTags.forEach(t => {
-                const chip = document.createElement('button');
-                chip.className = "px-2.5 py-1 rounded-lg text-[10px] font-mono font-semibold bg-obsidian-900 text-slate-400 hover:text-white border border-white/5 transition-all";
-                chip.setAttribute('data-tag', t.tag);
-                chip.onclick = () => toggleTagFilter(t.tag, chip);
-                chip.innerText = `${t.tag} (${t.count})`;
-                container.appendChild(chip);
-            });
-        }
-
-        let activeTags = [];
-        function toggleTagFilter(tag, chipEl) {
-            if (activeTags.includes(tag)) {
-                activeTags = activeTags.filter(t => t !== tag);
-                chipEl.className = "px-2.5 py-1 rounded-lg text-[10px] font-mono font-semibold bg-obsidian-900 text-slate-400 hover:text-white border border-white/5 transition-all";
-            } else {
-                activeTags.push(tag);
-                chipEl.className = "px-2.5 py-1 rounded-lg text-[10px] font-mono font-semibold bg-cyan-600 text-white transition-all";
-            }
-            applyCombinedFilters();
-        }
-
-        function renderCards() {
-            const container = document.getElementById('plugin-cards-container');
-            container.innerHTML = '';
-
-            appData.plugins.forEach((p, idx) => {
-                let catColor = 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-                if (p.category === 'PlanX Suite') {
-                    catColor = 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
-                } else if (p.category === '02 Suite') {
-                    catColor = 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
-                }
-
-                let quadBadge = '';
-                if (p.quadrant === 'Popular Momentum') {
-                    quadBadge = '<span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/20 font-mono"><i class="fa-solid fa-fire mr-1"></i> Popular Momentum</span>';
-                } else if (p.quadrant === 'High Velocity') {
-                    quadBadge = '<span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 font-mono"><i class="fa-solid fa-arrow-trend-up mr-1"></i> High Velocity</span>';
-                } else if (p.quadrant === 'Stable Classic') {
-                    quadBadge = '<span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-cyan-500/15 text-cyan-400 border border-cyan-500/20 font-mono"><i class="fa-solid fa-anchor mr-1"></i> Stable Classic</span>';
-                } else {
-                    quadBadge = '<span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-slate-500/15 text-slate-400 border border-slate-500/20 font-mono"><i class="fa-solid fa-bullseye mr-1"></i> Niche Specialist</span>';
-                }
-
-                let honorsHtml = '';
-                (p.honors || []).forEach(h => {
-                    honorsHtml += `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-${h.color}-500/10 text-${h.color}-400 text-[9px] font-bold border border-${h.color}-500/20 font-mono"><i class="fa-solid ${h.icon}"></i> ${h.badge}</span> `;
-                });
-
-                const tagsHtml = p.tags.slice(0, 4).map(t => `<span class="bg-obsidian-900 text-slate-400 px-2 py-0.5 rounded text-[9px] border border-white/5 font-mono">${t}</span>`).join(' ');
-
-                const card = document.createElement('div');
-                card.className = "p-6 rounded-3xl glass-panel flex flex-col justify-between relative overflow-hidden group transition-all";
-                card.setAttribute('data-category', p.category);
-                card.setAttribute('data-name', p.name);
-                card.setAttribute('data-quadrant', p.quadrant);
-                card.setAttribute('data-tags', p.tags.join(' '));
-
-                card.innerHTML = `
-                    <div>
-                        <div class="flex justify-between items-start gap-2 mb-3">
-                            <span class="text-[9px] font-bold px-2.5 py-1 rounded-md border ${catColor} font-heading">${p.category}</span>
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-[10px] text-slate-500 font-mono font-semibold"><i class="fa-solid fa-code-branch"></i> v${p.version}</span>
-                                <span class="text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded font-mono text-[8px]">QGIS ${p.qgis_minimum_version}+</span>
-                            </div>
-                        </div>
-
-                        <h3 class="text-base font-extrabold mb-1.5 group-hover:text-cyan-400 transition-colors truncate font-heading" title="${p.name}">${p.name}</h3>
-                        <div class="flex flex-wrap gap-1 mb-3">
-                            ${honorsHtml}
-                        </div>
-
-                        <div class="flex items-center justify-between mb-4">
-                            ${quadBadge}
-                            <span class="text-xs font-mono font-bold text-amber-400">${p.bayesian_rating.toFixed(2)} ★ <span class="text-[10px] text-slate-500 font-normal">(${p.votes_count})</span></span>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4 bg-obsidian-950/70 p-3 rounded-2xl border border-white/5 mb-4">
-                            <div>
-                                <span class="text-[10px] text-slate-500 font-medium block font-mono">Downloads</span>
-                                <span class="text-sm font-extrabold font-mono">${p.downloads.toLocaleString()}</span>
-                            </div>
-                            <div>
-                                <span class="text-[10px] text-slate-500 font-medium block font-mono">Velocity</span>
-                                <span class="text-sm font-extrabold text-cyan-400 font-mono">${Math.round(p.avg_monthly_downloads).toLocaleString()}/mo</span>
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <div class="flex justify-between items-center text-[9px] font-bold text-slate-500 mb-1 font-mono">
-                                <span>Milestone: ${p.next_milestone.toLocaleString()}</span>
-                                <span class="text-emerald-400">${p.milestone_progress}%</span>
-                            </div>
-                            <div class="w-full bg-obsidian-800 rounded-full h-1">
-                                <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-1 rounded-full" style="width: ${p.milestone_progress}%"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-2 pt-3 border-t border-white/5 flex flex-col gap-2">
-                        <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono">
-                            <span>Released: ${p.create_date}</span>
-                            <div class="flex gap-2.5">
-                                ${p.homepage ? `<a href="${p.homepage}" target="_blank" class="text-slate-400 hover:text-cyan-400 transition-colors" title="Docs"><i class="fa-solid fa-book text-sm"></i></a>` : ''}
-                                ${p.repository ? `<a href="${p.repository}" target="_blank" class="text-slate-400 hover:text-white transition-colors" title="Repo"><i class="fa-brands fa-github text-sm"></i></a>` : ''}
-                                ${p.tracker ? `<a href="${p.tracker}" target="_blank" class="text-slate-400 hover:text-rose-400 transition-colors" title="Issues"><i class="fa-solid fa-bug text-sm"></i></a>` : ''}
-                            </div>
-                        </div>
-                        <div class="flex flex-wrap gap-1 mt-1">
-                            ${tagsHtml}
-                        </div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        let selectedCategory = 'All';
-        function filterCardsCategory(cat) {
-            selectedCategory = cat;
-            const btns = { 'All': 'btn-cat-all', 'PlanX Suite': 'btn-cat-planx', '02 Suite': 'btn-cat-02', 'Standalone Plugins': 'btn-cat-standalone' };
-            Object.keys(btns).forEach(key => {
-                const btn = document.getElementById(btns[key]);
-                if (btn) btn.className = (key === cat) ? "px-4 py-2 rounded-xl text-xs font-bold bg-cyan-600 text-white whitespace-nowrap" : "px-4 py-2 rounded-xl text-xs font-bold bg-obsidian-900 text-slate-400 hover:text-white border border-white/5 whitespace-nowrap";
-            });
-            applyCombinedFilters();
-        }
-
-        function filterCards() { applyCombinedFilters(); }
-
-        function applyCombinedFilters() {
-            const searchVal = document.getElementById('card-search-input').value.toUpperCase();
-            const cards = document.getElementById('plugin-cards-container').getElementsByClassName('glass-panel');
-            let matching = 0;
-
-            for (let i = 0; i < cards.length; i++) {
-                const card = cards[i];
-                const cardCat = card.getAttribute('data-category');
-                const cardName = card.getAttribute('data-name');
-                const cardQuadrant = card.getAttribute('data-quadrant');
-                const cardTags = card.getAttribute('data-tags');
-
-                const matchesCat = (selectedCategory === 'All' || cardCat === selectedCategory);
-                const matchesSearch = (cardName.toUpperCase().indexOf(searchVal) > -1 || cardTags.toUpperCase().indexOf(searchVal) > -1 || cardQuadrant.toUpperCase().indexOf(searchVal) > -1);
-
-                let matchesActiveTags = true;
-                if (activeTags.length > 0) {
-                    matchesActiveTags = activeTags.every(t => cardTags.indexOf(t) > -1);
-                }
-
-                if (matchesCat && matchesSearch && matchesActiveTags) {
-                    card.style.display = "";
-                    matching++;
-                } else {
-                    card.style.display = "none";
-                }
-            }
-            document.getElementById('matching-plugins-count').innerText = `${matching} plugins matching`;
-        }
-
-        let sortDirections = [true, true, true, true, true, true, true, true];
-        function sortTable(colIndex) {
-            const rows = Array.from(tbody.getElementsByTagName('tr'));
-            const direction = sortDirections[colIndex];
-
-            rows.sort((rowA, rowB) => {
-                let cellA = rowA.getElementsByTagName('td')[colIndex].innerText.replace(/,/g, '');
-                let cellB = rowB.getElementsByTagName('td')[colIndex].innerText.replace(/,/g, '');
-
-                const numA = parseFloat(cellA);
-                const numB = parseFloat(cellB);
-
-                if (!isNaN(numA) && !isNaN(numB)) {
-                    return direction ? numA - numB : numB - numA;
-                }
-                return direction ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
-            });
-
-            sortDirections[colIndex] = !direction;
-            tbody.innerHTML = '';
-            rows.forEach(r => tbody.appendChild(r));
-        }
-
         function filterTableData() {
             const input = document.getElementById('table-search-input');
-            const filter = input.value.toUpperCase();
-            const rows = tbody.getElementsByTagName('tr');
+            currentTableQuery = input ? input.value : '';
+            tableCurrentPage = 1;
+            renderTableData();
+        }
 
-            for (let i = 0; i < rows.length; i++) {
-                const nameCol = rows[i].getElementsByTagName('td')[0];
-                const catCol = rows[i].getElementsByTagName('td')[1];
-                if (nameCol || catCol) {
-                    const nameText = nameCol.textContent || nameCol.innerText;
-                    const catText = catCol.textContent || catCol.innerText;
-                    rows[i].style.display = (nameText.toUpperCase().indexOf(filter) > -1 || catText.toUpperCase().indexOf(filter) > -1) ? "" : "none";
-                }
+        function sortTable(colIndex) {
+            const cols = ['name', 'category', 'create_date', 'downloads', 'avg_monthly_downloads', 'bayesian_rating'];
+            const targetCol = cols[colIndex] || 'downloads';
+            if (tableSortCol === targetCol) {
+                tableSortAsc = !tableSortAsc;
+            } else {
+                tableSortCol = targetCol;
+                tableSortAsc = false;
             }
+            renderTableData();
         }
 
         function exportToCSV() {
@@ -4412,11 +4548,27 @@ COMMIT;
         }
 
         // =============================================================
-        // GLOBAL CHARTS INITIALIZATION
+        // GLOBAL CHARTS INITIALIZATION & BI-DIRECTIONAL CROSS-FILTERING
         // =============================================================
         let overviewBarChart = null;
         let overviewDonutChart = null;
         let suiteRadarChart = null;
+        let activeBcgSuite = 'all';
+
+        function setBcgSuiteFilter(suite) {
+            activeBcgSuite = suite;
+            const btns = { 'all': 'bcg-btn-all', 'PlanX Suite': 'bcg-btn-planx', '02 Suite': 'bcg-btn-02', 'Standalone Plugins': 'bcg-btn-std' };
+            Object.keys(btns).forEach(k => {
+                const btn = document.getElementById(btns[k]);
+                if (btn) {
+                    btn.className = (k === suite)
+                        ? "px-2 py-0.5 rounded bg-cyan-600 text-white font-bold"
+                        : "px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5";
+                }
+            });
+            renderBcgScatter();
+        }
+
         function renderBcgScatter() {
             const el = document.getElementById('bcg-scatter-chart');
             if (!el) return;
@@ -4442,7 +4594,23 @@ COMMIT;
                 return out;
             };
 
+            const med = arr => arr.slice().sort((a, b) => a - b)[Math.floor(arr.length / 2)];
+            const mx = lx(med(dlVals)), my = ly(med(vVals));
+
             let s = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">`;
+
+            // Ambient Quadrant Zoning
+            s += `<rect x="${padL}" y="${padT}" width="${mx - padL}" height="${my - padT}" fill="rgba(244, 63, 94, 0.035)" />`; // High Velocity
+            s += `<rect x="${mx}" y="${padT}" width="${W - padR - mx}" height="${my - padT}" fill="rgba(16, 185, 129, 0.045)" />`; // Stars
+            s += `<rect x="${padL}" y="${my}" width="${mx - padL}" height="${H - padB - my}" fill="rgba(100, 116, 139, 0.025)" />`; // Niche
+            s += `<rect x="${mx}" y="${my}" width="${W - padR - mx}" height="${H - padB - my}" fill="rgba(99, 102, 241, 0.035)" />`; // Stable Classic
+
+            // Watermark text in corners
+            s += `<text x="${padL + 10}" y="${padT + 15}" fill="${labelColor}" opacity="0.35" font-size="8.5" font-family="JetBrains Mono, monospace" font-weight="700">QUADRANT II: HIGH VELOCITY</text>`;
+            s += `<text x="${W - padR - 10}" y="${padT + 15}" fill="${labelColor}" opacity="0.35" font-size="8.5" font-family="JetBrains Mono, monospace" font-weight="700" text-anchor="end">QUADRANT I: STARS (POPULAR MOMENTUM)</text>`;
+            s += `<text x="${padL + 10}" y="${H - padB - 8}" fill="${labelColor}" opacity="0.35" font-size="8.5" font-family="JetBrains Mono, monospace" font-weight="700">QUADRANT IV: NICHE SPECIALISTS</text>`;
+            s += `<text x="${W - padR - 10}" y="${H - padB - 8}" fill="${labelColor}" opacity="0.35" font-size="8.5" font-family="JetBrains Mono, monospace" font-weight="700" text-anchor="end">QUADRANT III: STABLE CLASSICS</text>`;
+
             ticks(minDl, maxDl, 4).forEach(t => {
                 const px = lx(t);
                 s += `<line x1="${px}" y1="${padT}" x2="${px}" y2="${H - padB}" stroke="${gridColor}"/>`;
@@ -4456,19 +4624,21 @@ COMMIT;
             s += `<text x="${(padL + W - padR) / 2}" y="${H - 8}" fill="${labelColor}" font-size="11" font-family="Plus Jakarta Sans, sans-serif" font-weight="700" text-anchor="middle">Cumulative Downloads</text>`;
             s += `<text transform="rotate(-90 16 ${(padT + H - padB) / 2})" x="16" y="${(padT + H - padB) / 2}" fill="${labelColor}" font-size="11" font-family="Plus Jakarta Sans, sans-serif" font-weight="700" text-anchor="middle">Monthly Run-Rate (dl/mo)</text>`;
 
-            const med = arr => arr.slice().sort((a, b) => a - b)[Math.floor(arr.length / 2)];
-            const mx = lx(med(dlVals)), my = ly(med(vVals));
+            // Median Threshold Crosshairs
             s += `<line x1="${mx}" y1="${padT}" x2="${mx}" y2="${H - padB}" stroke="${labelColor}" stroke-dasharray="4 5" opacity="0.45"/>`;
             s += `<line x1="${padL}" y1="${my}" x2="${W - padR}" y2="${my}" stroke="${labelColor}" stroke-dasharray="4 5" opacity="0.45"/>`;
 
             plugins.forEach(p => {
                 const px = lx(p.downloads), py = ly(Math.max(p.avg_monthly_downloads, 1));
                 const color = catColors[p.category] || '#64748b';
-                const tip = `${esc(p.name)} · ${p.downloads.toLocaleString()} downloads · ${Math.round(p.avg_monthly_downloads).toLocaleString()}/mo · ${p.category}`;
+                const tip = `${esc(p.name)} · ${p.downloads.toLocaleString()} downloads · ${Math.round(p.avg_monthly_downloads).toLocaleString()}/mo · ${p.category} · ${p.bayesian_rating.toFixed(2)} ★`;
+                const isMatch = (activeBcgSuite === 'all' || p.category === activeBcgSuite);
+                const nodeOpacity = isMatch ? "1.0" : "0.15";
+
                 if (p.icon) {
-                    s += `<g transform="translate(${(px - 16).toFixed(1)} ${(py - 16).toFixed(1)})" style="cursor:pointer"><title>${tip}</title><circle cx="16" cy="16" r="19" fill="${color}" opacity="0.15"/><image href="${p.icon}" x="4" y="4" width="24" height="24" preserveAspectRatio="xMidYMid meet"/><circle cx="16" cy="16" r="19" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.55"/></g>`;
+                    s += `<g transform="translate(${(px - 16).toFixed(1)} ${(py - 16).toFixed(1)})" style="cursor:pointer;opacity:${nodeOpacity}" onclick="switchTab('deepdive');document.getElementById('card-search-input').value='${esc(p.name)}';filterCards();"><title>${tip}</title><circle cx="16" cy="16" r="19" fill="${color}" opacity="0.18"/><image href="${p.icon}" x="4" y="4" width="24" height="24" preserveAspectRatio="xMidYMid meet"/><circle cx="16" cy="16" r="19" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.65"/></g>`;
                 } else {
-                    s += `<g transform="translate(${px} ${py})" style="cursor:pointer"><title>${tip}</title><circle r="6" fill="${color}"/></g>`;
+                    s += `<g transform="translate(${px} ${py})" style="cursor:pointer;opacity:${nodeOpacity}" onclick="switchTab('deepdive');document.getElementById('card-search-input').value='${esc(p.name)}';filterCards();"><title>${tip}</title><circle r="7" fill="${color}" stroke="#fff" stroke-width="1"/></g>`;
                 }
             });
             s += '</svg>';
@@ -4484,7 +4654,7 @@ COMMIT;
             if (overviewDonutChart) overviewDonutChart.destroy();
             if (suiteRadarChart) suiteRadarChart.destroy();
 
-            // 1. Horizontal Bar Chart
+            // 1. Horizontal Bar Chart with Click-to-Filter
             const names = appData.plugins.map(p => p.name);
             const downloads = appData.plugins.map(p => p.downloads);
 
@@ -4497,7 +4667,20 @@ COMMIT;
                     type: 'bar',
                     height: 400,
                     toolbar: { show: false },
-                    foreColor: labelColor
+                    foreColor: labelColor,
+                    events: {
+                        dataPointSelection: function(event, chartContext, config) {
+                            const selectedName = names[config.dataPointIndex];
+                            if (selectedName) {
+                                switchTab('deepdive');
+                                const input = document.getElementById('card-search-input');
+                                if (input) {
+                                    input.value = selectedName;
+                                    filterCards();
+                                }
+                            }
+                        }
+                    }
                 },
                 plotOptions: {
                     bar: {
@@ -4545,7 +4728,7 @@ COMMIT;
                 tooltip: {
                     theme: isAlabaster ? 'light' : 'dark',
                     y: {
-                        formatter: function(val) { return val.toLocaleString() + " downloads"; }
+                        formatter: function(val) { return val.toLocaleString() + " downloads (Click to inspect)"; }
                     }
                 }
             };
@@ -4553,7 +4736,7 @@ COMMIT;
             overviewBarChart = new ApexCharts(document.querySelector("#overview-bar-chart"), barOptions);
             overviewBarChart.render();
 
-            // 2. Donut Chart
+            // 2. Donut Chart with Click-to-Filter
             const planxDownloads = appData.summary.categories["PlanX Suite"]?.downloads || 0;
             const suite02Downloads = appData.summary.categories["02 Suite"]?.downloads || 0;
             const standaloneDownloads = appData.summary.categories["Standalone Plugins"]?.downloads || 0;
@@ -4563,7 +4746,17 @@ COMMIT;
                 chart: {
                     type: 'donut',
                     height: 280,
-                    foreColor: labelColor
+                    foreColor: labelColor,
+                    events: {
+                        dataPointSelection: function(event, chartContext, config) {
+                            const cats = ['PlanX Suite', '02 Suite', 'Standalone Plugins'];
+                            const selectedCat = cats[config.dataPointIndex];
+                            if (selectedCat) {
+                                switchTab('deepdive');
+                                filterCardsCategory(selectedCat);
+                            }
+                        }
+                    }
                 },
                 labels: ['PlanX Suite', '02 Suite', 'Standalone'],
                 colors: ['#6366f1', '#0ea5e9', '#64748b'],
@@ -4604,7 +4797,7 @@ COMMIT;
                     y: {
                         formatter: function(val, { seriesIndex, w }) {
                             const percent = w.globals.seriesPercent[seriesIndex][0];
-                            return `${val.toLocaleString()} downloads (${percent.toFixed(1)}%)`;
+                            return `${val.toLocaleString()} downloads (${percent.toFixed(1)}%) - Click to filter`;
                         }
                     }
                 }
@@ -4613,7 +4806,7 @@ COMMIT;
             overviewDonutChart = new ApexCharts(document.querySelector("#overview-donut-chart"), donutOptions);
             overviewDonutChart.render();
 
-            // 3. BCG Scatter Matrix — custom SVG with each plugin's own icon as the node
+            // 3. BCG Scatter Matrix
             renderBcgScatter();
 
             // 4. Suite Capability Radar Chart
@@ -4678,7 +4871,12 @@ COMMIT;
 </html>
 """
 
-    html_output = html_template.replace("##WORLD_SVG_LAYER##", world_svg_layer_html).replace("##DATA_INJECTION##", json.dumps(embedded_data, ensure_ascii=False, indent=2))
+    html_output = (
+        html_template
+        .replace("##WORLD_SVG_LAYER##", world_svg_layer_html)
+        .replace("##DATA_INJECTION##", json.dumps(embedded_data, ensure_ascii=False, indent=2))
+        .replace("##TOTAL_PLUGINS##", str(len(yusuf_plugins)))
+    )
 
     local_output_path = os.path.join(os.path.dirname(__file__), "qgis_plugins_dashboard.html")
     index_output_path = os.path.join(os.path.dirname(__file__), "index.html")

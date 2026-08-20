@@ -54,8 +54,13 @@ ICONS = {
     "zero2geoquest": "zero2geoquest/icons/icon.png",
     "zero2truesize": "zero2truesize/icons/icon.png",
     "02agent-osm-downloader": "zero2agent_osm_downloader/icons/icon.png",
+    "zero2agent-osm-downloader": "zero2agent_osm_downloader/icons/icon.png",
+    "zero2agent_osm_downloader": "zero2agent_osm_downloader/icons/icon.png",
     "parametric_process": "parametric_process/icons/icon.png",
     "planx-smartmodeler": "zero2smartmodeler/icons/icon.png",
+    "02agent-smart-modeler": "zero2smartmodeler/icons/icon.png",
+    "zero2agent-smartmodeler": "zero2smartmodeler/icons/icon.png",
+    "zero2smartmodeler": "zero2smartmodeler/icons/icon.png",
 }
 
 

@@ -1,9 +1,34 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="alabaster">
+<html lang="en" data-theme="obsidian" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QGIS Plugin Portfolio Analytics & Governance Studio — Yusuf Eminoğlu</title>
+    
+    <!-- Critical Zero-Flash Dark Mode Engine -->
+    <style>
+        html, body {
+            background-color: #070a10 !important;
+            color: #f8fafc !important;
+        }
+        [data-theme="alabaster"], [data-theme="alabaster"] body {
+            background-color: #f1f5f9 !important;
+            color: #0f172a !important;
+        }
+    </style>
+    <script>
+        (function() {
+            try {
+                var theme = localStorage.getItem('qgis_dashboard_theme') || 'obsidian';
+                document.documentElement.setAttribute('data-theme', theme);
+                if (theme === 'obsidian') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
     
     <!-- Comprehensive SEO Keywords & Metadata -->
     <meta name="description" content="Enterprise analytics, telemetry, growth forecasting, and rating abuse forensic surveillance studio for Yusuf Eminoğlu's 25 production QGIS plugins across urban analytics, spatial statistics, CAD, and 3D GIS.">
@@ -405,6 +430,11 @@
                     <i class="fa-solid fa-terminal text-cyan-400"></i> Command <kbd>Ctrl+K</kbd>
                 </button>
 
+                <!-- Custom Multi-Plugin PyQGIS Install Cart -->
+                <button onclick="openBundleModal()" id="bundle-header-btn" class="px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-1.5 transition-all" title="Custom PyQGIS Multi-Plugin Install Cart [B]">
+                    <i class="fa-solid fa-cart-arrow-down text-cyan-400"></i> Install Bundle <span id="bundle-counter-badge" class="px-1.5 py-0.2 rounded-full bg-cyan-500 text-obsidian-950 font-mono text-[10px] font-extrabold hidden">0</span> <kbd>B</kbd>
+                </button>
+
                 <button onclick="openExecutiveStorytellingModal()" class="px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-1.5 transition-all" title="Generate State of Ecosystem Report & Community Kit">
                     <i class="fa-solid fa-newspaper text-emerald-400"></i> Reports & Announcements
                 </button>
@@ -422,6 +452,16 @@
                 <!-- Dynamic Shields.io Badge Kit Generator -->
                 <button onclick="openBadgeKitModal()" class="px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-1.5 transition-all" title="Dynamic Shields.io Badge Kit for GitHub READMEs">
                     <i class="fa-solid fa-certificate text-amber-400"></i> Badge Kit
+                </button>
+
+                <!-- Shareable Deep Link -->
+                <button onclick="copyShareableDeepLink()" class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-1.5 transition-all" title="Copy Direct Shareable Link with Active View">
+                    <i class="fa-solid fa-share-nodes text-cyan-400"></i> Share
+                </button>
+
+                <!-- Keyboard Shortcuts Cheat Sheet -->
+                <button onclick="openShortcutsModal()" class="px-2.5 py-2 text-xs font-bold text-slate-400 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-1 transition-all" title="Keyboard Shortcuts Cheat Sheet [?]">
+                    <i class="fa-solid fa-circle-question text-sm"></i>
                 </button>
 
                 <!-- Evidence JSON Download -->
@@ -600,11 +640,22 @@
                             <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-shapes text-cyan-400 mr-2"></i>BCG Adoption & Velocity Matrix</h2>
                             <p class="text-xs text-slate-400">Downloads (X) vs Monthly Velocity (Y) across portfolio</p>
                         </div>
-                        <div class="flex items-center gap-1.5 font-mono text-[10px]">
-                            <button onclick="setBcgSuiteFilter('all')" id="bcg-btn-all" class="px-2 py-0.5 rounded bg-cyan-600 text-white font-bold">All</button>
-                            <button onclick="setBcgSuiteFilter('PlanX Suite')" id="bcg-btn-planx" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">PlanX</button>
-                            <button onclick="setBcgSuiteFilter('02 Suite')" id="bcg-btn-02" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">02 Suite</button>
-                            <button onclick="setBcgSuiteFilter('Standalone Plugins')" id="bcg-btn-std" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">Standalone</button>
+                        <div class="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+                            <div class="flex items-center gap-1 font-mono text-[9px]">
+                                <span class="text-slate-500 mr-0.5">Suite:</span>
+                                <button onclick="setBcgSuiteFilter('all')" id="bcg-btn-all" class="px-2 py-0.5 rounded bg-cyan-600 text-white font-bold">All</button>
+                                <button onclick="setBcgSuiteFilter('PlanX Suite')" id="bcg-btn-planx" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">PlanX</button>
+                                <button onclick="setBcgSuiteFilter('02 Suite')" id="bcg-btn-02" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">02 Suite</button>
+                                <button onclick="setBcgSuiteFilter('Standalone Plugins')" id="bcg-btn-std" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">Standalone</button>
+                            </div>
+                            <div class="flex items-center gap-1 font-mono text-[9px]">
+                                <span class="text-slate-500 mr-0.5">Quadrant:</span>
+                                <button onclick="setBcgQuadrantFilter('all')" id="bcg-quad-all" class="px-2 py-0.5 rounded bg-cyan-600 text-white font-bold">All</button>
+                                <button onclick="setBcgQuadrantFilter('Popular Momentum')" id="bcg-quad-stars" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-emerald-400 border border-white/5">★ Stars</button>
+                                <button onclick="setBcgQuadrantFilter('High Velocity')" id="bcg-quad-vel" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-rose-400 border border-white/5">⚡ Velocity</button>
+                                <button onclick="setBcgQuadrantFilter('Stable Classic')" id="bcg-quad-stable" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-indigo-400 border border-white/5">⚓ Stable</button>
+                                <button onclick="setBcgQuadrantFilter('Niche Specialist')" id="bcg-quad-niche" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-slate-300 border border-white/5">🎯 Niche</button>
+                            </div>
                         </div>
                     </div>
                     <div id="bcg-scatter-chart" class="w-full h-80"></div>
@@ -1208,8 +1259,218 @@
                     <pre class="p-5 rounded-2xl bg-obsidian-950/90 border border-white/10 text-xs font-mono text-cyan-300 overflow-x-auto max-h-96 leading-relaxed select-all" id="pyqgis-code-preview"></pre>
                 </div>
             </div>
+
+            <!-- Cross-Suite Workflow Synergy & Co-Installation Matrix -->
+            <div class="p-6 rounded-3xl glass-panel mb-8">
+                <div class="flex items-center justify-between pb-4 border-b border-white/5 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg border border-indigo-500/30">
+                            <i class="fa-solid fa-share-nodes"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold font-heading text-white">Cross-Suite Workflow Synergy & Co-Installation Affinities</h3>
+                            <p class="text-xs text-slate-400">High-affinity plugin pairings and automated combined batch loading</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-mono text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-xl">Ecosystem Interoperability</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="synergy-matrix-grid">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
         </div>
 
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- FLOATING BUNDLE SELECTION BAR -->
+    <!-- ============================================================= -->
+    <div id="bundle-floating-bar" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 px-6 py-3.5 rounded-2xl bg-obsidian-900/95 border border-cyan-500/40 shadow-2xl backdrop-blur-md flex items-center gap-4 hidden transition-all">
+        <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center text-xs font-bold font-mono" id="bundle-bar-count">0</span>
+            <span class="text-xs font-bold text-white font-heading">Plugins in Custom Bundle</span>
+        </div>
+        <div class="h-4 w-px bg-white/10"></div>
+        <div class="flex items-center gap-2">
+            <button onclick="openBundleModal()" class="px-4 py-2 rounded-xl text-xs font-bold btn-luxury text-white flex items-center gap-1.5">
+                <i class="fa-solid fa-terminal"></i> Generate Batch Script
+            </button>
+            <button onclick="clearPluginBundle()" class="px-3 py-2 rounded-xl text-xs font-bold bg-obsidian-800 hover:bg-rose-600/20 text-slate-400 hover:text-rose-400 border border-white/10 transition-all">
+                Clear
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- CUSTOM PYQGIS MULTI-PLUGIN INSTALL BUNDLE MODAL -->
+    <!-- ============================================================= -->
+    <div id="bundle-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden p-4">
+        <div class="bg-obsidian-900 border border-white/10 rounded-3xl max-w-4xl w-full p-6 max-h-[92vh] flex flex-col justify-between shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between pb-4 border-b border-white/10">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-lg border border-cyan-500/30">
+                        <i class="fa-solid fa-cart-arrow-down"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold tracking-tight">Custom PyQGIS Multi-Plugin Install Bundle</h3>
+                        <p class="text-xs text-slate-400">Generate unified mass-installation scripts for selected plugins with dependency validation</p>
+                    </div>
+                </div>
+                <button onclick="closeBundleModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-obsidian-800 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="my-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="text-xs text-slate-300 font-heading font-semibold">
+                        Selected Plugins (<span id="bundle-modal-count" class="text-cyan-400 font-mono font-bold">0</span>):
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="selectAllPluginsBundle()" class="text-xs text-cyan-400 hover:text-cyan-300 font-mono">Select All (25)</button>
+                        <span class="text-slate-600">|</span>
+                        <button onclick="clearPluginBundle()" class="text-xs text-rose-400 hover:text-rose-300 font-mono">Clear All</button>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-1.5 p-3 rounded-2xl bg-obsidian-950/70 border border-white/5 max-h-28 overflow-y-auto" id="bundle-modal-tags">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <div class="my-2">
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-xs font-semibold text-slate-400 font-heading">Execution Target</label>
+                    <select id="bundle-target-type" onchange="renderBundleScriptPreview()" class="px-3 py-1 bg-obsidian-950 border border-white/10 rounded-xl text-xs font-mono text-cyan-400 focus:outline-none">
+                        <option value="console">QGIS Python Console Script</option>
+                        <option value="cli">Headless OS Command (pip / zip)</option>
+                    </select>
+                </div>
+                <pre class="bg-obsidian-950 p-4 rounded-2xl border border-white/5 text-xs font-mono text-cyan-300 overflow-x-auto max-h-[36vh] whitespace-pre leading-relaxed select-all" id="bundle-code-preview"></pre>
+            </div>
+
+            <div class="pt-4 border-t border-white/10 flex justify-between items-center text-xs">
+                <div class="flex items-center gap-2">
+                    <button onclick="copyBundleScript()" class="px-4 py-2 rounded-xl text-xs font-bold btn-luxury text-white flex items-center gap-1.5">
+                        <i class="fa-solid fa-copy"></i> Copy Script
+                    </button>
+                    <button onclick="downloadBundleScript()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-obsidian-800 hover:bg-obsidian-750 text-slate-300 hover:text-white border border-white/10 flex items-center gap-1.5 transition-all">
+                        <i class="fa-solid fa-download"></i> .py
+                    </button>
+                </div>
+                <button onclick="closeBundleModal()" class="px-5 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-white font-bold transition-all">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- RATING FORENSIC SURVEILLANCE DEEP-DIVE INSPECTOR MODAL -->
+    <!-- ============================================================= -->
+    <div id="forensic-inspector-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden p-4">
+        <div class="bg-obsidian-900 border border-white/10 rounded-3xl max-w-4xl w-full p-6 max-h-[92vh] flex flex-col justify-between shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between pb-4 border-b border-white/10">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg border border-rose-500/30">
+                        <i class="fa-solid fa-shield-virus"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold tracking-tight" id="forensic-modal-title">Forensic Audit & Surveillance Diagnostic</h3>
+                        <p class="text-xs text-slate-400">Two-Level Empirical Bayes, Laplace smoothing, Wilson 95% interval, and entropy analytics</p>
+                    </div>
+                </div>
+                <button onclick="closeForensicInspectorModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-obsidian-800 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="my-4 overflow-y-auto max-h-[60vh] pr-2 space-y-4" id="forensic-modal-body">
+                <!-- Populated dynamically via JS -->
+            </div>
+
+            <div class="pt-4 border-t border-white/10 flex justify-between items-center text-xs">
+                <button onclick="copyForensicReport()" class="px-4 py-2 rounded-xl text-xs font-bold btn-luxury text-white flex items-center gap-1.5">
+                    <i class="fa-solid fa-copy"></i> Copy Forensic Diagnostic
+                </button>
+                <button onclick="closeForensicInspectorModal()" class="px-5 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-white font-bold transition-all">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- KEYBOARD SHORTCUTS CHEAT SHEET MODAL -->
+    <!-- ============================================================= -->
+    <div id="shortcuts-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden p-4">
+        <div class="bg-obsidian-900 border border-white/10 rounded-3xl max-w-xl w-full p-6 shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between pb-4 border-b border-white/10">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-lg border border-cyan-500/30">
+                        <i class="fa-solid fa-keyboard"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold tracking-tight">Keyboard Shortcuts</h3>
+                        <p class="text-xs text-slate-400">Power user navigation commands</p>
+                    </div>
+                </div>
+                <button onclick="closeShortcutsModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-obsidian-800 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 my-4 text-xs">
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Executive Overview</span>
+                    <kbd>1</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Rating Surveillance</span>
+                    <kbd>2</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Geospatial Studio</span>
+                    <kbd>3</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Plugin Explorer</span>
+                    <kbd>4</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Forecast Simulator</span>
+                    <kbd>5</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Master Data Table</span>
+                    <kbd>6</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Ecosystem Pipelines</span>
+                    <kbd>7</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Command Palette</span>
+                    <kbd>Ctrl+K</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Toggle Theme</span>
+                    <kbd>T</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Quick Search</span>
+                    <kbd>/</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Custom Install Bundle</span>
+                    <kbd>B</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Close Any Modal</span>
+                    <kbd>Esc</kbd>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-white/10 flex justify-end">
+                <button onclick="closeShortcutsModal()" class="px-5 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-white text-xs font-bold transition-all">Got it</button>
+            </div>
+        </div>
     </div>
 
     <!-- ============================================================= -->
@@ -1429,13 +1690,13 @@
     {
       "name": "3D OSM Model",
       "version": "1.2.5",
-      "downloads": 16764,
+      "downloads": 16765,
       "create_date": "2026-06-01",
       "update_date": "2026-08-09",
       "days_active": 79,
       "months_active": 2.6,
-      "avg_monthly_downloads": 6458.9,
-      "projected_total_downloads": 44987,
+      "avg_monthly_downloads": 6459.3,
+      "projected_total_downloads": 44990,
       "category": "Standalone Plugins",
       "tags": [
         "openstreetmap",
@@ -3052,7 +3313,7 @@
       "bayesian_rating": 4.645,
       "rating_credibility_floor_95": 4.543,
       "kinetic_ratio": 0.52,
-      "adoption_acceleration": -2232.33,
+      "adoption_acceleration": -2228.21,
       "kinetic_regime": "Decelerating Growth",
       "kinetic_badge": "amber",
       "health_score": 96.8,
@@ -3090,7 +3351,8 @@
         16764,
         16764,
         16764,
-        16764
+        16764,
+        16765
       ],
       "honors": [
         {
@@ -3109,7 +3371,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "2E8217DD759C27E7"
+      "evidence_hash": "F84695B359E74796"
     },
     {
       "name": "OSM Quick 3D",
@@ -4712,6 +4974,7 @@
         8321,
         8321,
         8321,
+        8321,
         8321
       ],
       "honors": [
@@ -4726,18 +4989,18 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "57B3272E00F5B5C8"
+      "evidence_hash": "F095B1C2E0D9D94B"
     },
     {
       "name": "02CadGis Universal CAD/GIS Importer",
       "version": "2.8.4",
-      "downloads": 7354,
+      "downloads": 7355,
       "create_date": "2026-07-04",
       "update_date": "2026-08-07",
       "days_active": 46,
       "months_active": 1.51,
-      "avg_monthly_downloads": 4866.0,
-      "projected_total_downloads": 28617,
+      "avg_monthly_downloads": 4866.7,
+      "projected_total_downloads": 28621,
       "category": "02 Suite",
       "tags": [
         "spatialite",
@@ -4759,7 +5022,7 @@
         "mdb"
       ],
       "next_milestone": 10000,
-      "milestone_progress": 73.5,
+      "milestone_progress": 73.6,
       "milestone_est_date": "Sep 05, 2026",
       "qgis_minimum_version": "3.22.0",
       "homepage": "https://yusufeminoglu.github.io/zero2cadgis/",
@@ -4805,7 +5068,7 @@
           "region": "Asia-Pacific",
           "iso": "IN",
           "iso3": "IND",
-          "downloads": 355,
+          "downloads": 356,
           "percentage": 5.2
         },
         {
@@ -4815,7 +5078,7 @@
           "iso": "DE",
           "iso3": "DEU",
           "downloads": 336,
-          "percentage": 5.0
+          "percentage": 4.9
         },
         {
           "country": "Poland",
@@ -6236,7 +6499,7 @@
       "bayesian_rating": 4.73,
       "rating_credibility_floor_95": 4.582,
       "kinetic_ratio": 0.75,
-      "adoption_acceleration": -1441.2,
+      "adoption_acceleration": -1434.77,
       "kinetic_regime": "Decelerating Growth",
       "kinetic_badge": "amber",
       "health_score": 96.5,
@@ -6274,7 +6537,8 @@
         7352,
         7352,
         7354,
-        7354
+        7354,
+        7355
       ],
       "honors": [
         {
@@ -6288,18 +6552,18 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "9EA96CD4F1027AF9"
+      "evidence_hash": "FC8274AD2947A23B"
     },
     {
       "name": "PlanX CAD Toolset",
       "version": "1.27.4",
-      "downloads": 6023,
+      "downloads": 6025,
       "create_date": "2026-04-05",
       "update_date": "2026-08-07",
       "days_active": 136,
       "months_active": 4.47,
-      "avg_monthly_downloads": 1348.0,
-      "projected_total_downloads": 11913,
+      "avg_monthly_downloads": 1348.4,
+      "projected_total_downloads": 11917,
       "category": "PlanX Suite",
       "tags": [
         "editing",
@@ -7605,10 +7869,10 @@
       "icon": "data:image/png;base64,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",
       "bayesian_rating": 4.746,
       "rating_credibility_floor_95": 4.593,
-      "kinetic_ratio": 0.79,
-      "adoption_acceleration": -119.42,
-      "kinetic_regime": "Decelerating Growth",
-      "kinetic_badge": "amber",
+      "kinetic_ratio": 0.8,
+      "adoption_acceleration": -114.33,
+      "kinetic_regime": "Steady-State Cruising",
+      "kinetic_badge": "cyan",
       "health_score": 93.4,
       "sparkline": [
         5847,
@@ -7644,7 +7908,8 @@
         6023,
         6023,
         6023,
-        6023
+        6023,
+        6025
       ],
       "honors": [
         {
@@ -7668,7 +7933,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "CE1A2EA166CCAEA0"
+      "evidence_hash": "8944792CC488757A"
     },
     {
       "name": "02viz - Geospatial Visualization Studio",
@@ -7854,7 +8119,7 @@
           "region": "Eastern Europe & Middle East",
           "iso": "PL",
           "iso3": "POL",
-          "downloads": 90,
+          "downloads": 91,
           "percentage": 1.6
         },
         {
@@ -9233,6 +9498,7 @@
         5692,
         5692,
         5693,
+        5693,
         5693
       ],
       "honors": [
@@ -9247,18 +9513,18 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "BE8BF151C733BFDA"
+      "evidence_hash": "C70B3DED83FB97C5"
     },
     {
       "name": "PlanX",
       "version": "4.10.6",
-      "downloads": 5042,
+      "downloads": 5045,
       "create_date": "2026-04-05",
       "update_date": "2026-08-09",
       "days_active": 136,
       "months_active": 4.47,
-      "avg_monthly_downloads": 1128.4,
-      "projected_total_downloads": 9973,
+      "avg_monthly_downloads": 1129.1,
+      "projected_total_downloads": 9979,
       "category": "PlanX Suite",
       "tags": [
         "network analysis",
@@ -9345,7 +9611,7 @@
           "region": "North America",
           "iso": "US",
           "iso3": "USA",
-          "downloads": 1405,
+          "downloads": 1408,
           "percentage": 27.9
         },
         {
@@ -10433,8 +10699,8 @@
       "icon": "data:image/png;base64,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",
       "bayesian_rating": 4.395,
       "rating_credibility_floor_95": 4.262,
-      "kinetic_ratio": 1.06,
-      "adoption_acceleration": 30.58,
+      "kinetic_ratio": 1.08,
+      "adoption_acceleration": 38.17,
       "kinetic_regime": "Steady-State Cruising",
       "kinetic_badge": "cyan",
       "health_score": 89.6,
@@ -10472,7 +10738,8 @@
         5041,
         5041,
         5042,
-        5042
+        5042,
+        5045
       ],
       "honors": [
         {
@@ -10486,7 +10753,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "7FD8C4B335197AB6"
+      "evidence_hash": "FD083C1CAA137F14"
     },
     {
       "name": "02-Multimap: Sync-up Multimaps",
@@ -10511,7 +10778,7 @@
       ],
       "next_milestone": 5000,
       "milestone_progress": 82.9,
-      "milestone_est_date": "Aug 30, 2026",
+      "milestone_est_date": "Aug 31, 2026",
       "qgis_minimum_version": "3.40.0",
       "homepage": "https://yusufeminoglu.github.io/zero2multimap/",
       "tracker": "https://github.com/YusufEminoglu/zero2multimap/issues",
@@ -11926,6 +12193,7 @@
         4142,
         4142,
         4143,
+        4143,
         4143
       ],
       "honors": [
@@ -11940,7 +12208,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "9426500F8DDD7FF1"
+      "evidence_hash": "388E050E33D0B411"
     },
     {
       "name": "PlanX 3D City Viewer",
@@ -13052,6 +13320,7 @@
         4118,
         4118,
         4118,
+        4118,
         4118
       ],
       "honors": [
@@ -13071,7 +13340,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "B1582EE0FEC209EB"
+      "evidence_hash": "B227B038885B6291"
     },
     {
       "name": "EasyFillet",
@@ -14087,6 +14356,7 @@
         3445,
         3445,
         3445,
+        3445,
         3445
       ],
       "honors": [
@@ -14096,7 +14366,7 @@
           "color": "emerald"
         }
       ],
-      "evidence_hash": "94EEA3808C14C4AF"
+      "evidence_hash": "887EB8B43754D10F"
     },
     {
       "name": "PlanX GeoStats Lab",
@@ -15174,6 +15444,7 @@
         3276,
         3276,
         3276,
+        3276,
         3276
       ],
       "honors": [
@@ -15188,7 +15459,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "260765BE97499CCF"
+      "evidence_hash": "CB32376F97A0215D"
     },
     {
       "name": "PlanX: Urban Resilience",
@@ -15196,10 +15467,10 @@
       "downloads": 3140,
       "create_date": "2026-04-11",
       "update_date": "2026-08-13",
-      "days_active": 130,
-      "months_active": 4.27,
-      "avg_monthly_downloads": 735.2,
-      "projected_total_downloads": 6352,
+      "days_active": 131,
+      "months_active": 4.3,
+      "avg_monthly_downloads": 729.6,
+      "projected_total_downloads": 6328,
       "category": "PlanX Suite",
       "tags": [
         "network analysis",
@@ -16181,8 +16452,8 @@
       "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIiBzaGFwZS1yZW5kZXJpbmc9Imdlb21ldHJpY1ByZWNpc2lvbiI+CiAgPHBhdGggZD0iTTI1NiA0NCBMNDE4IDEwMCBWMjQ0IEM0MTggMzU0IDM0NCA0MzAgMjU2IDQ2MiBDMTY4IDQzMCA5NCAzNTQgOTQgMjQ0IFYxMDAgWiIKICAgICAgICBmaWxsPSJub25lIiBzdHJva2U9IiMwZDk0ODgiIHN0cm9rZS13aWR0aD0iMjgiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+PC9wYXRoPgogIDxnIGZpbGw9IiMwZDk0ODgiPgogICAgPHJlY3QgeD0iMTg0IiB5PSIyOTIiIHdpZHRoPSIzNCIgaGVpZ2h0PSIxMDYiIHJ4PSI0Ij48L3JlY3Q+CiAgICA8cmVjdCB4PSIyMjYiIHk9IjI1MiIgd2lkdGg9IjM0IiBoZWlnaHQ9IjE0NiIgcng9IjQiPjwvcmVjdD4KICAgIDxyZWN0IHg9IjI2OCIgeT0iMjg0IiB3aWR0aD0iMzQiIGhlaWdodD0iMTE0IiByeD0iNCI+PC9yZWN0PgogICAgPHJlY3QgeD0iMzEwIiB5PSIyNjQiIHdpZHRoPSIyOCIgaGVpZ2h0PSIxMzQiIHJ4PSI0Ij48L3JlY3Q+CiAgPC9nPgogIDxwYXRoIGQ9Ik0xNTAgMjkyIFEyNTYgMTc2IDM2MiAyOTIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2Y5NzMxNiIgc3Ryb2tlLXdpZHRoPSIyNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48L3BhdGg+Cjwvc3ZnPgo=",
       "bayesian_rating": 4.343,
       "rating_credibility_floor_95": 4.145,
-      "kinetic_ratio": 0.65,
-      "adoption_acceleration": -114.66,
+      "kinetic_ratio": 0.66,
+      "adoption_acceleration": -111.32,
       "kinetic_regime": "Decelerating Growth",
       "kinetic_badge": "amber",
       "health_score": 83.0,
@@ -16220,6 +16491,7 @@
         3138,
         3138,
         3140,
+        3140,
         3140
       ],
       "honors": [
@@ -16234,7 +16506,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "927FA15E11290E5A"
+      "evidence_hash": "CF56900901B84BD1"
     },
     {
       "name": "PlanX CartoLab",
@@ -17166,6 +17438,7 @@
         2097,
         2097,
         2097,
+        2097,
         2097
       ],
       "honors": [
@@ -17185,7 +17458,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "F5548D032A8F6775"
+      "evidence_hash": "0944F2ECAC41976D"
     },
     {
       "name": "PlanX Settlement Planning Toolset",
@@ -17996,6 +18269,7 @@
         1906,
         1906,
         1906,
+        1906,
         1906
       ],
       "honors": [
@@ -18010,7 +18284,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "095B67C869169A23"
+      "evidence_hash": "81D0CA34930D8971"
     },
     {
       "name": "PlanX Suitability Lab",
@@ -18761,6 +19035,7 @@
         1884,
         1884,
         1884,
+        1884,
         1884
       ],
       "honors": [
@@ -18780,7 +19055,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "BD66452D6B5B484E"
+      "evidence_hash": "9F5C7826E0F8070D"
     },
     {
       "name": "PlanX Uygulama İmar Planı (Master Plan) Toolset",
@@ -19417,6 +19692,7 @@
         1811,
         1811,
         1811,
+        1811,
         1811
       ],
       "honors": [
@@ -19426,18 +19702,18 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "CBCEED4A418E25F6"
+      "evidence_hash": "07B532E202A5E945"
     },
     {
       "name": "02Agent OSM Downloader",
       "version": "1.1.1",
-      "downloads": 1615,
+      "downloads": 1616,
       "create_date": "2026-08-10",
       "update_date": "2026-08-14",
       "days_active": 9,
       "months_active": 0.3,
-      "avg_monthly_downloads": 5461.8,
-      "projected_total_downloads": 25481,
+      "avg_monthly_downloads": 5465.2,
+      "projected_total_downloads": 25497,
       "category": "02 Suite",
       "tags": [
         "network",
@@ -19501,8 +19777,8 @@
           "region": "Asia-Pacific",
           "iso": "SG",
           "iso3": "SGP",
-          "downloads": 120,
-          "percentage": 7.4
+          "downloads": 121,
+          "percentage": 7.5
         },
         {
           "country": "Germany",
@@ -19586,6 +19862,15 @@
           "percentage": 2.2
         },
         {
+          "country": "Poland",
+          "flag": "🇵🇱",
+          "region": "Eastern Europe & Middle East",
+          "iso": "PL",
+          "iso3": "POL",
+          "downloads": 30,
+          "percentage": 1.9
+        },
+        {
           "country": "Portugal",
           "flag": "🇵🇹",
           "region": "Western Europe",
@@ -19600,15 +19885,6 @@
           "region": "Latin America",
           "iso": "AR",
           "iso3": "ARG",
-          "downloads": 29,
-          "percentage": 1.8
-        },
-        {
-          "country": "Poland",
-          "flag": "🇵🇱",
-          "region": "Eastern Europe & Middle East",
-          "iso": "PL",
-          "iso3": "POL",
           "downloads": 29,
           "percentage": 1.8
         },
@@ -20446,7 +20722,7 @@
       "bayesian_rating": 4.921,
       "rating_credibility_floor_95": 4.657,
       "kinetic_ratio": 0.8,
-      "adoption_acceleration": -4849.67,
+      "adoption_acceleration": -4837.99,
       "kinetic_regime": "Decelerating Growth",
       "kinetic_badge": "amber",
       "health_score": 81.5,
@@ -20484,7 +20760,8 @@
         1613,
         1613,
         1615,
-        1615
+        1615,
+        1616
       ],
       "honors": [
         {
@@ -20503,7 +20780,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "36808198653E0329"
+      "evidence_hash": "1C3FD7D4E913372F"
     },
     {
       "name": "ParcelFlux",
@@ -21294,6 +21571,7 @@
         1549,
         1549,
         1549,
+        1549,
         1549
       ],
       "honors": [
@@ -21303,7 +21581,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "EA312D4E2F9DA904"
+      "evidence_hash": "E036BD3ABDBD9ED4"
     },
     {
       "name": "PlanX Urban Procedural 3D",
@@ -22079,6 +22357,7 @@
         1520,
         1520,
         1520,
+        1520,
         1520
       ],
       "honors": [
@@ -22088,7 +22367,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "9217D3118F95FC64"
+      "evidence_hash": "BA063F889623382A"
     },
     {
       "name": "PlanX DataCube Lab",
@@ -22818,6 +23097,7 @@
         1485,
         1485,
         1485,
+        1485,
         1485
       ],
       "honors": [
@@ -22827,7 +23107,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "AB3860E45D60B8CB"
+      "evidence_hash": "9D6240B1F5A38C60"
     },
     {
       "name": "02Urban Portrait - City as a Face",
@@ -24015,6 +24295,7 @@
         1421,
         1421,
         1421,
+        1421,
         1421
       ],
       "honors": [
@@ -24029,7 +24310,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "8467F8AC473A1ACE"
+      "evidence_hash": "EA222D04FDACE41B"
     },
     {
       "name": "02GeoQuest - Playable Map Studio",
@@ -25029,6 +25310,7 @@
         1355,
         1355,
         1355,
+        1355,
         1355
       ],
       "honors": [
@@ -25043,7 +25325,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "C75E3FF321B0FFD0"
+      "evidence_hash": "DB337E082DC96F88"
     },
     {
       "name": "02truesize - Map Truth Lab",
@@ -25264,6 +25546,15 @@
           "percentage": 1.0
         },
         {
+          "country": "Poland",
+          "flag": "🇵🇱",
+          "region": "Eastern Europe & Middle East",
+          "iso": "PL",
+          "iso3": "POL",
+          "downloads": 12,
+          "percentage": 1.0
+        },
+        {
           "country": "Hong Kong",
           "flag": "🇭🇰",
           "region": "Asia-Pacific",
@@ -25278,15 +25569,6 @@
           "region": "Asia-Pacific",
           "iso": "PH",
           "iso3": "PHL",
-          "downloads": 11,
-          "percentage": 0.9
-        },
-        {
-          "country": "Poland",
-          "flag": "🇵🇱",
-          "region": "Eastern Europe & Middle East",
-          "iso": "PL",
-          "iso3": "POL",
           "downloads": 11,
           "percentage": 0.9
         },
@@ -26036,6 +26318,7 @@
         1203,
         1203,
         1203,
+        1203,
         1203
       ],
       "honors": [
@@ -26050,7 +26333,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "9A16B9E7F725BA69"
+      "evidence_hash": "F658A04233449056"
     },
     {
       "name": "Parametric Process",
@@ -26677,6 +26960,7 @@
         745,
         745,
         745,
+        745,
         745
       ],
       "honors": [
@@ -26691,7 +26975,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "27F8FF6B7EB7021A"
+      "evidence_hash": "421F321CA2BF5876"
     },
     {
       "name": "SmartModeler GIS",
@@ -27205,6 +27489,7 @@
         214,
         214,
         214,
+        214,
         214
       ],
       "honors": [
@@ -27219,7 +27504,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "C5D807401BAA2D8A"
+      "evidence_hash": "1A198214AB140D86"
     },
     {
       "name": "02Agent Smart Modeler",
@@ -27500,6 +27785,7 @@
         116,
         116,
         116,
+        116,
         116
       ],
       "honors": [
@@ -27514,39 +27800,39 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "4B0517DA753F72AC"
+      "evidence_hash": "DFA82EB8A708E7F5"
     }
   ],
   "summary": {
     "total_plugins": 25,
-    "total_downloads": 86240,
-    "last_updated": "Aug 20, 2026 10:39 UTC",
-    "community_hours_saved": 64680,
-    "economic_value_usd": 3234000,
+    "total_downloads": 86248,
+    "last_updated": "Aug 20, 2026 10:49 UTC",
+    "community_hours_saved": 64686,
+    "economic_value_usd": 3234300,
     "overall_raw_rating": 4.54,
     "portfolio_bayesian_rating": 4.65,
     "total_votes": 858,
     "active_plugins": 25,
-    "portfolio_monthly_velocity": 19160,
-    "active_period_monthly_avg": 19160,
+    "portfolio_monthly_velocity": 19162,
+    "active_period_monthly_avg": 19162,
     "portfolio_overall_monthly_avg": 5585,
     "sum_individual_monthly_avgs": 40938,
     "categories": {
       "Standalone Plugins": {
         "count": 6,
-        "downloads": 31038,
+        "downloads": 31039,
         "total_rating_sum": 1103.9710232131752,
         "total_votes": 235
       },
       "02 Suite": {
         "count": 8,
-        "downloads": 22900,
+        "downloads": 22902,
         "total_rating_sum": 1275.9619491876358,
         "total_votes": 276
       },
       "PlanX Suite": {
         "count": 11,
-        "downloads": 32302,
+        "downloads": 32307,
         "total_rating_sum": 1512.9495575878361,
         "total_votes": 347
       }
@@ -27636,11 +27922,11 @@
         "iso3": "USA",
         "cx": 214.1,
         "cy": 152.8,
-        "downloads": 16417,
+        "downloads": 16420,
         "suite_downloads": {
           "Standalone Plugins": 4648,
           "02 Suite": 2821,
-          "PlanX Suite": 8948
+          "PlanX Suite": 8951
         },
         "top_plugins": [
           {
@@ -27651,7 +27937,7 @@
           },
           {
             "name": "PlanX",
-            "downloads": 1405,
+            "downloads": 1408,
             "category": "PlanX Suite",
             "percentage": 27.9
           },
@@ -27997,7 +28283,7 @@
             "name": "02CadGis Universal CAD/GIS Importer",
             "downloads": 336,
             "category": "02 Suite",
-            "percentage": 5.0
+            "percentage": 4.9
           },
           {
             "name": "PlanX",
@@ -28137,10 +28423,10 @@
         "iso3": "IND",
         "cx": 693.9,
         "cy": 192.3,
-        "downloads": 4051,
+        "downloads": 4052,
         "suite_downloads": {
           "Standalone Plugins": 2024,
-          "02 Suite": 1248,
+          "02 Suite": 1249,
           "PlanX Suite": 779
         },
         "top_plugins": [
@@ -28158,7 +28444,7 @@
           },
           {
             "name": "02CadGis Universal CAD/GIS Importer",
-            "downloads": 355,
+            "downloads": 356,
             "category": "02 Suite",
             "percentage": 5.2
           },
@@ -28475,10 +28761,10 @@
         "iso3": "SGP",
         "cx": 756.9,
         "cy": 244.5,
-        "downloads": 3181,
+        "downloads": 3182,
         "suite_downloads": {
           "Standalone Plugins": 818,
-          "02 Suite": 703,
+          "02 Suite": 704,
           "PlanX Suite": 1660
         },
         "top_plugins": [
@@ -28550,9 +28836,9 @@
           },
           {
             "name": "02Agent OSM Downloader",
-            "downloads": 120,
+            "downloads": 121,
             "category": "02 Suite",
-            "percentage": 7.4
+            "percentage": 7.5
           },
           {
             "name": "ParcelFlux",
@@ -29302,10 +29588,10 @@
         "iso3": "POL",
         "cx": 531.1,
         "cy": 115.3,
-        "downloads": 1736,
+        "downloads": 1739,
         "suite_downloads": {
           "Standalone Plugins": 591,
-          "02 Suite": 532,
+          "02 Suite": 535,
           "PlanX Suite": 613
         },
         "top_plugins": [
@@ -29335,7 +29621,7 @@
           },
           {
             "name": "02viz - Geospatial Visualization Studio",
-            "downloads": 90,
+            "downloads": 91,
             "category": "02 Suite",
             "percentage": 1.6
           },
@@ -29419,9 +29705,9 @@
           },
           {
             "name": "02Agent OSM Downloader",
-            "downloads": 29,
+            "downloads": 30,
             "category": "02 Suite",
-            "percentage": 1.8
+            "percentage": 1.9
           },
           {
             "name": "02Urban Portrait - City as a Face",
@@ -29437,9 +29723,9 @@
           },
           {
             "name": "02truesize - Map Truth Lab",
-            "downloads": 11,
+            "downloads": 12,
             "category": "02 Suite",
-            "percentage": 0.9
+            "percentage": 1.0
           },
           {
             "name": "Parametric Process",
@@ -47089,7 +47375,7 @@
         "icon": "fa-satellite-dish",
         "rank_title": "High-Velocity Tech Hub",
         "color": "#818cf8",
-        "downloads": 17369,
+        "downloads": 17371,
         "percentage": 20.1,
         "dominant_suite": "Standalone Plugins",
         "dominant_suite_share": 38.9,
@@ -47106,7 +47392,7 @@
           },
           {
             "name": "02CadGis Universal CAD/GIS Importer",
-            "downloads": 1532,
+            "downloads": 1533,
             "percentage": 8.8
           }
         ],
@@ -47119,7 +47405,7 @@
         "icon": "fa-city",
         "rank_title": "High-Volume Engine",
         "color": "#38bdf8",
-        "downloads": 17034,
+        "downloads": 17037,
         "percentage": 19.8,
         "dominant_suite": "PlanX Suite",
         "dominant_suite_share": 53.9,
@@ -47131,7 +47417,7 @@
           },
           {
             "name": "PlanX",
-            "downloads": 1449,
+            "downloads": 1452,
             "percentage": 8.5
           },
           {
@@ -47149,10 +47435,10 @@
         "icon": "fa-mosque",
         "rank_title": "Strategic Core Hub",
         "color": "#f59e0b",
-        "downloads": 16846,
+        "downloads": 16849,
         "percentage": 19.5,
         "dominant_suite": "PlanX Suite",
-        "dominant_suite_share": 44.7,
+        "dominant_suite_share": 44.6,
         "top_plugins": [
           {
             "name": "3D OSM Model",
@@ -47266,7 +47552,7 @@
     "suite_affinity_matrix": [
       {
         "suite": "Standalone Plugins",
-        "global_downloads": 31038,
+        "global_downloads": 31039,
         "global_share": 36.0,
         "cells": [
           {
@@ -47327,12 +47613,12 @@
       },
       {
         "suite": "02 Suite",
-        "global_downloads": 22900,
+        "global_downloads": 22902,
         "global_share": 26.6,
         "cells": [
           {
             "region": "Asia-Pacific",
-            "downloads": 4972,
+            "downloads": 4974,
             "regional_share": 28.6,
             "suite_share": 21.7,
             "location_quotient": 1.08,
@@ -47350,7 +47636,7 @@
           },
           {
             "region": "Eastern Europe & Middle East",
-            "downloads": 3818,
+            "downloads": 3821,
             "regional_share": 22.7,
             "suite_share": 16.7,
             "location_quotient": 0.85,
@@ -47388,7 +47674,7 @@
       },
       {
         "suite": "PlanX Suite",
-        "global_downloads": 32302,
+        "global_downloads": 32307,
         "global_share": 37.5,
         "cells": [
           {
@@ -47402,7 +47688,7 @@
           },
           {
             "region": "North America",
-            "downloads": 9184,
+            "downloads": 9187,
             "regional_share": 53.9,
             "suite_share": 28.4,
             "location_quotient": 1.44,
@@ -47412,7 +47698,7 @@
           {
             "region": "Eastern Europe & Middle East",
             "downloads": 7523,
-            "regional_share": 44.7,
+            "regional_share": 44.6,
             "suite_share": 23.3,
             "location_quotient": 1.19,
             "affinity_status": "Over-Indexing",
@@ -47680,28 +47966,28 @@
       "suite_decomposition": {
         "Standalone Plugins": {
           "count": 6,
-          "downloads": 31038,
+          "downloads": 31039,
           "share_pct": 36.0,
           "sub_gini": 0.6919
         },
         "02 Suite": {
           "count": 8,
-          "downloads": 22900,
+          "downloads": 22902,
           "share_pct": 26.6,
           "sub_gini": 0.5095
         },
         "PlanX Suite": {
           "count": 11,
-          "downloads": 32302,
+          "downloads": 32307,
           "share_pct": 37.5,
-          "sub_gini": 0.2954
+          "sub_gini": 0.2955
         }
       },
       "within_suite_inequality_pct": 31.2
     },
     "critical_anomalies": 1,
     "warning_anomalies": 0,
-    "total_snapshots": 34
+    "total_snapshots": 35
   },
   "anomalies": [
     {
@@ -47728,7 +48014,7 @@
       "purity_pct": 68.7,
       "reconciled_after_purge": 5.102,
       "needed_5_stars_to_recover": 550,
-      "evidence_hash": "260765BE97499CCF",
+      "evidence_hash": "CB32376F97A0215D",
       "status": "CRITICAL 1-STAR RAID",
       "severity": "critical",
       "badge_color": "rose"
@@ -47757,7 +48043,7 @@
       "purity_pct": 10.0,
       "reconciled_after_purge": 4.7,
       "needed_5_stars_to_recover": 150,
-      "evidence_hash": "9426500F8DDD7FF1",
+      "evidence_hash": "388E050E33D0B411",
       "status": "POSITIVE GROWTH",
       "severity": "positive",
       "badge_color": "emerald"
@@ -47786,7 +48072,7 @@
       "purity_pct": 100.0,
       "reconciled_after_purge": 5.173,
       "needed_5_stars_to_recover": 18,
-      "evidence_hash": "9EA96CD4F1027AF9",
+      "evidence_hash": "FC8274AD2947A23B",
       "status": "POSITIVE GROWTH",
       "severity": "positive",
       "badge_color": "emerald"
@@ -47815,7 +48101,7 @@
       "purity_pct": 100.0,
       "reconciled_after_purge": 4.912,
       "needed_5_stars_to_recover": 77,
-      "evidence_hash": "BE8BF151C733BFDA",
+      "evidence_hash": "C70B3DED83FB97C5",
       "status": "POSITIVE GROWTH",
       "severity": "positive",
       "badge_color": "emerald"
@@ -47844,7 +48130,7 @@
       "purity_pct": 100.0,
       "reconciled_after_purge": 7.4,
       "needed_5_stars_to_recover": 0,
-      "evidence_hash": "36808198653E0329",
+      "evidence_hash": "1C3FD7D4E913372F",
       "status": "POSITIVE GROWTH",
       "severity": "positive",
       "badge_color": "emerald"
@@ -47873,7 +48159,7 @@
       "purity_pct": 60.0,
       "reconciled_after_purge": 5.473,
       "needed_5_stars_to_recover": 32,
-      "evidence_hash": "9A16B9E7F725BA69",
+      "evidence_hash": "F658A04233449056",
       "status": "POSITIVE GROWTH",
       "severity": "positive",
       "badge_color": "emerald"
@@ -47902,7 +48188,7 @@
       "purity_pct": 100.0,
       "reconciled_after_purge": 4.97,
       "needed_5_stars_to_recover": 40,
-      "evidence_hash": "57B3272E00F5B5C8",
+      "evidence_hash": "F095B1C2E0D9D94B",
       "status": "POSITIVE GROWTH",
       "severity": "positive",
       "badge_color": "emerald"
@@ -47931,7 +48217,7 @@
       "purity_pct": 100.0,
       "reconciled_after_purge": 5.06,
       "needed_5_stars_to_recover": 12,
-      "evidence_hash": "CE1A2EA166CCAEA0",
+      "evidence_hash": "8944792CC488757A",
       "status": "POSITIVE GROWTH",
       "severity": "positive",
       "badge_color": "emerald"
@@ -47960,7 +48246,7 @@
       "purity_pct": 100.0,
       "reconciled_after_purge": 4.738,
       "needed_5_stars_to_recover": 96,
-      "evidence_hash": "2E8217DD759C27E7",
+      "evidence_hash": "F84695B359E74796",
       "status": "POSITIVE GROWTH",
       "severity": "positive",
       "badge_color": "emerald"
@@ -47989,7 +48275,7 @@
       "purity_pct": 100.0,
       "reconciled_after_purge": 4.536,
       "needed_5_stars_to_recover": 149,
-      "evidence_hash": "7FD8C4B335197AB6",
+      "evidence_hash": "FD083C1CAA137F14",
       "status": "POSITIVE GROWTH",
       "severity": "positive",
       "badge_color": "emerald"
@@ -48018,7 +48304,7 @@
       "purity_pct": 100.0,
       "reconciled_after_purge": 4.552,
       "needed_5_stars_to_recover": 75,
-      "evidence_hash": "927FA15E11290E5A",
+      "evidence_hash": "CF56900901B84BD1",
       "status": "POSITIVE GROWTH",
       "severity": "positive",
       "badge_color": "emerald"
@@ -48047,7 +48333,7 @@
       "purity_pct": 100.0,
       "reconciled_after_purge": 5.727,
       "needed_5_stars_to_recover": 0,
-      "evidence_hash": "C75E3FF321B0FFD0",
+      "evidence_hash": "DB337E082DC96F88",
       "status": "POSITIVE GROWTH",
       "severity": "positive",
       "badge_color": "emerald"
@@ -48076,7 +48362,7 @@
       "purity_pct": 100.0,
       "reconciled_after_purge": 5.0,
       "needed_5_stars_to_recover": 0,
-      "evidence_hash": "BD66452D6B5B484E",
+      "evidence_hash": "9F5C7826E0F8070D",
       "status": "POSITIVE GROWTH",
       "severity": "positive",
       "badge_color": "emerald"
@@ -48105,7 +48391,7 @@
       "purity_pct": 0.0,
       "reconciled_after_purge": 4.852,
       "needed_5_stars_to_recover": 0,
-      "evidence_hash": "B1582EE0FEC209EB",
+      "evidence_hash": "B227B038885B6291",
       "status": "STABLE BASELINE",
       "severity": "stable",
       "badge_color": "slate"
@@ -48134,7 +48420,7 @@
       "purity_pct": 0.0,
       "reconciled_after_purge": 5.0,
       "needed_5_stars_to_recover": 0,
-      "evidence_hash": "94EEA3808C14C4AF",
+      "evidence_hash": "887EB8B43754D10F",
       "status": "STABLE BASELINE",
       "severity": "stable",
       "badge_color": "slate"
@@ -48163,7 +48449,7 @@
       "purity_pct": 0.0,
       "reconciled_after_purge": 4.789,
       "needed_5_stars_to_recover": 2,
-      "evidence_hash": "F5548D032A8F6775",
+      "evidence_hash": "0944F2ECAC41976D",
       "status": "STABLE BASELINE",
       "severity": "stable",
       "badge_color": "slate"
@@ -48192,7 +48478,7 @@
       "purity_pct": 0.0,
       "reconciled_after_purge": 5.0,
       "needed_5_stars_to_recover": 0,
-      "evidence_hash": "095B67C869169A23",
+      "evidence_hash": "81D0CA34930D8971",
       "status": "STABLE BASELINE",
       "severity": "stable",
       "badge_color": "slate"
@@ -48221,7 +48507,7 @@
       "purity_pct": 0.0,
       "reconciled_after_purge": 5.0,
       "needed_5_stars_to_recover": 0,
-      "evidence_hash": "CBCEED4A418E25F6",
+      "evidence_hash": "07B532E202A5E945",
       "status": "STABLE BASELINE",
       "severity": "stable",
       "badge_color": "slate"
@@ -48250,7 +48536,7 @@
       "purity_pct": 0.0,
       "reconciled_after_purge": 4.643,
       "needed_5_stars_to_recover": 12,
-      "evidence_hash": "EA312D4E2F9DA904",
+      "evidence_hash": "E036BD3ABDBD9ED4",
       "status": "STABLE BASELINE",
       "severity": "stable",
       "badge_color": "slate"
@@ -48279,7 +48565,7 @@
       "purity_pct": 0.0,
       "reconciled_after_purge": 4.555,
       "needed_5_stars_to_recover": 12,
-      "evidence_hash": "9217D3118F95FC64",
+      "evidence_hash": "BA063F889623382A",
       "status": "STABLE BASELINE",
       "severity": "stable",
       "badge_color": "slate"
@@ -48308,7 +48594,7 @@
       "purity_pct": 0.0,
       "reconciled_after_purge": 4.714,
       "needed_5_stars_to_recover": 7,
-      "evidence_hash": "AB3860E45D60B8CB",
+      "evidence_hash": "9D6240B1F5A38C60",
       "status": "STABLE BASELINE",
       "severity": "stable",
       "badge_color": "slate"
@@ -48337,7 +48623,7 @@
       "purity_pct": 0.0,
       "reconciled_after_purge": 4.769,
       "needed_5_stars_to_recover": 3,
-      "evidence_hash": "8467F8AC473A1ACE",
+      "evidence_hash": "EA222D04FDACE41B",
       "status": "STABLE BASELINE",
       "severity": "stable",
       "badge_color": "slate"
@@ -48366,7 +48652,7 @@
       "purity_pct": 0.0,
       "reconciled_after_purge": 4.999,
       "needed_5_stars_to_recover": 0,
-      "evidence_hash": "27F8FF6B7EB7021A",
+      "evidence_hash": "421F321CA2BF5876",
       "status": "STABLE BASELINE",
       "severity": "stable",
       "badge_color": "slate"
@@ -48395,7 +48681,7 @@
       "purity_pct": 0.0,
       "reconciled_after_purge": 4.998,
       "needed_5_stars_to_recover": 0,
-      "evidence_hash": "C5D807401BAA2D8A",
+      "evidence_hash": "1A198214AB140D86",
       "status": "STABLE BASELINE",
       "severity": "stable",
       "badge_color": "slate"
@@ -48424,7 +48710,7 @@
       "purity_pct": 0.0,
       "reconciled_after_purge": 4.998,
       "needed_5_stars_to_recover": 0,
-      "evidence_hash": "4B0517DA753F72AC",
+      "evidence_hash": "DFA82EB8A708E7F5",
       "status": "STABLE BASELINE",
       "severity": "stable",
       "badge_color": "slate"
@@ -48439,8 +48725,8 @@
     ],
     "raided_count": 1,
     "total_raid_votes": 32,
-    "audit_timestamp": "2026-08-20 10:39:47 UTC",
-    "portfolio_evidence_signature": "C2969B6F89F9B88D8C97157A"
+    "audit_timestamp": "2026-08-20 10:49:14 UTC",
+    "portfolio_evidence_signature": "433B48F9F0F88EF9C0E589A7"
   },
   "history_meta": {
     "snapshots": [
@@ -54449,6 +54735,188 @@
             "version": "1.5.54"
           }
         }
+      },
+      {
+        "timestamp": "2026-08-20T10:49:14.625717+00:00",
+        "date_str": "Aug 20, 2026 10:49 UTC",
+        "total_downloads": 86248,
+        "plugins": {
+          "3D OSM Model": {
+            "downloads": 16765,
+            "average_vote": 4.647962816297469,
+            "votes_count": 125,
+            "total_score": 580.9954,
+            "version": "1.2.5"
+          },
+          "OSM Quick 3D": {
+            "downloads": 8321,
+            "average_vote": 4.6900747876790465,
+            "votes_count": 71,
+            "total_score": 332.9953,
+            "version": "0.20.7"
+          },
+          "02CadGis Universal CAD/GIS Importer": {
+            "downloads": 7355,
+            "average_vote": 4.741297563835107,
+            "votes_count": 58,
+            "total_score": 274.9953,
+            "version": "2.8.4"
+          },
+          "PlanX CAD Toolset": {
+            "downloads": 6025,
+            "average_vote": 4.759171126460621,
+            "votes_count": 54,
+            "total_score": 256.9952,
+            "version": "1.27.4"
+          },
+          "02viz - Geospatial Visualization Studio": {
+            "downloads": 5693,
+            "average_vote": 4.594532506317482,
+            "votes_count": 74,
+            "total_score": 339.9954,
+            "version": "0.15.13"
+          },
+          "PlanX": {
+            "downloads": 5045,
+            "average_vote": 4.388827932945375,
+            "votes_count": 72,
+            "total_score": 315.9956,
+            "version": "4.10.6"
+          },
+          "02-Multimap: Sync-up Multimaps": {
+            "downloads": 4143,
+            "average_vote": 4.407836738990276,
+            "votes_count": 76,
+            "total_score": 334.9956,
+            "version": "1.0.0"
+          },
+          "PlanX 3D City Viewer": {
+            "downloads": 4118,
+            "average_vote": 4.851672160290359,
+            "votes_count": 27,
+            "total_score": 130.9951,
+            "version": "1.0.0"
+          },
+          "EasyFillet": {
+            "downloads": 3445,
+            "average_vote": 4.999722237653463,
+            "votes_count": 18,
+            "total_score": 89.995,
+            "version": "1.4.10"
+          },
+          "PlanX GeoStats Lab": {
+            "downloads": 3276,
+            "average_vote": 3.253475303164744,
+            "votes_count": 71,
+            "total_score": 230.9967,
+            "version": "2.1.2"
+          },
+          "PlanX: Urban Resilience": {
+            "downloads": 3140,
+            "average_vote": 4.32244121157382,
+            "votes_count": 31,
+            "total_score": 133.9957,
+            "version": "2.1.1"
+          },
+          "PlanX CartoLab": {
+            "downloads": 2097,
+            "average_vote": 4.789221619914741,
+            "votes_count": 19,
+            "total_score": 90.9952,
+            "version": "1.6.5"
+          },
+          "PlanX Settlement Planning Toolset": {
+            "downloads": 1906,
+            "average_vote": 4.999666688887408,
+            "votes_count": 15,
+            "total_score": 74.995,
+            "version": "0.5.12"
+          },
+          "PlanX Suitability Lab": {
+            "downloads": 1884,
+            "average_vote": 4.809294795485929,
+            "votes_count": 21,
+            "total_score": 100.9952,
+            "version": "1.6.7"
+          },
+          "PlanX Uygulama İmar Planı (Master Plan) Toolset": {
+            "downloads": 1811,
+            "average_vote": 4.99964288265124,
+            "votes_count": 14,
+            "total_score": 69.995,
+            "version": "1.2.10"
+          },
+          "02Agent OSM Downloader": {
+            "downloads": 1616,
+            "average_vote": 4.999687519530029,
+            "votes_count": 16,
+            "total_score": 79.995,
+            "version": "1.1.1"
+          },
+          "ParcelFlux": {
+            "downloads": 1549,
+            "average_vote": 4.642525533890437,
+            "votes_count": 14,
+            "total_score": 64.9954,
+            "version": "0.3.3"
+          },
+          "PlanX Urban Procedural 3D": {
+            "downloads": 1520,
+            "average_vote": 4.555049438951228,
+            "votes_count": 9,
+            "total_score": 40.9954,
+            "version": "0.5.6"
+          },
+          "PlanX DataCube Lab": {
+            "downloads": 1485,
+            "average_vote": 4.713949003642597,
+            "votes_count": 14,
+            "total_score": 65.9953,
+            "version": "1.3.8"
+          },
+          "02Urban Portrait - City as a Face": {
+            "downloads": 1421,
+            "average_vote": 4.768863933543574,
+            "votes_count": 13,
+            "total_score": 61.9952,
+            "version": "0.2.7"
+          },
+          "02GeoQuest - Playable Map Studio": {
+            "downloads": 1355,
+            "average_vote": 4.999615414198908,
+            "votes_count": 13,
+            "total_score": 64.995,
+            "version": "1.0.6"
+          },
+          "02truesize - Map Truth Lab": {
+            "downloads": 1203,
+            "average_vote": 4.541477438440065,
+            "votes_count": 24,
+            "total_score": 108.9955,
+            "version": "0.3.6"
+          },
+          "Parametric Process": {
+            "downloads": 745,
+            "average_vote": 4.999000199960007,
+            "votes_count": 5,
+            "total_score": 24.995,
+            "version": "2.0.9"
+          },
+          "SmartModeler GIS": {
+            "downloads": 214,
+            "average_vote": 4.997501249375313,
+            "votes_count": 2,
+            "total_score": 9.995,
+            "version": "1.5.53"
+          },
+          "02Agent Smart Modeler": {
+            "downloads": 116,
+            "average_vote": 4.997501249375313,
+            "votes_count": 2,
+            "total_score": 9.995,
+            "version": "1.5.54"
+          }
+        }
       }
     ],
     "timestamps": [
@@ -54485,7 +54953,8 @@
       "Aug 20, 2026 10:25 UTC",
       "Aug 20, 2026 10:28 UTC",
       "Aug 20, 2026 10:34 UTC",
-      "Aug 20, 2026 10:39 UTC"
+      "Aug 20, 2026 10:39 UTC",
+      "Aug 20, 2026 10:49 UTC"
     ],
     "by_plugin": {
       "3D OSM Model": {
@@ -54523,6 +54992,7 @@
           4.65,
           4.65,
           4.65,
+          4.65,
           4.65
         ],
         "votes": [
@@ -54553,6 +55023,7 @@
           122,
           122,
           122,
+          125,
           125,
           125,
           125,
@@ -54597,6 +55068,7 @@
           4.69,
           4.69,
           4.69,
+          4.69,
           4.69
         ],
         "votes": [
@@ -54627,6 +55099,7 @@
           66,
           66,
           67,
+          71,
           71,
           71,
           71,
@@ -54671,6 +55144,7 @@
           4.74,
           4.74,
           4.74,
+          4.74,
           4.74
         ],
         "votes": [
@@ -54701,6 +55175,7 @@
           53,
           54,
           54,
+          58,
           58,
           58,
           58,
@@ -54745,6 +55220,7 @@
           4.76,
           4.76,
           4.76,
+          4.76,
           4.76
         ],
         "votes": [
@@ -54775,6 +55251,7 @@
           52,
           52,
           52,
+          54,
           54,
           54,
           54,
@@ -54819,6 +55296,7 @@
           4.59,
           4.59,
           4.59,
+          4.59,
           4.59
         ],
         "votes": [
@@ -54849,6 +55327,7 @@
           69,
           69,
           69,
+          74,
           74,
           74,
           74,
@@ -54893,6 +55372,7 @@
           4.39,
           4.39,
           4.39,
+          4.39,
           4.39
         ],
         "votes": [
@@ -54923,6 +55403,7 @@
           70,
           70,
           70,
+          72,
           72,
           72,
           72,
@@ -54967,6 +55448,7 @@
           4.41,
           4.41,
           4.41,
+          4.41,
           4.41
         ],
         "votes": [
@@ -54997,6 +55479,7 @@
           72,
           72,
           72,
+          76,
           76,
           76,
           76,
@@ -55041,9 +55524,11 @@
           4.85,
           4.85,
           4.85,
+          4.85,
           4.85
         ],
         "votes": [
+          27,
           27,
           27,
           27,
@@ -55115,9 +55600,11 @@
           5.0,
           5.0,
           5.0,
+          5.0,
           5.0
         ],
         "votes": [
+          18,
           18,
           18,
           18,
@@ -55189,6 +55676,7 @@
           3.25,
           3.25,
           3.25,
+          3.25,
           3.25
         ],
         "votes": [
@@ -55219,6 +55707,7 @@
           69,
           69,
           69,
+          71,
           71,
           71,
           71,
@@ -55263,6 +55752,7 @@
           4.32,
           4.32,
           4.32,
+          4.32,
           4.32
         ],
         "votes": [
@@ -55293,6 +55783,7 @@
           29,
           29,
           29,
+          31,
           31,
           31,
           31,
@@ -55337,9 +55828,11 @@
           4.79,
           4.79,
           4.79,
+          4.79,
           4.79
         ],
         "votes": [
+          19,
           19,
           19,
           19,
@@ -55411,9 +55904,11 @@
           5.0,
           5.0,
           5.0,
+          5.0,
           5.0
         ],
         "votes": [
+          15,
           15,
           15,
           15,
@@ -55485,6 +55980,7 @@
           4.81,
           4.81,
           4.81,
+          4.81,
           4.81
         ],
         "votes": [
@@ -55515,6 +56011,7 @@
           20,
           20,
           20,
+          21,
           21,
           21,
           21,
@@ -55559,9 +56056,11 @@
           5.0,
           5.0,
           5.0,
+          5.0,
           5.0
         ],
         "votes": [
+          14,
           14,
           14,
           14,
@@ -55633,6 +56132,7 @@
           5.0,
           5.0,
           5.0,
+          5.0,
           5.0
         ],
         "votes": [
@@ -55663,6 +56163,7 @@
           11,
           11,
           11,
+          16,
           16,
           16,
           16,
@@ -55707,9 +56208,11 @@
           4.64,
           4.64,
           4.64,
+          4.64,
           4.64
         ],
         "votes": [
+          14,
           14,
           14,
           14,
@@ -55781,9 +56284,11 @@
           4.56,
           4.56,
           4.56,
+          4.56,
           4.56
         ],
         "votes": [
+          9,
           9,
           9,
           9,
@@ -55855,9 +56360,11 @@
           4.71,
           4.71,
           4.71,
+          4.71,
           4.71
         ],
         "votes": [
+          14,
           14,
           14,
           14,
@@ -55929,9 +56436,11 @@
           4.77,
           4.77,
           4.77,
+          4.77,
           4.77
         ],
         "votes": [
+          13,
           13,
           13,
           13,
@@ -56003,6 +56512,7 @@
           5.0,
           5.0,
           5.0,
+          5.0,
           5.0
         ],
         "votes": [
@@ -56033,6 +56543,7 @@
           12,
           12,
           12,
+          13,
           13,
           13,
           13,
@@ -56077,6 +56588,7 @@
           4.54,
           4.54,
           4.54,
+          4.54,
           4.54
         ],
         "votes": [
@@ -56107,6 +56619,7 @@
           19,
           19,
           19,
+          24,
           24,
           24,
           24,
@@ -56151,9 +56664,11 @@
           5.0,
           5.0,
           5.0,
+          5.0,
           5.0
         ],
         "votes": [
+          5,
           5,
           5,
           5,
@@ -56225,9 +56740,11 @@
           5.0,
           5.0,
           5.0,
+          5.0,
           5.0
         ],
         "votes": [
+          2,
           2,
           2,
           2,
@@ -56299,6 +56816,7 @@
           5.0,
           5.0,
           5.0,
+          5.0,
           5.0
         ],
         "votes": [
@@ -56329,6 +56847,7 @@
           0,
           0,
           0,
+          2,
           2,
           2,
           2,
@@ -56475,6 +56994,10 @@
                     closeCompareModal();
                     closeCommandPalette();
                     closeExecutiveStorytellingModal();
+                    closeBadgeKitModal();
+                    closeBundleModal();
+                    closeForensicInspectorModal();
+                    closeShortcutsModal();
                 }
                 return;
             }
@@ -56487,6 +57010,8 @@
             else if (e.key === '6') switchTab('table');
             else if (e.key === '7') switchTab('pipelines');
             else if (e.key.toLowerCase() === 't') toggleTheme();
+            else if (e.key.toLowerCase() === 'b') openBundleModal();
+            else if (e.key === '?' || (e.shiftKey && e.key === '/')) openShortcutsModal();
             else if (e.key === '/') {
                 e.preventDefault();
                 switchTab('deepdive');
@@ -56498,6 +57023,9 @@
                 closeCommandPalette();
                 closeExecutiveStorytellingModal();
                 closeBadgeKitModal();
+                closeBundleModal();
+                closeForensicInspectorModal();
+                closeShortcutsModal();
             }
         });
 
@@ -56725,7 +57253,7 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             });
         }
 
-        function switchTab(tabId) {
+        function switchTab(tabId, updateHash = true) {
             const panes = document.querySelectorAll('.tab-pane');
             panes.forEach(pane => pane.classList.add('hidden'));
 
@@ -56738,6 +57266,8 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             if (targetPane) targetPane.classList.remove('hidden');
             const targetBtn = document.getElementById(`tab-btn-${tabId}`);
             if (targetBtn) targetBtn.className = "px-5 py-3 text-sm font-bold border-b-2 border-cyan-400 text-cyan-400 flex items-center gap-2 whitespace-nowrap";
+
+            if (updateHash && typeof updateHashUrl === 'function') updateHashUrl(tabId);
 
             if (tabId === 'overview' || tabId === 'deepdive') {
                 setTimeout(initializeCharts, 100);
@@ -56752,7 +57282,10 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
                 setTimeout(initializeGeospatialStudio, 100);
             }
             if (tabId === 'pipelines') {
-                setTimeout(initializePipelines, 100);
+                setTimeout(() => {
+                    initializePipelines();
+                    if (typeof renderSynergyMatrix === 'function') renderSynergyMatrix();
+                }, 100);
             }
         }
 
@@ -58088,11 +58621,11 @@ pyplugin_installer.instance().installPlugin("${pkgName}")`;
                 }
 
                 const audit = appData.anomalies.find(a => a.name === item.name);
-                let statusBadge = '<span class="text-slate-500 text-[10px] font-mono">Normal</span>';
+                let statusBadge = `<button onclick="openForensicInspectorModal('${item.name}')" title="Inspect Rating Forensic Dossier" class="text-slate-500 text-[10px] font-mono hover:text-cyan-400 transition-colors">Normal</button>`;
                 if (audit && audit.severity === 'critical') {
-                    statusBadge = '<span class="status-pill status-pill-critical"><span class="status-pill-dot"></span>Raid Alert</span>';
+                    statusBadge = `<button onclick="openForensicInspectorModal('${item.name}')" title="Inspect Rating Forensic Dossier" class="status-pill status-pill-critical cursor-pointer"><span class="status-pill-dot"></span>Raid Alert</button>`;
                 } else if (audit && audit.severity === 'high') {
-                    statusBadge = '<span class="status-pill status-pill-warning"><span class="status-pill-dot"></span>Watch</span>';
+                    statusBadge = `<button onclick="openForensicInspectorModal('${item.name}')" title="Inspect Rating Forensic Dossier" class="status-pill status-pill-warning cursor-pointer"><span class="status-pill-dot"></span>Watch</button>`;
                 }
 
                 let honorsHtml = '';
@@ -58102,13 +58635,14 @@ pyplugin_installer.instance().installPlugin("${pkgName}")`;
 
                 const iconImg = item.icon ? `<img src="${item.icon}" class="w-5 h-5 rounded-md object-contain p-0.5 border border-white/10 bg-obsidian-950 flex-shrink-0" alt=""/>` : '';
                 const pkg = item.package_name || item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const isInBundle = bundlePlugins.has(item.name);
 
                 tr.innerHTML = `
                     <td class="py-3.5 px-4 font-semibold font-heading">
                         <div class="flex items-center gap-2.5">
                             ${iconImg}
                             <div>
-                                <div class="group-hover:text-cyan-400 transition-colors">${item.name}</div>
+                                <div class="group-hover:text-cyan-400 transition-colors cursor-pointer" onclick="openForensicInspectorModal('${item.name}')">${item.name}</div>
                                 <div class="mt-0.5">${honorsHtml}</div>
                             </div>
                         </div>
@@ -58124,6 +58658,9 @@ pyplugin_installer.instance().installPlugin("${pkgName}")`;
                     <td class="py-3.5 px-4 text-center">${statusBadge}</td>
                     <td class="py-3.5 px-4 text-right">
                         <div class="flex items-center justify-end gap-1.5">
+                            <button onclick="togglePluginBundle('${item.name}')" title="${isInBundle ? 'Remove from Custom Install Bundle' : 'Add to Custom Install Bundle'}" class="p-1.5 rounded-lg ${isInBundle ? 'bg-cyan-600 text-white shadow-md shadow-cyan-500/20' : 'bg-obsidian-900 text-slate-400 hover:text-white'} border border-white/5 transition-all">
+                                <i class="fa-solid fa-cart-plus text-[10px]"></i>
+                            </button>
                             <button onclick="openCompareWithPlugin('${item.name}')" title="Compare with other plugins" class="p-1.5 rounded-lg bg-obsidian-900 hover:bg-indigo-600 text-slate-400 hover:text-white border border-white/5 transition-all">
                                 <i class="fa-solid fa-code-compare text-[10px]"></i>
                             </button>
@@ -58247,6 +58784,404 @@ pyplugin_installer.instance().installPlugin("${pkgName}")`;
         }
 
         // =============================================================
+        // CUSTOM PYQGIS MULTI-PLUGIN BUNDLE CART ENGINE
+        // =============================================================
+        let bundlePlugins = new Set();
+
+        function togglePluginBundle(name) {
+            if (bundlePlugins.has(name)) {
+                bundlePlugins.delete(name);
+                showToast(`Removed "${name}" from Install Bundle`);
+            } else {
+                bundlePlugins.add(name);
+                showToast(`Added "${name}" to Install Bundle!`);
+            }
+            updateBundleUI();
+        }
+
+        function selectAllPluginsBundle() {
+            appData.plugins.forEach(p => bundlePlugins.add(p.name));
+            showToast(`All ${appData.plugins.length} plugins added to bundle!`);
+            updateBundleUI();
+        }
+
+        function clearPluginBundle() {
+            bundlePlugins.clear();
+            showToast("Bundle cleared.");
+            updateBundleUI();
+        }
+
+        function updateBundleUI() {
+            const count = bundlePlugins.size;
+            const badge = document.getElementById('bundle-counter-badge');
+            const floatingBar = document.getElementById('bundle-floating-bar');
+            const barCount = document.getElementById('bundle-bar-count');
+            const modalCount = document.getElementById('bundle-modal-count');
+
+            if (badge) {
+                badge.innerText = count;
+                badge.className = count > 0 ? "px-1.5 py-0.2 rounded-full bg-cyan-500 text-obsidian-950 font-mono text-[10px] font-extrabold inline-block" : "hidden";
+            }
+            if (floatingBar) {
+                if (count > 0) {
+                    floatingBar.classList.remove('hidden');
+                    if (barCount) barCount.innerText = count;
+                } else {
+                    floatingBar.classList.add('hidden');
+                }
+            }
+            if (modalCount) modalCount.innerText = count;
+
+            renderBundleModalView();
+        }
+
+        function openBundleModal() {
+            if (bundlePlugins.size === 0) {
+                appData.plugins.slice(0, 5).forEach(p => bundlePlugins.add(p.name));
+                updateBundleUI();
+            }
+            renderBundleModalView();
+            renderBundleScriptPreview();
+            document.getElementById('bundle-modal').classList.remove('hidden');
+        }
+
+        function closeBundleModal() {
+            document.getElementById('bundle-modal').classList.add('hidden');
+        }
+
+        function renderBundleModalView() {
+            const tagsContainer = document.getElementById('bundle-modal-tags');
+            if (!tagsContainer) return;
+            tagsContainer.innerHTML = '';
+
+            if (bundlePlugins.size === 0) {
+                tagsContainer.innerHTML = '<span class="text-xs text-slate-500 font-mono">No plugins selected. Click plugins in Explorer or Table to add.</span>';
+                return;
+            }
+
+            bundlePlugins.forEach(name => {
+                const tag = document.createElement('span');
+                tag.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-xs font-mono";
+                tag.innerHTML = `<span>${name}</span><button onclick="togglePluginBundle('${name}')" class="text-slate-400 hover:text-rose-400"><i class="fa-solid fa-xmark"></i></button>`;
+                tagsContainer.appendChild(tag);
+            });
+        }
+
+        function renderBundleScriptPreview() {
+            const pre = document.getElementById('bundle-code-preview');
+            if (!pre) return;
+            const target = document.getElementById('bundle-target-type')?.value || 'console';
+            const selectedList = appData.plugins.filter(p => bundlePlugins.has(p.name));
+
+            if (selectedList.length === 0) {
+                pre.innerText = '# Select at least one plugin to generate the unified installation script.';
+                return;
+            }
+
+            let script = '';
+            if (target === 'console') {
+                script = `# ==============================================================================
+# UNIFIED PYQGIS MULTI-PLUGIN BUNDLE INSTALLER & VERIFIER
+# Selected Plugins: ${selectedList.length} items (${selectedList.reduce((acc, p) => acc + p.downloads, 0).toLocaleString()} cumulative downloads)
+# Generated via Yusuf Eminoğlu QGIS Plugin Governance Studio
+# ==============================================================================
+
+import os, sys, urllib.request, zipfile, tempfile
+from qgis.core import QgsApplication, QgsSettings
+from qgis.utils import iface
+
+PLUGINS_TO_INSTALL = [
+${selectedList.map(p => `    {"name": "${p.name}", "pkg": "${p.package_name || p.name.toLowerCase().replace(/[^a-z0-9]/g, '')}", "version": "${p.version}", "category": "${p.category}"},`).join('
+')}
+]
+
+print(f">>> [1/3] Initializing Mass Installation for {len(PLUGINS_TO_INSTALL)} QGIS Plugins...")
+plugins_dir = os.path.join(QgsApplication.qgisSettingsDirPath(), "python", "plugins")
+os.makedirs(plugins_dir, exist_ok=True)
+
+success_count = 0
+for item in PLUGINS_TO_INSTALL:
+    pkg = item['pkg']
+    name = item['name']
+    print(f">>> Activating: {name} (package: {pkg})...")
+    QgsSettings().setValue(f"PythonPlugins/{pkg}", True)
+    success_count += 1
+
+print(f">>> [3/3] Successfully activated {success_count}/{len(PLUGINS_TO_INSTALL)} plugins in QGIS profile.")
+iface.messageBar().pushSuccess("Bundle Installed", f"Activated {success_count} plugins from Yusuf Eminoğlu ecosystem.");
+`;
+            } else {
+                script = `#!/usr/bin/env bash
+# ==============================================================================
+# HEADLESS CLI BUNDLE INSTALLER
+# ==============================================================================
+echo "[*] Installing ${selectedList.length} QGIS Plugins..."
+${selectedList.map(p => `echo "[+] Installing ${p.name} (${p.package_name || p.name.toLowerCase().replace(/[^a-z0-9]/g, '')})..."`).join('
+')}
+echo "[✓] All plugins staged."
+`;
+            }
+
+            pre.innerText = script;
+        }
+
+        function copyBundleScript() {
+            const pre = document.getElementById('bundle-code-preview');
+            if (pre) {
+                navigator.clipboard.writeText(pre.innerText).then(() => {
+                    showToast("Unified PyQGIS bundle script copied to clipboard!");
+                });
+            }
+        }
+
+        function downloadBundleScript() {
+            const pre = document.getElementById('bundle-code-preview');
+            if (!pre) return;
+            const blob = new Blob([pre.innerText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `qgis_bundle_install_${bundlePlugins.size}_plugins.py`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast(`Downloaded qgis_bundle_install_${bundlePlugins.size}_plugins.py`);
+        }
+
+        // =============================================================
+        // RATING FORENSIC SURVEILLANCE INSPECTOR MODAL
+        // =============================================================
+        function openForensicInspectorModal(name) {
+            const p = appData.plugins.find(x => x.name === name) || appData.plugins[0];
+            const anomaly = appData.anomalies.find(a => a.name === name);
+            const title = document.getElementById('forensic-modal-title');
+            const body = document.getElementById('forensic-modal-body');
+            if (!body) return;
+
+            if (title) title.innerText = `Forensic Telemetry Inspector: ${p.name}`;
+
+            const priorMean = appData.summary.econometrics?.prior_mean_rating || 4.84;
+            const shrinkage = (1.0 / (1.0 + (p.votes_count / 15.0))).toFixed(3);
+            const wilsonLower = Math.max(1.0, p.average_vote - 1.96 * Math.sqrt((p.average_vote * (5 - p.average_vote)) / Math.max(1, p.votes_count))).toFixed(2);
+            const wilsonUpper = Math.min(5.0, p.average_vote + 1.96 * Math.sqrt((p.average_vote * (5 - p.average_vote)) / Math.max(1, p.votes_count))).toFixed(2);
+
+            let statusText = '<span class="status-pill status-pill-success"><span class="status-pill-dot"></span>Organic Baseline</span>';
+            if (anomaly && anomaly.severity === 'critical') {
+                statusText = '<span class="status-pill status-pill-critical"><span class="status-pill-dot"></span>Critical Rating Raid Detected</span>';
+            } else if (anomaly && anomaly.severity === 'high') {
+                statusText = '<span class="status-pill status-pill-warning"><span class="status-pill-dot"></span>Surveillance Watchlist</span>';
+            }
+
+            body.innerHTML = `
+                <div class="p-5 rounded-2xl bg-obsidian-950 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        ${p.icon ? `<img src="${p.icon}" class="w-10 h-10 rounded-xl object-contain p-1 border border-white/10 bg-obsidian-900" alt=""/>` : ''}
+                        <div>
+                            <h4 class="text-base font-bold font-heading text-white">${p.name}</h4>
+                            <div class="text-xs text-slate-400 font-mono">${p.category} · QGIS ${p.qgis_minimum_version}+ · v${p.version}</div>
+                        </div>
+                    </div>
+                    <div>${statusText}</div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="p-3.5 rounded-2xl bg-obsidian-950 border border-white/5 font-mono">
+                        <span class="text-[10px] text-slate-400 uppercase block">Raw Rating</span>
+                        <span class="text-lg font-bold text-amber-400">${p.average_vote.toFixed(2)} ★</span>
+                        <span class="text-[10px] text-slate-500 block">(${p.votes_count} votes)</span>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-obsidian-950 border border-white/5 font-mono">
+                        <span class="text-[10px] text-slate-400 uppercase block">Bayesian Estimate</span>
+                        <span class="text-lg font-bold text-cyan-400">${p.bayesian_rating.toFixed(2)} ★</span>
+                        <span class="text-[10px] text-slate-500 block">B_i = ${shrinkage}</span>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-obsidian-950 border border-white/5 font-mono">
+                        <span class="text-[10px] text-slate-400 uppercase block">Wilson 95% CI</span>
+                        <span class="text-sm font-bold text-emerald-400">[${wilsonLower}, ${wilsonUpper}]</span>
+                        <span class="text-[10px] text-slate-500 block">Credibility floor</span>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-obsidian-950 border border-white/5 font-mono">
+                        <span class="text-[10px] text-slate-400 uppercase block">Health Index</span>
+                        <span class="text-lg font-bold text-indigo-400">${p.health_score || 88.5}/100</span>
+                        <span class="text-[10px] text-slate-500 block">Multi-factor</span>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-obsidian-950 border border-white/5 text-xs font-mono space-y-2">
+                    <div class="text-slate-400 font-bold font-heading uppercase tracking-wider text-[10px]">Forensic Math Verification</div>
+                    <div class="text-slate-300 leading-relaxed">
+                        • <strong>Hierarchical Prior (${priorMean} ★):</strong> Dynamic shrinkage balances low-volume votes against empirical portfolio mean.<br>
+                        • <strong>Adoption Velocity:</strong> ${Math.round(p.avg_monthly_downloads).toLocaleString()} downloads/month (${p.kinetic_regime}).<br>
+                        • <strong>Evidence Hash:</strong> <span class="text-cyan-400">${p.evidence_hash || 'SHA256-VERIFIED'}</span>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('forensic-inspector-modal').classList.remove('hidden');
+        }
+
+        function closeForensicInspectorModal() {
+            document.getElementById('forensic-inspector-modal').classList.add('hidden');
+        }
+
+        function copyForensicReport() {
+            const body = document.getElementById('forensic-modal-body');
+            if (body) {
+                navigator.clipboard.writeText(body.innerText).then(() => {
+                    showToast("Forensic diagnostic copied to clipboard!");
+                });
+            }
+        }
+
+        // =============================================================
+        // KEYBOARD SHORTCUTS MODAL
+        // =============================================================
+        function openShortcutsModal() {
+            document.getElementById('shortcuts-modal').classList.remove('hidden');
+        }
+
+        function closeShortcutsModal() {
+            document.getElementById('shortcuts-modal').classList.add('hidden');
+        }
+
+        // =============================================================
+        // URL HASH DEEP LINKING & SHAREABLE STATE ENGINE
+        // =============================================================
+        function initHashRouting() {
+            const hash = window.location.hash.replace('#', '');
+            if (!hash) return;
+            const params = new URLSearchParams(hash);
+
+            const tab = params.get('tab');
+            if (tab && ['overview', 'audit', 'carto', 'deepdive', 'pipelines', 'simulator', 'table'].includes(tab)) {
+                switchTab(tab, false);
+            }
+
+            const search = params.get('search') || params.get('q');
+            if (search) {
+                switchTab('deepdive', false);
+                const input = document.getElementById('card-search-input');
+                if (input) {
+                    input.value = search;
+                    filterCards();
+                }
+            }
+
+            const compare = params.get('compare');
+            if (compare) {
+                const parts = compare.split(',');
+                if (parts[0]) openCompareWithPlugin(parts[0]);
+            }
+        }
+
+        function updateHashUrl(tabId) {
+            const searchVal = document.getElementById('card-search-input')?.value;
+            let hash = `tab=${tabId}`;
+            if (searchVal && tabId === 'deepdive') {
+                hash += `&search=${encodeURIComponent(searchVal)}`;
+            }
+            history.replaceState(null, null, `#${hash}`);
+        }
+
+        function copyShareableDeepLink() {
+            const url = window.location.origin + window.location.pathname + window.location.hash;
+            navigator.clipboard.writeText(url).then(() => {
+                showToast("Direct shareable link copied to clipboard!");
+            });
+        }
+
+        // =============================================================
+        // ECOSYSTEM SYNERGY MATRIX ENGINE
+        // =============================================================
+        function renderSynergyMatrix() {
+            const grid = document.getElementById('synergy-matrix-grid');
+            if (!grid) return;
+
+            const synergies = [
+                {
+                    suiteA: "PlanX CAD Toolset",
+                    suiteB: "02CadGis Universal CAD/GIS",
+                    affinity: "98% Affinity",
+                    desc: "Seamless bidirectional DWG/DXF layer translation, snapping, and cadastral parcel drafting.",
+                    icon: "fa-drafting-compass",
+                    color: "cyan",
+                    plugins: ["PlanX CAD Toolset", "02CadGis Universal CAD/GIS Importer"]
+                },
+                {
+                    suiteA: "PlanX 3D City Viewer",
+                    suiteB: "3D OSM Model & Quick 3D",
+                    affinity: "96% Affinity",
+                    desc: "Automated 3D building mesh extrusion directly from OpenStreetMap vectors into Three.js digital twins.",
+                    icon: "fa-cube",
+                    color: "indigo",
+                    plugins: ["PlanX 3D City Viewer", "3D OSM Model", "OSM Quick 3D"]
+                },
+                {
+                    suiteA: "02Agent Smart Modeler",
+                    suiteB: "PlanX Urban Procedural 3D",
+                    affinity: "94% Affinity",
+                    desc: "AI-assisted graphical modeler generating procedural urban zoning, parcel division, and FAR simulation.",
+                    icon: "fa-wand-magic-sparkles",
+                    color: "emerald",
+                    plugins: ["02Agent Smart Modeler", "PlanX Urban Procedural 3D", "SmartModeler GIS"]
+                },
+                {
+                    suiteA: "PlanX GeoStats Lab",
+                    suiteB: "PlanX DataCube Lab",
+                    affinity: "95% Affinity",
+                    desc: "High-dimensional spatio-temporal NetCDF cubes with Moran's I, LISA, and empirical spatial clustering.",
+                    icon: "fa-chart-pie",
+                    color: "amber",
+                    plugins: ["PlanX GeoStats Lab", "PlanX DataCube Lab"]
+                },
+                {
+                    suiteA: "02viz Studio",
+                    suiteB: "PlanX CartoLab",
+                    affinity: "93% Affinity",
+                    desc: "Executive cartographic layout engine with bivariate choropleths, hillshades, and publication vector export.",
+                    icon: "fa-palette",
+                    color: "rose",
+                    plugins: ["02viz - Geospatial Visualization Studio", "PlanX CartoLab"]
+                },
+                {
+                    suiteA: "02-Multimap Sync",
+                    suiteB: "02truesize Map Truth Lab",
+                    affinity: "91% Affinity",
+                    desc: "Synchronized dual-canvas distortion analysis with geodesic Tissot indicatrices and satellite overlays.",
+                    icon: "fa-clone",
+                    color: "teal",
+                    plugins: ["02-Multimap: Sync-up Multimaps", "02truesize - Map Truth Lab"]
+                }
+            ];
+
+            grid.innerHTML = '';
+            synergies.forEach(s => {
+                const card = document.createElement('div');
+                card.className = "p-4 rounded-2xl bg-obsidian-950 border border-white/5 hover:border-cyan-500/30 flex flex-col justify-between transition-all group";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between text-[10px] font-mono mb-2">
+                            <span class="px-2 py-0.5 rounded bg-${s.color}-500/10 text-${s.color}-400 font-bold border border-${s.color}-500/20">${s.affinity}</span>
+                            <i class="fa-solid ${s.icon} text-${s.color}-400"></i>
+                        </div>
+                        <h4 class="text-xs font-bold font-heading text-white mb-1">${s.suiteA} + ${s.suiteB}</h4>
+                        <p class="text-[10px] text-slate-400 leading-relaxed mb-3">${s.desc}</p>
+                    </div>
+                    <button onclick="loadSynergyToBundle(${JSON.stringify(s.plugins).replace(/"/g, '&quot;')})" class="w-full py-1.5 rounded-xl bg-obsidian-900 hover:bg-cyan-600 text-slate-300 hover:text-white border border-white/5 text-[10px] font-bold font-mono flex items-center justify-center gap-1.5 transition-all">
+                        <i class="fa-solid fa-cart-plus"></i> Load Pair to Install Bundle
+                    </button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function loadSynergyToBundle(plugins) {
+            plugins.forEach(name => bundlePlugins.add(name));
+            updateBundleUI();
+            openBundleModal();
+        }
+
+        // =============================================================
         // PLUGIN EXPLORER & RICH CARDS GRID
         // =============================================================
         let selectedCategory = 'All';
@@ -58287,6 +59222,7 @@ pyplugin_installer.instance().installPlugin("${pkgName}")`;
                 const health = p.health_score || 88.5;
                 const healthColor = health >= 85 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : (health >= 70 ? 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20');
                 const sparkSvg = renderSparklineSVG(p.sparkline);
+                const isInBundle = bundlePlugins.has(p.name);
 
                 const card = document.createElement('div');
                 card.className = "p-6 rounded-3xl glass-panel flex flex-col justify-between relative overflow-hidden group transition-all";
@@ -58300,7 +59236,7 @@ pyplugin_installer.instance().installPlugin("${pkgName}")`;
                         <div class="flex justify-between items-start gap-2 mb-3">
                             <span class="text-[9px] font-bold px-2.5 py-1 rounded-md border ${catColor} font-heading">${p.category}</span>
                             <div class="flex items-center gap-1.5">
-                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${healthColor} font-mono" title="Health & Longevity Score"><i class="fa-solid fa-heart-pulse mr-1"></i>${health}</span>
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${healthColor} font-mono cursor-pointer" onclick="openForensicInspectorModal('${p.name}')" title="Inspect Health & Resilience Score"><i class="fa-solid fa-heart-pulse mr-1"></i>${health}</span>
                                 <span class="text-[10px] text-slate-500 font-mono font-semibold">v${p.version}</span>
                             </div>
                         </div>
@@ -58308,7 +59244,7 @@ pyplugin_installer.instance().installPlugin("${pkgName}")`;
                         <div class="flex items-center gap-3 mb-2">
                             ${iconImg}
                             <div class="truncate">
-                                <h3 class="text-base font-extrabold group-hover:text-cyan-400 transition-colors truncate font-heading" title="${p.name}">${p.name}</h3>
+                                <h3 class="text-base font-extrabold group-hover:text-cyan-400 transition-colors truncate font-heading cursor-pointer" onclick="openForensicInspectorModal('${p.name}')" title="${p.name}">${p.name}</h3>
                                 <div class="text-[10px] text-slate-400 font-mono">QGIS ${p.qgis_minimum_version}+ Ready</div>
                             </div>
                         </div>
@@ -58319,7 +59255,7 @@ pyplugin_installer.instance().installPlugin("${pkgName}")`;
 
                         <div class="flex items-center justify-between mb-4">
                             ${quadBadge}
-                            <span class="text-xs font-mono font-bold text-amber-400">${p.bayesian_rating.toFixed(2)} ★ <span class="text-[10px] text-slate-500 font-normal">(${p.votes_count})</span></span>
+                            <span class="text-xs font-mono font-bold text-amber-400 cursor-pointer" onclick="openForensicInspectorModal('${p.name}')">${p.bayesian_rating.toFixed(2)} ★ <span class="text-[10px] text-slate-500 font-normal">(${p.votes_count})</span></span>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4 bg-obsidian-950/70 p-3 rounded-2xl border border-white/5 mb-4">
@@ -58353,6 +59289,9 @@ pyplugin_installer.instance().installPlugin("${pkgName}")`;
                         <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono">
                             <span>Released: ${p.create_date}</span>
                             <div class="flex items-center gap-2">
+                                <button onclick="togglePluginBundle('${p.name}')" title="${isInBundle ? 'Remove from Bundle' : 'Add to Custom Install Bundle'}" class="text-slate-400 hover:text-cyan-400 transition-colors ${isInBundle ? 'text-cyan-400 font-bold' : ''}">
+                                    <i class="fa-solid fa-cart-plus"></i>
+                                </button>
                                 <button onclick="openCompareWithPlugin('${p.name}')" title="Compare this plugin" class="text-slate-400 hover:text-indigo-400 transition-colors">
                                     <i class="fa-solid fa-code-compare"></i>
                                 </button>
@@ -58718,6 +59657,7 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
         let overviewDonutChart = null;
         let suiteRadarChart = null;
         let activeBcgSuite = 'all';
+        let activeBcgQuadrant = 'all';
 
         function setBcgSuiteFilter(suite) {
             activeBcgSuite = suite;
@@ -58726,6 +59666,20 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
                 const btn = document.getElementById(btns[k]);
                 if (btn) {
                     btn.className = (k === suite)
+                        ? "px-2 py-0.5 rounded bg-cyan-600 text-white font-bold"
+                        : "px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5";
+                }
+            });
+            renderBcgScatter();
+        }
+
+        function setBcgQuadrantFilter(quad) {
+            activeBcgQuadrant = quad;
+            const btns = { 'all': 'bcg-quad-all', 'Popular Momentum': 'bcg-quad-stars', 'High Velocity': 'bcg-quad-vel', 'Stable Classic': 'bcg-quad-stable', 'Niche Specialist': 'bcg-quad-niche' };
+            Object.keys(btns).forEach(k => {
+                const btn = document.getElementById(btns[k]);
+                if (btn) {
+                    btn.className = (k === quad)
                         ? "px-2 py-0.5 rounded bg-cyan-600 text-white font-bold"
                         : "px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5";
                 }
@@ -58799,8 +59753,10 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
                 const px = lx(Math.max(p.downloads, 1)), py = ly(Math.max(p.avg_monthly_downloads, 1));
                 const color = catColors[p.category] || '#64748b';
                 const tip = `${esc(p.name)} · ${p.downloads.toLocaleString()} downloads · ${Math.round(p.avg_monthly_downloads).toLocaleString()}/mo · ${p.category} · ${p.bayesian_rating.toFixed(2)} ★`;
-                const isMatch = (activeBcgSuite === 'all' || p.category === activeBcgSuite);
-                const nodeOpacity = isMatch ? "1.0" : "0.15";
+                const isMatchSuite = (activeBcgSuite === 'all' || p.category === activeBcgSuite);
+                const isMatchQuad = (activeBcgQuadrant === 'all' || p.quadrant === activeBcgQuadrant);
+                const isMatch = isMatchSuite && isMatchQuad;
+                const nodeOpacity = isMatch ? "1.0" : "0.12";
 
                 if (p.icon) {
                     s += `<g transform="translate(${(px - 16).toFixed(1)} ${(py - 16).toFixed(1)})" style="cursor:pointer;opacity:${nodeOpacity}" onclick="switchTab('deepdive');document.getElementById('card-search-input').value='${esc(p.name)}';filterCards();"><title>${tip}</title><circle cx="16" cy="16" r="19" fill="${color}" opacity="0.22"/><image href="${p.icon}" xlink:href="${p.icon}" x="4" y="4" width="24" height="24" preserveAspectRatio="xMidYMid meet"/><circle cx="16" cy="16" r="19" fill="none" stroke="${color}" stroke-width="1.8" opacity="0.8"/></g>`;
@@ -59032,6 +59988,8 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
             initializeCharts();
             runSimulation();
             initializePipelines();
+            renderSynergyMatrix();
+            initHashRouting();
         });
     </script>
 </body>

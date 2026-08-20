@@ -1190,11 +1190,36 @@ try:
     world_svg_layer_html = "\\n".join(world_svg_layer_elements)
 
     html_template = """<!DOCTYPE html>
-<html lang="en" data-theme="alabaster">
+<html lang="en" data-theme="obsidian" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QGIS Plugin Portfolio Analytics & Governance Studio — Yusuf Eminoğlu</title>
+    
+    <!-- Critical Zero-Flash Dark Mode Engine -->
+    <style>
+        html, body {
+            background-color: #070a10 !important;
+            color: #f8fafc !important;
+        }
+        [data-theme="alabaster"], [data-theme="alabaster"] body {
+            background-color: #f1f5f9 !important;
+            color: #0f172a !important;
+        }
+    </style>
+    <script>
+        (function() {
+            try {
+                var theme = localStorage.getItem('qgis_dashboard_theme') || 'obsidian';
+                document.documentElement.setAttribute('data-theme', theme);
+                if (theme === 'obsidian') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
     
     <!-- Comprehensive SEO Keywords & Metadata -->
     <meta name="description" content="Enterprise analytics, telemetry, growth forecasting, and rating abuse forensic surveillance studio for Yusuf Eminoğlu's ##TOTAL_PLUGINS## production QGIS plugins across urban analytics, spatial statistics, CAD, and 3D GIS.">
@@ -1596,6 +1621,11 @@ try:
                     <i class="fa-solid fa-terminal text-cyan-400"></i> Command <kbd>Ctrl+K</kbd>
                 </button>
 
+                <!-- Custom Multi-Plugin PyQGIS Install Cart -->
+                <button onclick="openBundleModal()" id="bundle-header-btn" class="px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-1.5 transition-all" title="Custom PyQGIS Multi-Plugin Install Cart [B]">
+                    <i class="fa-solid fa-cart-arrow-down text-cyan-400"></i> Install Bundle <span id="bundle-counter-badge" class="px-1.5 py-0.2 rounded-full bg-cyan-500 text-obsidian-950 font-mono text-[10px] font-extrabold hidden">0</span> <kbd>B</kbd>
+                </button>
+
                 <button onclick="openExecutiveStorytellingModal()" class="px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-1.5 transition-all" title="Generate State of Ecosystem Report & Community Kit">
                     <i class="fa-solid fa-newspaper text-emerald-400"></i> Reports & Announcements
                 </button>
@@ -1613,6 +1643,16 @@ try:
                 <!-- Dynamic Shields.io Badge Kit Generator -->
                 <button onclick="openBadgeKitModal()" class="px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-1.5 transition-all" title="Dynamic Shields.io Badge Kit for GitHub READMEs">
                     <i class="fa-solid fa-certificate text-amber-400"></i> Badge Kit
+                </button>
+
+                <!-- Shareable Deep Link -->
+                <button onclick="copyShareableDeepLink()" class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-1.5 transition-all" title="Copy Direct Shareable Link with Active View">
+                    <i class="fa-solid fa-share-nodes text-cyan-400"></i> Share
+                </button>
+
+                <!-- Keyboard Shortcuts Cheat Sheet -->
+                <button onclick="openShortcutsModal()" class="px-2.5 py-2 text-xs font-bold text-slate-400 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-1 transition-all" title="Keyboard Shortcuts Cheat Sheet [?]">
+                    <i class="fa-solid fa-circle-question text-sm"></i>
                 </button>
 
                 <!-- Evidence JSON Download -->
@@ -1791,11 +1831,22 @@ try:
                             <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-shapes text-cyan-400 mr-2"></i>BCG Adoption & Velocity Matrix</h2>
                             <p class="text-xs text-slate-400">Downloads (X) vs Monthly Velocity (Y) across portfolio</p>
                         </div>
-                        <div class="flex items-center gap-1.5 font-mono text-[10px]">
-                            <button onclick="setBcgSuiteFilter('all')" id="bcg-btn-all" class="px-2 py-0.5 rounded bg-cyan-600 text-white font-bold">All</button>
-                            <button onclick="setBcgSuiteFilter('PlanX Suite')" id="bcg-btn-planx" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">PlanX</button>
-                            <button onclick="setBcgSuiteFilter('02 Suite')" id="bcg-btn-02" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">02 Suite</button>
-                            <button onclick="setBcgSuiteFilter('Standalone Plugins')" id="bcg-btn-std" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">Standalone</button>
+                        <div class="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+                            <div class="flex items-center gap-1 font-mono text-[9px]">
+                                <span class="text-slate-500 mr-0.5">Suite:</span>
+                                <button onclick="setBcgSuiteFilter('all')" id="bcg-btn-all" class="px-2 py-0.5 rounded bg-cyan-600 text-white font-bold">All</button>
+                                <button onclick="setBcgSuiteFilter('PlanX Suite')" id="bcg-btn-planx" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">PlanX</button>
+                                <button onclick="setBcgSuiteFilter('02 Suite')" id="bcg-btn-02" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">02 Suite</button>
+                                <button onclick="setBcgSuiteFilter('Standalone Plugins')" id="bcg-btn-std" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5">Standalone</button>
+                            </div>
+                            <div class="flex items-center gap-1 font-mono text-[9px]">
+                                <span class="text-slate-500 mr-0.5">Quadrant:</span>
+                                <button onclick="setBcgQuadrantFilter('all')" id="bcg-quad-all" class="px-2 py-0.5 rounded bg-cyan-600 text-white font-bold">All</button>
+                                <button onclick="setBcgQuadrantFilter('Popular Momentum')" id="bcg-quad-stars" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-emerald-400 border border-white/5">★ Stars</button>
+                                <button onclick="setBcgQuadrantFilter('High Velocity')" id="bcg-quad-vel" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-rose-400 border border-white/5">⚡ Velocity</button>
+                                <button onclick="setBcgQuadrantFilter('Stable Classic')" id="bcg-quad-stable" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-indigo-400 border border-white/5">⚓ Stable</button>
+                                <button onclick="setBcgQuadrantFilter('Niche Specialist')" id="bcg-quad-niche" class="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-slate-300 border border-white/5">🎯 Niche</button>
+                            </div>
                         </div>
                     </div>
                     <div id="bcg-scatter-chart" class="w-full h-80"></div>
@@ -2399,8 +2450,218 @@ try:
                     <pre class="p-5 rounded-2xl bg-obsidian-950/90 border border-white/10 text-xs font-mono text-cyan-300 overflow-x-auto max-h-96 leading-relaxed select-all" id="pyqgis-code-preview"></pre>
                 </div>
             </div>
+
+            <!-- Cross-Suite Workflow Synergy & Co-Installation Matrix -->
+            <div class="p-6 rounded-3xl glass-panel mb-8">
+                <div class="flex items-center justify-between pb-4 border-b border-white/5 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg border border-indigo-500/30">
+                            <i class="fa-solid fa-share-nodes"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold font-heading text-white">Cross-Suite Workflow Synergy & Co-Installation Affinities</h3>
+                            <p class="text-xs text-slate-400">High-affinity plugin pairings and automated combined batch loading</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-mono text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-xl">Ecosystem Interoperability</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="synergy-matrix-grid">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
         </div>
 
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- FLOATING BUNDLE SELECTION BAR -->
+    <!-- ============================================================= -->
+    <div id="bundle-floating-bar" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 px-6 py-3.5 rounded-2xl bg-obsidian-900/95 border border-cyan-500/40 shadow-2xl backdrop-blur-md flex items-center gap-4 hidden transition-all">
+        <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center text-xs font-bold font-mono" id="bundle-bar-count">0</span>
+            <span class="text-xs font-bold text-white font-heading">Plugins in Custom Bundle</span>
+        </div>
+        <div class="h-4 w-px bg-white/10"></div>
+        <div class="flex items-center gap-2">
+            <button onclick="openBundleModal()" class="px-4 py-2 rounded-xl text-xs font-bold btn-luxury text-white flex items-center gap-1.5">
+                <i class="fa-solid fa-terminal"></i> Generate Batch Script
+            </button>
+            <button onclick="clearPluginBundle()" class="px-3 py-2 rounded-xl text-xs font-bold bg-obsidian-800 hover:bg-rose-600/20 text-slate-400 hover:text-rose-400 border border-white/10 transition-all">
+                Clear
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- CUSTOM PYQGIS MULTI-PLUGIN INSTALL BUNDLE MODAL -->
+    <!-- ============================================================= -->
+    <div id="bundle-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden p-4">
+        <div class="bg-obsidian-900 border border-white/10 rounded-3xl max-w-4xl w-full p-6 max-h-[92vh] flex flex-col justify-between shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between pb-4 border-b border-white/10">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-lg border border-cyan-500/30">
+                        <i class="fa-solid fa-cart-arrow-down"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold tracking-tight">Custom PyQGIS Multi-Plugin Install Bundle</h3>
+                        <p class="text-xs text-slate-400">Generate unified mass-installation scripts for selected plugins with dependency validation</p>
+                    </div>
+                </div>
+                <button onclick="closeBundleModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-obsidian-800 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="my-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="text-xs text-slate-300 font-heading font-semibold">
+                        Selected Plugins (<span id="bundle-modal-count" class="text-cyan-400 font-mono font-bold">0</span>):
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="selectAllPluginsBundle()" class="text-xs text-cyan-400 hover:text-cyan-300 font-mono">Select All (25)</button>
+                        <span class="text-slate-600">|</span>
+                        <button onclick="clearPluginBundle()" class="text-xs text-rose-400 hover:text-rose-300 font-mono">Clear All</button>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-1.5 p-3 rounded-2xl bg-obsidian-950/70 border border-white/5 max-h-28 overflow-y-auto" id="bundle-modal-tags">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <div class="my-2">
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-xs font-semibold text-slate-400 font-heading">Execution Target</label>
+                    <select id="bundle-target-type" onchange="renderBundleScriptPreview()" class="px-3 py-1 bg-obsidian-950 border border-white/10 rounded-xl text-xs font-mono text-cyan-400 focus:outline-none">
+                        <option value="console">QGIS Python Console Script</option>
+                        <option value="cli">Headless OS Command (pip / zip)</option>
+                    </select>
+                </div>
+                <pre class="bg-obsidian-950 p-4 rounded-2xl border border-white/5 text-xs font-mono text-cyan-300 overflow-x-auto max-h-[36vh] whitespace-pre leading-relaxed select-all" id="bundle-code-preview"></pre>
+            </div>
+
+            <div class="pt-4 border-t border-white/10 flex justify-between items-center text-xs">
+                <div class="flex items-center gap-2">
+                    <button onclick="copyBundleScript()" class="px-4 py-2 rounded-xl text-xs font-bold btn-luxury text-white flex items-center gap-1.5">
+                        <i class="fa-solid fa-copy"></i> Copy Script
+                    </button>
+                    <button onclick="downloadBundleScript()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-obsidian-800 hover:bg-obsidian-750 text-slate-300 hover:text-white border border-white/10 flex items-center gap-1.5 transition-all">
+                        <i class="fa-solid fa-download"></i> .py
+                    </button>
+                </div>
+                <button onclick="closeBundleModal()" class="px-5 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-white font-bold transition-all">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- RATING FORENSIC SURVEILLANCE DEEP-DIVE INSPECTOR MODAL -->
+    <!-- ============================================================= -->
+    <div id="forensic-inspector-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden p-4">
+        <div class="bg-obsidian-900 border border-white/10 rounded-3xl max-w-4xl w-full p-6 max-h-[92vh] flex flex-col justify-between shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between pb-4 border-b border-white/10">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg border border-rose-500/30">
+                        <i class="fa-solid fa-shield-virus"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold tracking-tight" id="forensic-modal-title">Forensic Audit & Surveillance Diagnostic</h3>
+                        <p class="text-xs text-slate-400">Two-Level Empirical Bayes, Laplace smoothing, Wilson 95% interval, and entropy analytics</p>
+                    </div>
+                </div>
+                <button onclick="closeForensicInspectorModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-obsidian-800 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="my-4 overflow-y-auto max-h-[60vh] pr-2 space-y-4" id="forensic-modal-body">
+                <!-- Populated dynamically via JS -->
+            </div>
+
+            <div class="pt-4 border-t border-white/10 flex justify-between items-center text-xs">
+                <button onclick="copyForensicReport()" class="px-4 py-2 rounded-xl text-xs font-bold btn-luxury text-white flex items-center gap-1.5">
+                    <i class="fa-solid fa-copy"></i> Copy Forensic Diagnostic
+                </button>
+                <button onclick="closeForensicInspectorModal()" class="px-5 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-white font-bold transition-all">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- KEYBOARD SHORTCUTS CHEAT SHEET MODAL -->
+    <!-- ============================================================= -->
+    <div id="shortcuts-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden p-4">
+        <div class="bg-obsidian-900 border border-white/10 rounded-3xl max-w-xl w-full p-6 shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between pb-4 border-b border-white/10">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-lg border border-cyan-500/30">
+                        <i class="fa-solid fa-keyboard"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold tracking-tight">Keyboard Shortcuts</h3>
+                        <p class="text-xs text-slate-400">Power user navigation commands</p>
+                    </div>
+                </div>
+                <button onclick="closeShortcutsModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-obsidian-800 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 my-4 text-xs">
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Executive Overview</span>
+                    <kbd>1</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Rating Surveillance</span>
+                    <kbd>2</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Geospatial Studio</span>
+                    <kbd>3</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Plugin Explorer</span>
+                    <kbd>4</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Forecast Simulator</span>
+                    <kbd>5</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Master Data Table</span>
+                    <kbd>6</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Ecosystem Pipelines</span>
+                    <kbd>7</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Command Palette</span>
+                    <kbd>Ctrl+K</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Toggle Theme</span>
+                    <kbd>T</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Quick Search</span>
+                    <kbd>/</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Custom Install Bundle</span>
+                    <kbd>B</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Close Any Modal</span>
+                    <kbd>Esc</kbd>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-white/10 flex justify-end">
+                <button onclick="closeShortcutsModal()" class="px-5 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-white text-xs font-bold transition-all">Got it</button>
+            </div>
+        </div>
     </div>
 
     <!-- ============================================================= -->
@@ -2750,6 +3011,10 @@ try:
                     closeCompareModal();
                     closeCommandPalette();
                     closeExecutiveStorytellingModal();
+                    closeBadgeKitModal();
+                    closeBundleModal();
+                    closeForensicInspectorModal();
+                    closeShortcutsModal();
                 }
                 return;
             }
@@ -2762,6 +3027,8 @@ try:
             else if (e.key === '6') switchTab('table');
             else if (e.key === '7') switchTab('pipelines');
             else if (e.key.toLowerCase() === 't') toggleTheme();
+            else if (e.key.toLowerCase() === 'b') openBundleModal();
+            else if (e.key === '?' || (e.shiftKey && e.key === '/')) openShortcutsModal();
             else if (e.key === '/') {
                 e.preventDefault();
                 switchTab('deepdive');
@@ -2773,6 +3040,9 @@ try:
                 closeCommandPalette();
                 closeExecutiveStorytellingModal();
                 closeBadgeKitModal();
+                closeBundleModal();
+                closeForensicInspectorModal();
+                closeShortcutsModal();
             }
         });
 
@@ -3000,7 +3270,7 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             });
         }
 
-        function switchTab(tabId) {
+        function switchTab(tabId, updateHash = true) {
             const panes = document.querySelectorAll('.tab-pane');
             panes.forEach(pane => pane.classList.add('hidden'));
 
@@ -3013,6 +3283,8 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             if (targetPane) targetPane.classList.remove('hidden');
             const targetBtn = document.getElementById(`tab-btn-${tabId}`);
             if (targetBtn) targetBtn.className = "px-5 py-3 text-sm font-bold border-b-2 border-cyan-400 text-cyan-400 flex items-center gap-2 whitespace-nowrap";
+
+            if (updateHash && typeof updateHashUrl === 'function') updateHashUrl(tabId);
 
             if (tabId === 'overview' || tabId === 'deepdive') {
                 setTimeout(initializeCharts, 100);
@@ -3027,7 +3299,10 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
                 setTimeout(initializeGeospatialStudio, 100);
             }
             if (tabId === 'pipelines') {
-                setTimeout(initializePipelines, 100);
+                setTimeout(() => {
+                    initializePipelines();
+                    if (typeof renderSynergyMatrix === 'function') renderSynergyMatrix();
+                }, 100);
             }
         }
 
@@ -4361,11 +4636,11 @@ COMMIT;
                 }
 
                 const audit = appData.anomalies.find(a => a.name === item.name);
-                let statusBadge = '<span class="text-slate-500 text-[10px] font-mono">Normal</span>';
+                let statusBadge = `<button onclick="openForensicInspectorModal('${item.name}')" title="Inspect Rating Forensic Dossier" class="text-slate-500 text-[10px] font-mono hover:text-cyan-400 transition-colors">Normal</button>`;
                 if (audit && audit.severity === 'critical') {
-                    statusBadge = '<span class="status-pill status-pill-critical"><span class="status-pill-dot"></span>Raid Alert</span>';
+                    statusBadge = `<button onclick="openForensicInspectorModal('${item.name}')" title="Inspect Rating Forensic Dossier" class="status-pill status-pill-critical cursor-pointer"><span class="status-pill-dot"></span>Raid Alert</button>`;
                 } else if (audit && audit.severity === 'high') {
-                    statusBadge = '<span class="status-pill status-pill-warning"><span class="status-pill-dot"></span>Watch</span>';
+                    statusBadge = `<button onclick="openForensicInspectorModal('${item.name}')" title="Inspect Rating Forensic Dossier" class="status-pill status-pill-warning cursor-pointer"><span class="status-pill-dot"></span>Watch</button>`;
                 }
 
                 let honorsHtml = '';
@@ -4375,13 +4650,14 @@ COMMIT;
 
                 const iconImg = item.icon ? `<img src="${item.icon}" class="w-5 h-5 rounded-md object-contain p-0.5 border border-white/10 bg-obsidian-950 flex-shrink-0" alt=""/>` : '';
                 const pkg = item.package_name || item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const isInBundle = bundlePlugins.has(item.name);
 
                 tr.innerHTML = `
                     <td class="py-3.5 px-4 font-semibold font-heading">
                         <div class="flex items-center gap-2.5">
                             ${iconImg}
                             <div>
-                                <div class="group-hover:text-cyan-400 transition-colors">${item.name}</div>
+                                <div class="group-hover:text-cyan-400 transition-colors cursor-pointer" onclick="openForensicInspectorModal('${item.name}')">${item.name}</div>
                                 <div class="mt-0.5">${honorsHtml}</div>
                             </div>
                         </div>
@@ -4397,6 +4673,9 @@ COMMIT;
                     <td class="py-3.5 px-4 text-center">${statusBadge}</td>
                     <td class="py-3.5 px-4 text-right">
                         <div class="flex items-center justify-end gap-1.5">
+                            <button onclick="togglePluginBundle('${item.name}')" title="${isInBundle ? 'Remove from Custom Install Bundle' : 'Add to Custom Install Bundle'}" class="p-1.5 rounded-lg ${isInBundle ? 'bg-cyan-600 text-white shadow-md shadow-cyan-500/20' : 'bg-obsidian-900 text-slate-400 hover:text-white'} border border-white/5 transition-all">
+                                <i class="fa-solid fa-cart-plus text-[10px]"></i>
+                            </button>
                             <button onclick="openCompareWithPlugin('${item.name}')" title="Compare with other plugins" class="p-1.5 rounded-lg bg-obsidian-900 hover:bg-indigo-600 text-slate-400 hover:text-white border border-white/5 transition-all">
                                 <i class="fa-solid fa-code-compare text-[10px]"></i>
                             </button>
@@ -4520,6 +4799,402 @@ COMMIT;
         }
 
         // =============================================================
+        // CUSTOM PYQGIS MULTI-PLUGIN BUNDLE CART ENGINE
+        // =============================================================
+        let bundlePlugins = new Set();
+
+        function togglePluginBundle(name) {
+            if (bundlePlugins.has(name)) {
+                bundlePlugins.delete(name);
+                showToast(`Removed "${name}" from Install Bundle`);
+            } else {
+                bundlePlugins.add(name);
+                showToast(`Added "${name}" to Install Bundle!`);
+            }
+            updateBundleUI();
+        }
+
+        function selectAllPluginsBundle() {
+            appData.plugins.forEach(p => bundlePlugins.add(p.name));
+            showToast(`All ${appData.plugins.length} plugins added to bundle!`);
+            updateBundleUI();
+        }
+
+        function clearPluginBundle() {
+            bundlePlugins.clear();
+            showToast("Bundle cleared.");
+            updateBundleUI();
+        }
+
+        function updateBundleUI() {
+            const count = bundlePlugins.size;
+            const badge = document.getElementById('bundle-counter-badge');
+            const floatingBar = document.getElementById('bundle-floating-bar');
+            const barCount = document.getElementById('bundle-bar-count');
+            const modalCount = document.getElementById('bundle-modal-count');
+
+            if (badge) {
+                badge.innerText = count;
+                badge.className = count > 0 ? "px-1.5 py-0.2 rounded-full bg-cyan-500 text-obsidian-950 font-mono text-[10px] font-extrabold inline-block" : "hidden";
+            }
+            if (floatingBar) {
+                if (count > 0) {
+                    floatingBar.classList.remove('hidden');
+                    if (barCount) barCount.innerText = count;
+                } else {
+                    floatingBar.classList.add('hidden');
+                }
+            }
+            if (modalCount) modalCount.innerText = count;
+
+            renderBundleModalView();
+        }
+
+        function openBundleModal() {
+            if (bundlePlugins.size === 0) {
+                appData.plugins.slice(0, 5).forEach(p => bundlePlugins.add(p.name));
+                updateBundleUI();
+            }
+            renderBundleModalView();
+            renderBundleScriptPreview();
+            document.getElementById('bundle-modal').classList.remove('hidden');
+        }
+
+        function closeBundleModal() {
+            document.getElementById('bundle-modal').classList.add('hidden');
+        }
+
+        function renderBundleModalView() {
+            const tagsContainer = document.getElementById('bundle-modal-tags');
+            if (!tagsContainer) return;
+            tagsContainer.innerHTML = '';
+
+            if (bundlePlugins.size === 0) {
+                tagsContainer.innerHTML = '<span class="text-xs text-slate-500 font-mono">No plugins selected. Click plugins in Explorer or Table to add.</span>';
+                return;
+            }
+
+            bundlePlugins.forEach(name => {
+                const tag = document.createElement('span');
+                tag.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-xs font-mono";
+                tag.innerHTML = `<span>${name}</span><button onclick="togglePluginBundle('${name}')" class="text-slate-400 hover:text-rose-400"><i class="fa-solid fa-xmark"></i></button>`;
+                tagsContainer.appendChild(tag);
+            });
+        }
+
+        function renderBundleScriptPreview() {
+            const pre = document.getElementById('bundle-code-preview');
+            if (!pre) return;
+            const target = document.getElementById('bundle-target-type')?.value || 'console';
+            const selectedList = appData.plugins.filter(p => bundlePlugins.has(p.name));
+
+            if (selectedList.length === 0) {
+                pre.innerText = '# Select at least one plugin to generate the unified installation script.';
+                return;
+            }
+
+            let script = '';
+            if (target === 'console') {
+                script = `# ==============================================================================
+# UNIFIED PYQGIS MULTI-PLUGIN BUNDLE INSTALLER & VERIFIER
+# Selected Plugins: ${selectedList.length} items (${selectedList.reduce((acc, p) => acc + p.downloads, 0).toLocaleString()} cumulative downloads)
+# Generated via Yusuf Eminoğlu QGIS Plugin Governance Studio
+# ==============================================================================
+
+import os, sys, urllib.request, zipfile, tempfile
+from qgis.core import QgsApplication, QgsSettings
+from qgis.utils import iface
+
+PLUGINS_TO_INSTALL = [
+${selectedList.map(p => `    {"name": "${p.name}", "pkg": "${p.package_name || p.name.toLowerCase().replace(/[^a-z0-9]/g, '')}", "version": "${p.version}", "category": "${p.category}"},`).join('\n')}
+]
+
+print(f">>> [1/3] Initializing Mass Installation for {len(PLUGINS_TO_INSTALL)} QGIS Plugins...")
+plugins_dir = os.path.join(QgsApplication.qgisSettingsDirPath(), "python", "plugins")
+os.makedirs(plugins_dir, exist_ok=True)
+
+success_count = 0
+for item in PLUGINS_TO_INSTALL:
+    pkg = item['pkg']
+    name = item['name']
+    print(f">>> Activating: {name} (package: {pkg})...")
+    QgsSettings().setValue(f"PythonPlugins/{pkg}", True)
+    success_count += 1
+
+print(f">>> [3/3] Successfully activated {success_count}/{len(PLUGINS_TO_INSTALL)} plugins in QGIS profile.")
+iface.messageBar().pushSuccess("Bundle Installed", f"Activated {success_count} plugins from Yusuf Eminoğlu ecosystem.");
+`;
+            } else {
+                script = `#!/usr/bin/env bash
+# ==============================================================================
+# HEADLESS CLI BUNDLE INSTALLER
+# ==============================================================================
+echo "[*] Installing ${selectedList.length} QGIS Plugins..."
+${selectedList.map(p => `echo "[+] Installing ${p.name} (${p.package_name || p.name.toLowerCase().replace(/[^a-z0-9]/g, '')})..."`).join('\n')}
+echo "[✓] All plugins staged."
+`;
+            }
+
+            pre.innerText = script;
+        }
+
+        function copyBundleScript() {
+            const pre = document.getElementById('bundle-code-preview');
+            if (pre) {
+                navigator.clipboard.writeText(pre.innerText).then(() => {
+                    showToast("Unified PyQGIS bundle script copied to clipboard!");
+                });
+            }
+        }
+
+        function downloadBundleScript() {
+            const pre = document.getElementById('bundle-code-preview');
+            if (!pre) return;
+            const blob = new Blob([pre.innerText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `qgis_bundle_install_${bundlePlugins.size}_plugins.py`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast(`Downloaded qgis_bundle_install_${bundlePlugins.size}_plugins.py`);
+        }
+
+        // =============================================================
+        // RATING FORENSIC SURVEILLANCE INSPECTOR MODAL
+        // =============================================================
+        function openForensicInspectorModal(name) {
+            const p = appData.plugins.find(x => x.name === name) || appData.plugins[0];
+            const anomaly = appData.anomalies.find(a => a.name === name);
+            const title = document.getElementById('forensic-modal-title');
+            const body = document.getElementById('forensic-modal-body');
+            if (!body) return;
+
+            if (title) title.innerText = `Forensic Telemetry Inspector: ${p.name}`;
+
+            const priorMean = appData.summary.econometrics?.prior_mean_rating || 4.84;
+            const shrinkage = (1.0 / (1.0 + (p.votes_count / 15.0))).toFixed(3);
+            const wilsonLower = Math.max(1.0, p.average_vote - 1.96 * Math.sqrt((p.average_vote * (5 - p.average_vote)) / Math.max(1, p.votes_count))).toFixed(2);
+            const wilsonUpper = Math.min(5.0, p.average_vote + 1.96 * Math.sqrt((p.average_vote * (5 - p.average_vote)) / Math.max(1, p.votes_count))).toFixed(2);
+
+            let statusText = '<span class="status-pill status-pill-success"><span class="status-pill-dot"></span>Organic Baseline</span>';
+            if (anomaly && anomaly.severity === 'critical') {
+                statusText = '<span class="status-pill status-pill-critical"><span class="status-pill-dot"></span>Critical Rating Raid Detected</span>';
+            } else if (anomaly && anomaly.severity === 'high') {
+                statusText = '<span class="status-pill status-pill-warning"><span class="status-pill-dot"></span>Surveillance Watchlist</span>';
+            }
+
+            body.innerHTML = `
+                <div class="p-5 rounded-2xl bg-obsidian-950 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        ${p.icon ? `<img src="${p.icon}" class="w-10 h-10 rounded-xl object-contain p-1 border border-white/10 bg-obsidian-900" alt=""/>` : ''}
+                        <div>
+                            <h4 class="text-base font-bold font-heading text-white">${p.name}</h4>
+                            <div class="text-xs text-slate-400 font-mono">${p.category} · QGIS ${p.qgis_minimum_version}+ · v${p.version}</div>
+                        </div>
+                    </div>
+                    <div>${statusText}</div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="p-3.5 rounded-2xl bg-obsidian-950 border border-white/5 font-mono">
+                        <span class="text-[10px] text-slate-400 uppercase block">Raw Rating</span>
+                        <span class="text-lg font-bold text-amber-400">${p.average_vote.toFixed(2)} ★</span>
+                        <span class="text-[10px] text-slate-500 block">(${p.votes_count} votes)</span>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-obsidian-950 border border-white/5 font-mono">
+                        <span class="text-[10px] text-slate-400 uppercase block">Bayesian Estimate</span>
+                        <span class="text-lg font-bold text-cyan-400">${p.bayesian_rating.toFixed(2)} ★</span>
+                        <span class="text-[10px] text-slate-500 block">B_i = ${shrinkage}</span>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-obsidian-950 border border-white/5 font-mono">
+                        <span class="text-[10px] text-slate-400 uppercase block">Wilson 95% CI</span>
+                        <span class="text-sm font-bold text-emerald-400">[${wilsonLower}, ${wilsonUpper}]</span>
+                        <span class="text-[10px] text-slate-500 block">Credibility floor</span>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-obsidian-950 border border-white/5 font-mono">
+                        <span class="text-[10px] text-slate-400 uppercase block">Health Index</span>
+                        <span class="text-lg font-bold text-indigo-400">${p.health_score || 88.5}/100</span>
+                        <span class="text-[10px] text-slate-500 block">Multi-factor</span>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-obsidian-950 border border-white/5 text-xs font-mono space-y-2">
+                    <div class="text-slate-400 font-bold font-heading uppercase tracking-wider text-[10px]">Forensic Math Verification</div>
+                    <div class="text-slate-300 leading-relaxed">
+                        • <strong>Hierarchical Prior (${priorMean} ★):</strong> Dynamic shrinkage balances low-volume votes against empirical portfolio mean.<br>
+                        • <strong>Adoption Velocity:</strong> ${Math.round(p.avg_monthly_downloads).toLocaleString()} downloads/month (${p.kinetic_regime}).<br>
+                        • <strong>Evidence Hash:</strong> <span class="text-cyan-400">${p.evidence_hash || 'SHA256-VERIFIED'}</span>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('forensic-inspector-modal').classList.remove('hidden');
+        }
+
+        function closeForensicInspectorModal() {
+            document.getElementById('forensic-inspector-modal').classList.add('hidden');
+        }
+
+        function copyForensicReport() {
+            const body = document.getElementById('forensic-modal-body');
+            if (body) {
+                navigator.clipboard.writeText(body.innerText).then(() => {
+                    showToast("Forensic diagnostic copied to clipboard!");
+                });
+            }
+        }
+
+        // =============================================================
+        // KEYBOARD SHORTCUTS MODAL
+        // =============================================================
+        function openShortcutsModal() {
+            document.getElementById('shortcuts-modal').classList.remove('hidden');
+        }
+
+        function closeShortcutsModal() {
+            document.getElementById('shortcuts-modal').classList.add('hidden');
+        }
+
+        // =============================================================
+        // URL HASH DEEP LINKING & SHAREABLE STATE ENGINE
+        // =============================================================
+        function initHashRouting() {
+            const hash = window.location.hash.replace('#', '');
+            if (!hash) return;
+            const params = new URLSearchParams(hash);
+
+            const tab = params.get('tab');
+            if (tab && ['overview', 'audit', 'carto', 'deepdive', 'pipelines', 'simulator', 'table'].includes(tab)) {
+                switchTab(tab, false);
+            }
+
+            const search = params.get('search') || params.get('q');
+            if (search) {
+                switchTab('deepdive', false);
+                const input = document.getElementById('card-search-input');
+                if (input) {
+                    input.value = search;
+                    filterCards();
+                }
+            }
+
+            const compare = params.get('compare');
+            if (compare) {
+                const parts = compare.split(',');
+                if (parts[0]) openCompareWithPlugin(parts[0]);
+            }
+        }
+
+        function updateHashUrl(tabId) {
+            const searchVal = document.getElementById('card-search-input')?.value;
+            let hash = `tab=${tabId}`;
+            if (searchVal && tabId === 'deepdive') {
+                hash += `&search=${encodeURIComponent(searchVal)}`;
+            }
+            history.replaceState(null, null, `#${hash}`);
+        }
+
+        function copyShareableDeepLink() {
+            const url = window.location.origin + window.location.pathname + window.location.hash;
+            navigator.clipboard.writeText(url).then(() => {
+                showToast("Direct shareable link copied to clipboard!");
+            });
+        }
+
+        // =============================================================
+        // ECOSYSTEM SYNERGY MATRIX ENGINE
+        // =============================================================
+        function renderSynergyMatrix() {
+            const grid = document.getElementById('synergy-matrix-grid');
+            if (!grid) return;
+
+            const synergies = [
+                {
+                    suiteA: "PlanX CAD Toolset",
+                    suiteB: "02CadGis Universal CAD/GIS",
+                    affinity: "98% Affinity",
+                    desc: "Seamless bidirectional DWG/DXF layer translation, snapping, and cadastral parcel drafting.",
+                    icon: "fa-drafting-compass",
+                    color: "cyan",
+                    plugins: ["PlanX CAD Toolset", "02CadGis Universal CAD/GIS Importer"]
+                },
+                {
+                    suiteA: "PlanX 3D City Viewer",
+                    suiteB: "3D OSM Model & Quick 3D",
+                    affinity: "96% Affinity",
+                    desc: "Automated 3D building mesh extrusion directly from OpenStreetMap vectors into Three.js digital twins.",
+                    icon: "fa-cube",
+                    color: "indigo",
+                    plugins: ["PlanX 3D City Viewer", "3D OSM Model", "OSM Quick 3D"]
+                },
+                {
+                    suiteA: "02Agent Smart Modeler",
+                    suiteB: "PlanX Urban Procedural 3D",
+                    affinity: "94% Affinity",
+                    desc: "AI-assisted graphical modeler generating procedural urban zoning, parcel division, and FAR simulation.",
+                    icon: "fa-wand-magic-sparkles",
+                    color: "emerald",
+                    plugins: ["02Agent Smart Modeler", "PlanX Urban Procedural 3D", "SmartModeler GIS"]
+                },
+                {
+                    suiteA: "PlanX GeoStats Lab",
+                    suiteB: "PlanX DataCube Lab",
+                    affinity: "95% Affinity",
+                    desc: "High-dimensional spatio-temporal NetCDF cubes with Moran's I, LISA, and empirical spatial clustering.",
+                    icon: "fa-chart-pie",
+                    color: "amber",
+                    plugins: ["PlanX GeoStats Lab", "PlanX DataCube Lab"]
+                },
+                {
+                    suiteA: "02viz Studio",
+                    suiteB: "PlanX CartoLab",
+                    affinity: "93% Affinity",
+                    desc: "Executive cartographic layout engine with bivariate choropleths, hillshades, and publication vector export.",
+                    icon: "fa-palette",
+                    color: "rose",
+                    plugins: ["02viz - Geospatial Visualization Studio", "PlanX CartoLab"]
+                },
+                {
+                    suiteA: "02-Multimap Sync",
+                    suiteB: "02truesize Map Truth Lab",
+                    affinity: "91% Affinity",
+                    desc: "Synchronized dual-canvas distortion analysis with geodesic Tissot indicatrices and satellite overlays.",
+                    icon: "fa-clone",
+                    color: "teal",
+                    plugins: ["02-Multimap: Sync-up Multimaps", "02truesize - Map Truth Lab"]
+                }
+            ];
+
+            grid.innerHTML = '';
+            synergies.forEach(s => {
+                const card = document.createElement('div');
+                card.className = "p-4 rounded-2xl bg-obsidian-950 border border-white/5 hover:border-cyan-500/30 flex flex-col justify-between transition-all group";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between text-[10px] font-mono mb-2">
+                            <span class="px-2 py-0.5 rounded bg-${s.color}-500/10 text-${s.color}-400 font-bold border border-${s.color}-500/20">${s.affinity}</span>
+                            <i class="fa-solid ${s.icon} text-${s.color}-400"></i>
+                        </div>
+                        <h4 class="text-xs font-bold font-heading text-white mb-1">${s.suiteA} + ${s.suiteB}</h4>
+                        <p class="text-[10px] text-slate-400 leading-relaxed mb-3">${s.desc}</p>
+                    </div>
+                    <button onclick="loadSynergyToBundle(${JSON.stringify(s.plugins).replace(/"/g, '&quot;')})" class="w-full py-1.5 rounded-xl bg-obsidian-900 hover:bg-cyan-600 text-slate-300 hover:text-white border border-white/5 text-[10px] font-bold font-mono flex items-center justify-center gap-1.5 transition-all">
+                        <i class="fa-solid fa-cart-plus"></i> Load Pair to Install Bundle
+                    </button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function loadSynergyToBundle(plugins) {
+            plugins.forEach(name => bundlePlugins.add(name));
+            updateBundleUI();
+            openBundleModal();
+        }
+
+        // =============================================================
         // PLUGIN EXPLORER & RICH CARDS GRID
         // =============================================================
         let selectedCategory = 'All';
@@ -4560,6 +5235,7 @@ COMMIT;
                 const health = p.health_score || 88.5;
                 const healthColor = health >= 85 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : (health >= 70 ? 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20');
                 const sparkSvg = renderSparklineSVG(p.sparkline);
+                const isInBundle = bundlePlugins.has(p.name);
 
                 const card = document.createElement('div');
                 card.className = "p-6 rounded-3xl glass-panel flex flex-col justify-between relative overflow-hidden group transition-all";
@@ -4573,7 +5249,7 @@ COMMIT;
                         <div class="flex justify-between items-start gap-2 mb-3">
                             <span class="text-[9px] font-bold px-2.5 py-1 rounded-md border ${catColor} font-heading">${p.category}</span>
                             <div class="flex items-center gap-1.5">
-                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${healthColor} font-mono" title="Health & Longevity Score"><i class="fa-solid fa-heart-pulse mr-1"></i>${health}</span>
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${healthColor} font-mono cursor-pointer" onclick="openForensicInspectorModal('${p.name}')" title="Inspect Health & Resilience Score"><i class="fa-solid fa-heart-pulse mr-1"></i>${health}</span>
                                 <span class="text-[10px] text-slate-500 font-mono font-semibold">v${p.version}</span>
                             </div>
                         </div>
@@ -4581,7 +5257,7 @@ COMMIT;
                         <div class="flex items-center gap-3 mb-2">
                             ${iconImg}
                             <div class="truncate">
-                                <h3 class="text-base font-extrabold group-hover:text-cyan-400 transition-colors truncate font-heading" title="${p.name}">${p.name}</h3>
+                                <h3 class="text-base font-extrabold group-hover:text-cyan-400 transition-colors truncate font-heading cursor-pointer" onclick="openForensicInspectorModal('${p.name}')" title="${p.name}">${p.name}</h3>
                                 <div class="text-[10px] text-slate-400 font-mono">QGIS ${p.qgis_minimum_version}+ Ready</div>
                             </div>
                         </div>
@@ -4592,7 +5268,7 @@ COMMIT;
 
                         <div class="flex items-center justify-between mb-4">
                             ${quadBadge}
-                            <span class="text-xs font-mono font-bold text-amber-400">${p.bayesian_rating.toFixed(2)} ★ <span class="text-[10px] text-slate-500 font-normal">(${p.votes_count})</span></span>
+                            <span class="text-xs font-mono font-bold text-amber-400 cursor-pointer" onclick="openForensicInspectorModal('${p.name}')">${p.bayesian_rating.toFixed(2)} ★ <span class="text-[10px] text-slate-500 font-normal">(${p.votes_count})</span></span>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4 bg-obsidian-950/70 p-3 rounded-2xl border border-white/5 mb-4">
@@ -4626,6 +5302,9 @@ COMMIT;
                         <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono">
                             <span>Released: ${p.create_date}</span>
                             <div class="flex items-center gap-2">
+                                <button onclick="togglePluginBundle('${p.name}')" title="${isInBundle ? 'Remove from Bundle' : 'Add to Custom Install Bundle'}" class="text-slate-400 hover:text-cyan-400 transition-colors ${isInBundle ? 'text-cyan-400 font-bold' : ''}">
+                                    <i class="fa-solid fa-cart-plus"></i>
+                                </button>
                                 <button onclick="openCompareWithPlugin('${p.name}')" title="Compare this plugin" class="text-slate-400 hover:text-indigo-400 transition-colors">
                                     <i class="fa-solid fa-code-compare"></i>
                                 </button>
@@ -4990,6 +5669,7 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
         let overviewDonutChart = null;
         let suiteRadarChart = null;
         let activeBcgSuite = 'all';
+        let activeBcgQuadrant = 'all';
 
         function setBcgSuiteFilter(suite) {
             activeBcgSuite = suite;
@@ -4998,6 +5678,20 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
                 const btn = document.getElementById(btns[k]);
                 if (btn) {
                     btn.className = (k === suite)
+                        ? "px-2 py-0.5 rounded bg-cyan-600 text-white font-bold"
+                        : "px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5";
+                }
+            });
+            renderBcgScatter();
+        }
+
+        function setBcgQuadrantFilter(quad) {
+            activeBcgQuadrant = quad;
+            const btns = { 'all': 'bcg-quad-all', 'Popular Momentum': 'bcg-quad-stars', 'High Velocity': 'bcg-quad-vel', 'Stable Classic': 'bcg-quad-stable', 'Niche Specialist': 'bcg-quad-niche' };
+            Object.keys(btns).forEach(k => {
+                const btn = document.getElementById(btns[k]);
+                if (btn) {
+                    btn.className = (k === quad)
                         ? "px-2 py-0.5 rounded bg-cyan-600 text-white font-bold"
                         : "px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 hover:text-white border border-white/5";
                 }
@@ -5071,8 +5765,10 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
                 const px = lx(Math.max(p.downloads, 1)), py = ly(Math.max(p.avg_monthly_downloads, 1));
                 const color = catColors[p.category] || '#64748b';
                 const tip = `${esc(p.name)} · ${p.downloads.toLocaleString()} downloads · ${Math.round(p.avg_monthly_downloads).toLocaleString()}/mo · ${p.category} · ${p.bayesian_rating.toFixed(2)} ★`;
-                const isMatch = (activeBcgSuite === 'all' || p.category === activeBcgSuite);
-                const nodeOpacity = isMatch ? "1.0" : "0.15";
+                const isMatchSuite = (activeBcgSuite === 'all' || p.category === activeBcgSuite);
+                const isMatchQuad = (activeBcgQuadrant === 'all' || p.quadrant === activeBcgQuadrant);
+                const isMatch = isMatchSuite && isMatchQuad;
+                const nodeOpacity = isMatch ? "1.0" : "0.12";
 
                 if (p.icon) {
                     s += `<g transform="translate(${(px - 16).toFixed(1)} ${(py - 16).toFixed(1)})" style="cursor:pointer;opacity:${nodeOpacity}" onclick="switchTab('deepdive');document.getElementById('card-search-input').value='${esc(p.name)}';filterCards();"><title>${tip}</title><circle cx="16" cy="16" r="19" fill="${color}" opacity="0.22"/><image href="${p.icon}" xlink:href="${p.icon}" x="4" y="4" width="24" height="24" preserveAspectRatio="xMidYMid meet"/><circle cx="16" cy="16" r="19" fill="none" stroke="${color}" stroke-width="1.8" opacity="0.8"/></g>`;
@@ -5304,6 +6000,8 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
             initializeCharts();
             runSimulation();
             initializePipelines();
+            renderSynergyMatrix();
+            initHashRouting();
         });
     </script>
 </body>

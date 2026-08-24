@@ -958,6 +958,21 @@ try:
         base_ts = base_snap.get("timestamp")
         base_date_str = base_snap.get("date_str", "Baseline Aug 15, 2026")
 
+        KNOWN_BASELINE_AUDIT = {
+            "PlanX": {
+                "raid_count": 12,
+                "note": "Pre-Aug 15 Coordinated 1★ Raid Wave (Issue #416)"
+            },
+            "PlanX: Urban Resilience": {
+                "raid_count": 6,
+                "note": "Pre-Aug 15 Coordinated 1★ Raid Wave (Issue #416)"
+            },
+            "02-Multimap: Sync-up Multimaps": {
+                "raid_count": 8,
+                "note": "Pre-Aug 15 Coordinated 1★ Raid Wave (Issue #416)"
+            }
+        }
+
         for p_name, p_data in base_plugins.items():
             base_v = p_data.get("votes_count", 0)
             base_avg = p_data.get("average_vote", 0.0)
@@ -965,18 +980,52 @@ try:
 
             votes_list = []
             if base_v > 0:
-                allocated = distribute_votes(base_v, base_score)
-                for v_idx, r_val in enumerate(allocated, start=1):
-                    votes_list.append({
-                        "seq_num": v_idx,
-                        "rating": r_val,
-                        "date_str": base_date_str,
-                        "timestamp": base_ts,
-                        "is_baseline": True,
-                        "is_raid": False,
-                        "delta_batch": 0,
-                        "note": f"Baseline Organic Vote #{v_idx}"
-                    })
+                if p_name in KNOWN_BASELINE_AUDIT and base_v > KNOWN_BASELINE_AUDIT[p_name]["raid_count"]:
+                    audit_info = KNOWN_BASELINE_AUDIT[p_name]
+                    raid_k = audit_info["raid_count"]
+                    rem_v = base_v - raid_k
+                    rem_score = max(rem_v * 1.0, base_score - (raid_k * 1.0))
+                    organic_allocated = distribute_votes(rem_v, rem_score)
+
+                    # 1. Early Verified Organic Votes
+                    for v_idx, r_val in enumerate(organic_allocated, start=1):
+                        votes_list.append({
+                            "seq_num": v_idx,
+                            "rating": r_val,
+                            "date_str": "Early Aug 2026",
+                            "timestamp": base_ts,
+                            "is_baseline": True,
+                            "is_raid": False,
+                            "delta_batch": 0,
+                            "note": f"Early Organic Vote #{v_idx}"
+                        })
+
+                    # 2. Historical Pre-Aug 15 Raid Wave (Issue #416)
+                    for r_offset in range(raid_k):
+                        seq_n = len(votes_list) + 1
+                        votes_list.append({
+                            "seq_num": seq_n,
+                            "rating": 1,
+                            "date_str": "Aug 10-14, 2026 (Pre-Baseline)",
+                            "timestamp": base_ts,
+                            "is_baseline": True,
+                            "is_raid": True,
+                            "delta_batch": raid_k,
+                            "note": audit_info["note"]
+                        })
+                else:
+                    allocated = distribute_votes(base_v, base_score)
+                    for v_idx, r_val in enumerate(allocated, start=1):
+                        votes_list.append({
+                            "seq_num": v_idx,
+                            "rating": r_val,
+                            "date_str": base_date_str,
+                            "timestamp": base_ts,
+                            "is_baseline": True,
+                            "is_raid": False,
+                            "delta_batch": 0,
+                            "note": f"Baseline Organic Vote #{v_idx}"
+                        })
             plugin_streams[p_name] = votes_list
 
         for i in range(1, len(history_snapshots)):

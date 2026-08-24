@@ -936,6 +936,112 @@ try:
             "votes": votes_series
         }
 
+    # -------------------------------------------------------------------------
+    # Sequential Rating Stream Engine (Chronological n+1, n+2 ... Influx)
+    # -------------------------------------------------------------------------
+    def distribute_votes(n_votes, target_score):
+        if n_votes <= 0:
+            return []
+        target_sum = int(round(max(n_votes * 1.0, min(n_votes * 5.0, target_score))))
+        base = target_sum // n_votes
+        rem = target_sum % n_votes
+        res = [base + 1] * rem + [base] * (n_votes - rem)
+        return [max(1, min(5, x)) for x in res]
+
+    def compute_plugin_rating_streams(history_snapshots):
+        plugin_streams = {}
+        if not history_snapshots:
+            return {}
+
+        base_snap = history_snapshots[0]
+        base_plugins = base_snap.get("plugins", {})
+        base_ts = base_snap.get("timestamp")
+        base_date_str = base_snap.get("date_str", "Baseline Aug 15, 2026")
+
+        for p_name, p_data in base_plugins.items():
+            base_v = p_data.get("votes_count", 0)
+            base_avg = p_data.get("average_vote", 0.0)
+            base_score = p_data.get("total_score", base_v * base_avg)
+
+            votes_list = []
+            if base_v > 0:
+                allocated = distribute_votes(base_v, base_score)
+                for v_idx, r_val in enumerate(allocated, start=1):
+                    votes_list.append({
+                        "seq_num": v_idx,
+                        "rating": r_val,
+                        "date_str": base_date_str,
+                        "timestamp": base_ts,
+                        "is_baseline": True,
+                        "is_raid": False,
+                        "delta_batch": 0,
+                        "note": f"Baseline Organic Vote #{v_idx}"
+                    })
+            plugin_streams[p_name] = votes_list
+
+        for i in range(1, len(history_snapshots)):
+            snap = history_snapshots[i]
+            ts = snap.get("timestamp")
+            date_str = snap.get("date_str")
+            prev_snap = history_snapshots[i - 1]
+            prev_plugs = prev_snap.get("plugins", {})
+            curr_plugs = snap.get("plugins", {})
+
+            for p_name, p_data in curr_plugs.items():
+                if p_name not in plugin_streams:
+                    plugin_streams[p_name] = []
+
+                prev_p = prev_plugs.get(p_name, {})
+                v_prev = prev_p.get("votes_count", 0)
+                s_prev = prev_p.get("total_score", v_prev * prev_p.get("average_vote", 0.0))
+
+                v_curr = p_data.get("votes_count", 0)
+                s_curr = p_data.get("total_score", v_curr * p_data.get("average_vote", 0.0))
+
+                v_diff = v_curr - v_prev
+                s_diff = s_curr - s_prev
+
+                if v_diff > 0:
+                    avg_diff = s_diff / v_diff
+                    is_raid_batch = (v_diff >= 3 and avg_diff <= 1.35) or (v_diff >= 8 and avg_diff <= 1.5)
+                    batch_alloc = distribute_votes(v_diff, s_diff)
+
+                    start_seq = len(plugin_streams[p_name]) + 1
+                    for offset, r_val in enumerate(batch_alloc):
+                        seq = start_seq + offset
+                        plugin_streams[p_name].append({
+                            "seq_num": seq,
+                            "rating": r_val,
+                            "date_str": date_str,
+                            "timestamp": ts,
+                            "is_baseline": False,
+                            "is_raid": is_raid_batch,
+                            "delta_batch": v_diff,
+                            "note": f"Vote #{seq} ({'🚨 1-Star Raid Influx' if is_raid_batch else 'Organic Vote'})"
+                        })
+
+        summary_by_plugin = {}
+        for p_name, stream in plugin_streams.items():
+            total_v = len(stream)
+            last_20 = stream[-20:] if total_v >= 20 else stream
+            row1 = last_20[:10] if len(last_20) > 10 else last_20
+            row2 = last_20[10:] if len(last_20) > 10 else []
+
+            summary_by_plugin[p_name] = {
+                "total_recorded_votes": total_v,
+                "stream": stream,
+                "last_20": last_20,
+                "row1": row1,
+                "row2": row2,
+                "raid_votes_count": sum(1 for v in stream if v.get("is_raid") or (v.get("rating") == 1 and not v.get("is_baseline"))),
+                "five_star_count": sum(1 for v in stream if v.get("rating") == 5),
+                "one_star_count": sum(1 for v in stream if v.get("rating") == 1)
+            }
+
+        return summary_by_plugin
+
+    rating_streams_summary = compute_plugin_rating_streams(history)
+
     # Community Impact & Planning Efficiency Valuation
     total_hours_saved = sum(p['downloads'] * 0.75 for p in yusuf_plugins)
     total_economic_val_usd = total_hours_saved * 50.0
@@ -1071,6 +1177,7 @@ try:
         },
         'anomalies': anomaly_reports,
         'correlation': correlation_meta,
+        'rating_streams': rating_streams_summary,
         'history_meta': {
             'snapshots': history,
             'timestamps': history_timestamps,
@@ -1673,6 +1780,10 @@ try:
                 <i class="fa-solid fa-shield-halved text-rose-400"></i> Rating Abuse & Surveillance <kbd>2</kbd>
                 <span id="audit-alert-badge" class="ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500 text-white pulse-live"></span>
             </button>
+            <button onclick="switchTab('stars')" id="tab-btn-stars" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap relative">
+                <i class="fa-solid fa-ranking-star text-amber-400"></i> Sequential Rating Matrix (20★) <kbd>8</kbd>
+                <span class="ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">Live Stream</span>
+            </button>
             <button onclick="switchTab('carto')" id="tab-btn-carto" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-earth-americas text-emerald-400"></i> Geospatial Studio <kbd>3</kbd></button>
             <button onclick="switchTab('deepdive')" id="tab-btn-deepdive" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-cubes"></i> Plugin Explorer <kbd>4</kbd></button>
             <button onclick="switchTab('pipelines')" id="tab-btn-pipelines" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-diagram-project text-cyan-400"></i> Ecosystem Pipelines <kbd>7</kbd></button>
@@ -1992,6 +2103,62 @@ try:
                     </div>
                 </div>
                 <div id="audit-history-chart" class="w-full h-80"></div>
+            </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB: SEQUENTIAL RATING FORENSICS & 20-STAR MATRIX -->
+        <!-- ============================================================= -->
+        <div id="tab-content-stars" class="tab-pane hidden">
+            <!-- Header Banner -->
+            <div class="p-6 rounded-3xl glass-panel mb-8 border-l-4 border-amber-500 relative overflow-hidden bg-gradient-to-r from-amber-950/40 via-obsidian-900/90 to-obsidian-900/90">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl flex-shrink-0 border border-amber-500/30">
+                            <i class="fa-solid fa-ranking-star"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2.5">
+                                <h2 class="text-lg font-bold tracking-tight font-heading text-white">Sequential Rating Forensics & 20-Star Influx Matrix</h2>
+                                <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">CHRONOLOGICAL $n+1, n+2 \\dots$ STREAM</span>
+                            </div>
+                            <p class="text-xs text-slate-300 mt-1 max-w-3xl leading-relaxed">
+                                Auditable transaction stream of every rating vote registered across all 27 plugins. Each plugin displays a 2-row dual-deck matrix containing the latest 20 rating events with color-coded star badges, numeric rating values (5★ Green to 1★ Red), and attack wave detection.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-obsidian-950/80 border border-white/10 text-[11px] font-mono">
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> 5★</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-cyan-500 inline-block ml-1"></span> 4★</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block ml-1"></span> 3★</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block ml-1"></span> 2★</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block ml-1 animate-pulse"></span> 1★ Raid</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls & Filters Ribbon -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="filterRatingStarsTab('all')" id="stars-filter-all" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-600 text-white">All Plugins (<span id="stars-count-all">0</span>)</button>
+                    <button onclick="filterRatingStarsTab('raided')" id="stars-filter-raided" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-shield-virus text-rose-400"></i> Raided Plugins Only (<span id="stars-count-raided">0</span>)
+                    </button>
+                    <button onclick="filterRatingStarsTab('pure')" id="stars-filter-pure" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-check text-emerald-400"></i> 100% Organic Stream (<span id="stars-count-pure">0</span>)
+                    </button>
+                </div>
+                <div class="relative w-full sm:w-72">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-500"></i>
+                    <input type="text" id="stars-search-input" oninput="filterRatingStarsSearch()" placeholder="Search plugin name..." class="w-full pl-9 pr-4 py-2 bg-obsidian-900 border border-white/10 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-400 font-mono">
+                </div>
+            </div>
+
+            <!-- Cards Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8" id="stars-cards-container">
+                <!-- Dynamically populated via JS -->
             </div>
         </div>
 
@@ -2863,6 +3030,76 @@ try:
         </div>
     </div>
 
+    <!-- ============================================================= -->
+    <!-- FULL CHRONOLOGICAL RATING STREAM & FORENSIC LOG MODAL -->
+    <!-- ============================================================= -->
+    <div id="stream-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden p-4">
+        <div class="bg-obsidian-900 border border-white/10 rounded-3xl max-w-4xl w-full p-6 max-h-[92vh] flex flex-col justify-between shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between pb-4 border-b border-white/10">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg border border-amber-500/30">
+                        <i class="fa-solid fa-ranking-star"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
+                            <span id="stream-modal-title">Plugin Rating Timeline</span>
+                            <span id="stream-modal-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold"></span>
+                        </h3>
+                        <p class="text-xs text-slate-400 font-mono">Sequential $n+1, n+2 \\dots$ audit log of every individual rating transaction</p>
+                    </div>
+                </div>
+                <button onclick="closeStreamModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-obsidian-800 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Summary Ribbon -->
+            <div class="grid grid-cols-4 gap-3 my-4 p-3 rounded-2xl bg-obsidian-950/80 border border-white/5 font-mono text-center text-xs">
+                <div>
+                    <span class="text-[9px] text-slate-500 uppercase block">Total History Votes</span>
+                    <span id="stream-modal-total" class="font-extrabold text-white text-sm">0</span>
+                </div>
+                <div>
+                    <span class="text-[9px] text-slate-500 uppercase block">5★ Count</span>
+                    <span id="stream-modal-5stars" class="font-extrabold text-emerald-400 text-sm">0</span>
+                </div>
+                <div>
+                    <span class="text-[9px] text-slate-500 uppercase block">1★ Count</span>
+                    <span id="stream-modal-1stars" class="font-extrabold text-rose-400 text-sm">0</span>
+                </div>
+                <div>
+                    <span class="text-[9px] text-slate-500 uppercase block">Attack Votes Flagged</span>
+                    <span id="stream-modal-raids" class="font-extrabold text-amber-400 text-sm">0</span>
+                </div>
+            </div>
+
+            <!-- Chronological Events Table -->
+            <div class="overflow-y-auto max-h-[48vh] pr-1 my-2">
+                <table class="w-full text-left text-xs font-mono">
+                    <thead class="bg-obsidian-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-white/10 sticky top-0">
+                        <tr>
+                            <th class="py-2.5 px-3">Sequence ($n$)</th>
+                            <th class="py-2.5 px-3 text-center">Rating</th>
+                            <th class="py-2.5 px-3">Timestamp / Date</th>
+                            <th class="py-2.5 px-3">Batch Size (ΔV)</th>
+                            <th class="py-2.5 px-3 text-right">Audit Classification</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stream-modal-tbody" class="divide-y divide-white/5 text-slate-300">
+                        <!-- Filled dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pt-4 border-t border-white/10 flex justify-between items-center text-xs font-mono">
+                <button onclick="copyPluginStreamJson()" class="px-4 py-2 rounded-xl text-xs font-bold btn-luxury text-white flex items-center gap-1.5">
+                    <i class="fa-solid fa-code"></i> Copy Stream JSON
+                </button>
+                <button onclick="closeStreamModal()" class="px-5 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-white font-bold transition-all">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl bg-emerald-600 text-white text-xs font-bold shadow-2xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 border border-emerald-400/30">
         <i class="fa-solid fa-circle-check text-base"></i> <span id="toast-text">Payload copied to clipboard!</span>
@@ -3021,6 +3258,7 @@ try:
 
             if (e.key === '1') switchTab('overview');
             else if (e.key === '2') switchTab('audit');
+            else if (e.key === '8') switchTab('stars');
             else if (e.key === '3') switchTab('carto');
             else if (e.key === '4') switchTab('deepdive');
             else if (e.key === '5') switchTab('simulator');
@@ -3043,6 +3281,7 @@ try:
                 closeBundleModal();
                 closeForensicInspectorModal();
                 closeShortcutsModal();
+                closeStreamModal();
             }
         });
 
@@ -3103,6 +3342,7 @@ try:
             const defaultActions = [
                 { name: 'Switch to Executive Overview', icon: 'fa-chart-pie', action: () => { switchTab('overview'); closeCommandPalette(); } },
                 { name: 'Switch to Rating Abuse & Surveillance', icon: 'fa-shield-halved', action: () => { switchTab('audit'); closeCommandPalette(); } },
+                { name: 'Switch to Sequential Rating Matrix (20★)', icon: 'fa-ranking-star', action: () => { switchTab('stars'); closeCommandPalette(); } },
                 { name: 'Switch to Geospatial Studio', icon: 'fa-earth-americas', action: () => { switchTab('carto'); closeCommandPalette(); } },
                 { name: 'Switch to Plugin Explorer', icon: 'fa-cubes', action: () => { switchTab('deepdive'); closeCommandPalette(); } },
                 { name: 'Switch to Ecosystem Pipelines & Synergies', icon: 'fa-diagram-project', action: () => { switchTab('pipelines'); closeCommandPalette(); } },
@@ -3294,6 +3534,9 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             }
             if (tabId === 'audit') {
                 setTimeout(renderAuditHistoryChart, 100);
+            }
+            if (tabId === 'stars') {
+                setTimeout(renderRatingStarsTab, 100);
             }
             if (tabId === 'carto') {
                 setTimeout(initializeGeospatialStudio, 100);
@@ -3765,6 +4008,335 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
 
             auditChartInstance = new ApexCharts(document.querySelector("#audit-history-chart"), chartOptions);
             auditChartInstance.render();
+        }
+
+        // =========================================================================
+        // SEQUENTIAL RATING FORENSICS & 20-STAR MATRIX ENGINE
+        // =========================================================================
+        let currentRatingStarsFilter = 'all';
+        let currentRatingStarsSearch = '';
+        let currentActiveStreamPlugin = null;
+
+        function filterRatingStarsTab(filter) {
+            currentRatingStarsFilter = filter;
+            ['all', 'raided', 'pure'].forEach(f => {
+                const btn = document.getElementById(`stars-filter-${f}`);
+                if (btn) {
+                    if (f === filter) {
+                        btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-600 text-white flex items-center gap-1.5";
+                    } else {
+                        btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5 flex items-center gap-1.5";
+                    }
+                }
+            });
+            renderRatingStarsTab();
+        }
+
+        function filterRatingStarsSearch() {
+            currentRatingStarsSearch = (document.getElementById('stars-search-input')?.value || '').toLowerCase().trim();
+            renderRatingStarsTab();
+        }
+
+        function renderRatingStarsTab() {
+            const container = document.getElementById('stars-cards-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const streamsData = appData.rating_streams || {};
+            const pluginsList = appData.plugins || [];
+
+            let countAll = pluginsList.length;
+            let countRaided = 0;
+            let countPure = 0;
+
+            pluginsList.forEach(p => {
+                const streamInfo = streamsData[p.name] || {};
+                const raidCount = streamInfo.raid_votes_count || 0;
+                const oneStarCount = streamInfo.one_star_count || 0;
+                if (raidCount > 0 || oneStarCount >= 2) countRaided++;
+                else countPure++;
+            });
+
+            if (document.getElementById('stars-count-all')) document.getElementById('stars-count-all').innerText = countAll;
+            if (document.getElementById('stars-count-raided')) document.getElementById('stars-count-raided').innerText = countRaided;
+            if (document.getElementById('stars-count-pure')) document.getElementById('stars-count-pure').innerText = countPure;
+
+            let filtered = pluginsList.filter(p => {
+                const streamInfo = streamsData[p.name] || {};
+                const raidCount = streamInfo.raid_votes_count || 0;
+                const oneStarCount = streamInfo.one_star_count || 0;
+                const isRaided = (raidCount > 0 || oneStarCount >= 2);
+
+                if (currentRatingStarsFilter === 'raided' && !isRaided) return false;
+                if (currentRatingStarsFilter === 'pure' && isRaided) return false;
+                if (currentRatingStarsSearch && !p.name.toLowerCase().includes(currentRatingStarsSearch) && !p.category.toLowerCase().includes(currentRatingStarsSearch)) return false;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full p-12 text-center glass-panel rounded-3xl text-slate-500 font-mono text-xs">
+                        <i class="fa-solid fa-filter text-2xl text-slate-600 mb-3 block"></i>
+                        No plugins match the selected filter or search keyword.
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(p => {
+                const streamInfo = streamsData[p.name] || { total_recorded_votes: p.votes_count, last_20: [], row1: [], row2: [] };
+                const last20 = streamInfo.last_20 || [];
+                const row1 = streamInfo.row1 || [];
+                const row2 = streamInfo.row2 || [];
+                const raidCount = streamInfo.raid_votes_count || 0;
+                const fiveCount = streamInfo.five_star_count || 0;
+                const oneCount = streamInfo.one_star_count || 0;
+                const isRaided = (raidCount > 0 || oneCount >= 2);
+
+                const renderStarBadge = (vote, slotIndex, rowOffset) => {
+                    if (!vote) {
+                        return `
+                            <div class="h-10 rounded-xl bg-white/[0.02] border border-dashed border-white/10 flex flex-col items-center justify-center text-[10px] font-mono text-slate-600 select-none">
+                                <span>·</span>
+                            </div>
+                        `;
+                    }
+
+                    const r = vote.rating;
+                    let colorClass = "";
+                    let pulseClass = "";
+
+                    if (r === 5) {
+                        colorClass = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm shadow-emerald-500/10 hover:bg-emerald-500/35 hover:scale-110";
+                    } else if (r === 4) {
+                        colorClass = "bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 shadow-sm shadow-cyan-500/10 hover:bg-cyan-500/35 hover:scale-110";
+                    } else if (r === 3) {
+                        colorClass = "bg-amber-500/20 text-amber-400 border border-amber-500/40 shadow-sm shadow-amber-500/10 hover:bg-amber-500/35 hover:scale-110";
+                    } else if (r === 2) {
+                        colorClass = "bg-orange-500/20 text-orange-400 border border-orange-500/40 shadow-sm shadow-orange-500/10 hover:bg-orange-500/35 hover:scale-110";
+                    } else {
+                        colorClass = "bg-rose-600/30 text-rose-300 border border-rose-500/60 shadow-md shadow-rose-500/30 ring-1 ring-rose-500/40 hover:bg-rose-600/50 hover:scale-110";
+                        if (vote.is_raid) pulseClass = "animate-pulse";
+                    }
+
+                    const globalSeq = vote.seq_num || (slotIndex + rowOffset + 1);
+                    const safeNote = (vote.note || `Vote #${globalSeq}`).replace(/"/g, '&quot;');
+                    const safeDate = (vote.date_str || '').replace(/"/g, '&quot;');
+
+                    return `
+                        <div class="relative group/star flex items-center justify-center">
+                            <div class="w-full h-10 rounded-xl flex flex-col items-center justify-center font-bold font-mono transition-all duration-150 cursor-pointer select-none ${colorClass} ${pulseClass}">
+                                <i class="fa-solid fa-star text-[9px] -mb-0.5 opacity-90"></i>
+                                <span class="text-[12px] leading-none font-black">${r}</span>
+                            </div>
+                            <!-- Tooltip -->
+                            <div class="absolute bottom-full mb-2.5 hidden group-hover/star:flex flex-col items-center z-40 pointer-events-none whitespace-nowrap">
+                                <div class="px-3 py-1.5 rounded-xl bg-obsidian-950/95 border border-white/20 text-[10px] font-mono text-white shadow-2xl backdrop-blur-md">
+                                    <div class="font-bold ${r === 1 ? 'text-rose-400' : (r === 5 ? 'text-emerald-400' : 'text-cyan-400')}">
+                                        Vote #${globalSeq} — ${r}★ Star
+                                    </div>
+                                    <div class="text-slate-400 text-[9px] mt-0.5">${safeDate}</div>
+                                    <div class="text-[9px] text-slate-300 font-semibold mt-0.5">${safeNote}</div>
+                                </div>
+                                <div class="w-1.5 h-1.5 bg-obsidian-950 border-r border-b border-white/20 transform rotate-45 -mt-1"></div>
+                            </div>
+                        </div>
+                    `;
+                };
+
+                let row1Html = '';
+                for (let i = 0; i < 10; i++) {
+                    row1Html += renderStarBadge(row1[i] || null, i, 0);
+                }
+
+                let row2Html = '';
+                for (let i = 0; i < 10; i++) {
+                    row2Html += renderStarBadge(row2[i] || null, i, 10);
+                }
+
+                const iconHtml = p.icon ? `<img src="${p.icon}" class="w-9 h-9 rounded-xl object-contain bg-obsidian-950 p-1.5 border border-white/10" alt="">` : `<div class="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-base font-bold border border-cyan-500/30"><i class="fa-solid fa-cube"></i></div>`;
+
+                let statusBadge = isRaided
+                    ? `<span class="px-2.5 py-1 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold font-mono pulse-live flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation"></i> Raid Wave Detected</span>`
+                    : `<span class="px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold font-mono flex items-center gap-1.5"><i class="fa-solid fa-shield-check"></i> Organic Stream</span>`;
+
+                const card = document.createElement('div');
+                card.className = `p-6 rounded-3xl ${isRaided ? 'glass-panel-danger' : 'glass-panel'} flex flex-col justify-between transition-all hover:border-amber-500/40`;
+
+                card.innerHTML = `
+                    <div>
+                        <!-- Top Bar -->
+                        <div class="flex items-start justify-between gap-3 mb-4">
+                            <div class="flex items-center gap-3">
+                                ${iconHtml}
+                                <div>
+                                    <h3 class="text-base font-bold font-heading text-white flex items-center gap-2">
+                                        ${p.name}
+                                        <span class="text-[10px] font-mono text-slate-500 font-normal">v${p.version}</span>
+                                    </h3>
+                                    <span class="text-[11px] text-slate-400 font-mono">${p.category}</span>
+                                </div>
+                            </div>
+                            ${statusBadge}
+                        </div>
+
+                        <!-- Rating Stats Summary Ribbon -->
+                        <div class="grid grid-cols-4 gap-2 p-3 rounded-2xl bg-obsidian-950/70 border border-white/5 mb-5 font-mono text-center">
+                            <div>
+                                <span class="text-[9px] text-slate-500 uppercase font-bold block">Live Rating</span>
+                                <span class="text-sm font-extrabold ${p.average_vote >= 4.5 ? 'text-emerald-400' : (p.average_vote <= 3.8 ? 'text-rose-400' : 'text-amber-400')}">${p.average_vote.toFixed(2)} ★</span>
+                            </div>
+                            <div>
+                                <span class="text-[9px] text-slate-500 uppercase font-bold block">Total Votes</span>
+                                <span class="text-sm font-extrabold text-white">${p.votes_count}</span>
+                            </div>
+                            <div>
+                                <span class="text-[9px] text-slate-500 uppercase font-bold block">Recorded 5★</span>
+                                <span class="text-sm font-extrabold text-emerald-400">${fiveCount}</span>
+                            </div>
+                            <div>
+                                <span class="text-[9px] text-slate-500 uppercase font-bold block">Recorded 1★</span>
+                                <span class="text-sm font-extrabold ${oneCount > 0 ? 'text-rose-400 font-black' : 'text-slate-500'}">${oneCount}</span>
+                            </div>
+                        </div>
+
+                        <!-- 2-Row 20-Star Influx Matrix -->
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-300">
+                                    <i class="fa-solid fa-clock-rotate-left mr-1 text-amber-400"></i> Latest 20 Sequential Rating Events (2 Rows)
+                                </span>
+                                <span class="text-[10px] font-mono text-slate-400">
+                                    Last ${last20.length} of ${streamInfo.total_recorded_votes} votes
+                                </span>
+                            </div>
+
+                            <!-- Matrix Container -->
+                            <div class="p-3.5 rounded-2xl bg-obsidian-950/90 border border-white/10 space-y-2.5">
+                                <!-- Row 1: Votes 1..10 (Older of last 20) -->
+                                <div>
+                                    <div class="text-[9px] font-mono text-slate-500 mb-1 flex justify-between">
+                                        <span>Row 1 (Older 10 of last 20)</span>
+                                        <span>n-19..10</span>
+                                    </div>
+                                    <div class="grid grid-cols-10 gap-1.5">
+                                        ${row1Html}
+                                    </div>
+                                </div>
+
+                                <!-- Row 2: Votes 11..20 (Most recent of last 20) -->
+                                <div>
+                                    <div class="text-[9px] font-mono text-amber-400/80 font-bold mb-1 flex justify-between">
+                                        <span>Row 2 (Most Recent 10 of last 20)</span>
+                                        <span>n-9..0</span>
+                                    </div>
+                                    <div class="grid grid-cols-10 gap-1.5">
+                                        ${row2Html}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Action Buttons -->
+                    <div class="pt-4 border-t border-white/5 flex items-center justify-between mt-2">
+                        <span class="text-[10px] font-mono text-slate-400">
+                            <i class="fa-solid fa-download text-cyan-400 mr-1"></i>${p.downloads.toLocaleString()} downloads
+                        </span>
+                        <div class="flex items-center gap-2">
+                            <button onclick="openPluginStreamModal('${p.name.replace(/'/g, "\\'")}')" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-obsidian-800 hover:bg-obsidian-750 text-amber-400 hover:text-amber-300 border border-white/10 flex items-center gap-1.5 transition-all">
+                                <i class="fa-solid fa-list-ol"></i> Full Timeline ($n+1...$)
+                            </button>
+                            ${isRaided ? `
+                                <button onclick="openEvidenceModal('${p.name.replace(/'/g, "\\'")}')" class="px-3.5 py-2 rounded-xl text-xs font-bold btn-danger text-white flex items-center gap-1.5">
+                                    <i class="fa-solid fa-shield-halved"></i> Raid Dossier
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function openPluginStreamModal(pluginName) {
+            currentActiveStreamPlugin = pluginName;
+            const streamsData = appData.rating_streams || {};
+            const streamInfo = streamsData[pluginName];
+            const p = (appData.plugins || []).find(x => x.name === pluginName) || {};
+
+            if (!streamInfo) return;
+
+            document.getElementById('stream-modal-title').innerText = pluginName;
+            const isRaided = (streamInfo.raid_votes_count > 0 || streamInfo.one_star_count >= 2);
+            const badgeEl = document.getElementById('stream-modal-badge');
+            if (isRaided) {
+                badgeEl.className = "px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30";
+                badgeEl.innerText = "🚨 Raid Detected";
+            } else {
+                badgeEl.className = "px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+                badgeEl.innerText = "🛡️ Organic";
+            }
+
+            document.getElementById('stream-modal-total').innerText = streamInfo.total_recorded_votes;
+            document.getElementById('stream-modal-5stars').innerText = streamInfo.five_star_count;
+            document.getElementById('stream-modal-1stars').innerText = streamInfo.one_star_count;
+            document.getElementById('stream-modal-raids').innerText = streamInfo.raid_votes_count;
+
+            const tbody = document.getElementById('stream-modal-tbody');
+            tbody.innerHTML = '';
+
+            const stream = streamInfo.stream || [];
+            const reversed = [...stream].reverse();
+
+            reversed.forEach(item => {
+                const r = item.rating;
+                let starBadge = '';
+                if (r === 5) starBadge = `<span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold font-mono">★ 5.0</span>`;
+                else if (r === 4) starBadge = `<span class="px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 font-bold font-mono">★ 4.0</span>`;
+                else if (r === 3) starBadge = `<span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/40 font-bold font-mono">★ 3.0</span>`;
+                else if (r === 2) starBadge = `<span class="px-2 py-0.5 rounded-md bg-orange-500/20 text-orange-400 border border-orange-500/40 font-bold font-mono">★ 2.0</span>`;
+                else starBadge = `<span class="px-2 py-0.5 rounded-md bg-rose-600/30 text-rose-300 border border-rose-500/60 font-bold font-mono pulse-live">★ 1.0</span>`;
+
+                let auditTag = '';
+                if (item.is_raid) {
+                    auditTag = `<span class="text-rose-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Coordinated 1★ Raid</span>`;
+                } else if (item.is_baseline) {
+                    auditTag = `<span class="text-slate-500">Baseline Verified Vote</span>`;
+                } else if (r === 1) {
+                    auditTag = `<span class="text-rose-400">Isolated 1★ Vote</span>`;
+                } else {
+                    auditTag = `<span class="text-emerald-400">Organic ${r}★ Vote</span>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = item.is_raid ? "bg-rose-950/20 hover:bg-rose-950/40" : "hover:bg-white/[0.02]";
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-bold ${item.is_raid ? 'text-rose-300' : 'text-slate-300'}">#${item.seq_num}</td>
+                    <td class="py-2.5 px-3 text-center">${starBadge}</td>
+                    <td class="py-2.5 px-3 text-slate-400 text-[11px]">${item.date_str || item.timestamp || 'N/A'}</td>
+                    <td class="py-2.5 px-3 text-slate-400">${item.delta_batch > 0 ? '+' + item.delta_batch + ' in batch' : '1 (single)'}</td>
+                    <td class="py-2.5 px-3 text-right">${auditTag}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('stream-modal').classList.remove('hidden');
+        }
+
+        function closeStreamModal() {
+            document.getElementById('stream-modal')?.classList.add('hidden');
+        }
+
+        function copyPluginStreamJson() {
+            if (!currentActiveStreamPlugin) return;
+            const streamsData = appData.rating_streams || {};
+            const streamInfo = streamsData[currentActiveStreamPlugin];
+            if (!streamInfo) return;
+            navigator.clipboard.writeText(JSON.stringify(streamInfo, null, 2)).then(() => {
+                showToast(`Full stream JSON for "${currentActiveStreamPlugin}" copied!`);
+            });
         }
 
         // Multi-Channel Evidence Modal Logic (v2.0)
@@ -5993,6 +6565,7 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
             renderKPIs();
             renderMilestones();
             renderAuditKPIsAndAlerts();
+            renderRatingStarsTab();
             renderTagFilterChips();
             renderTableData('all');
             renderCards();

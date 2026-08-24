@@ -4117,7 +4117,7 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
                     }
 
                     const globalSeq = vote.seq_num || (slotIndex + rowOffset + 1);
-                                        Record #${globalSeq} - avg ${ratingLabel}/5 across +${batchVotes} vote(s)
+                    const safeNote = (vote.note || `Record #${globalSeq}`).replace(/"/g, '&quot;');
                     const safeDate = (vote.date_str || '').replace(/"/g, '&quot;');
 
                     return `

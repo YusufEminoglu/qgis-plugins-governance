@@ -1781,14 +1781,14 @@ try:
                 <span id="audit-alert-badge" class="ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500 text-white pulse-live"></span>
             </button>
             <button onclick="switchTab('stars')" id="tab-btn-stars" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap relative">
-                <i class="fa-solid fa-ranking-star text-amber-400"></i> Sequential Rating Matrix (20★) <kbd>8</kbd>
+                <i class="fa-solid fa-ranking-star text-amber-400"></i> Sequential Rating Matrix (20★) <kbd>3</kbd>
                 <span class="ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">Live Stream</span>
             </button>
-            <button onclick="switchTab('carto')" id="tab-btn-carto" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-earth-americas text-emerald-400"></i> Geospatial Studio <kbd>3</kbd></button>
-            <button onclick="switchTab('deepdive')" id="tab-btn-deepdive" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-cubes"></i> Plugin Explorer <kbd>4</kbd></button>
-            <button onclick="switchTab('pipelines')" id="tab-btn-pipelines" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-diagram-project text-cyan-400"></i> Ecosystem Pipelines <kbd>7</kbd></button>
-            <button onclick="switchTab('simulator')" id="tab-btn-simulator" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-wand-magic-sparkles"></i> Forecast Simulator <kbd>5</kbd></button>
-            <button onclick="switchTab('table')" id="tab-btn-table" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-table"></i> Master Performance Table <kbd>6</kbd></button>
+            <button onclick="switchTab('carto')" id="tab-btn-carto" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-earth-americas text-emerald-400"></i> Geospatial Studio <kbd>4</kbd></button>
+            <button onclick="switchTab('deepdive')" id="tab-btn-deepdive" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-cubes"></i> Plugin Explorer <kbd>5</kbd></button>
+            <button onclick="switchTab('pipelines')" id="tab-btn-pipelines" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-diagram-project text-cyan-400"></i> Ecosystem Pipelines <kbd>6</kbd></button>
+            <button onclick="switchTab('simulator')" id="tab-btn-simulator" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-wand-magic-sparkles"></i> Forecast Simulator <kbd>7</kbd></button>
+            <button onclick="switchTab('table')" id="tab-btn-table" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-table"></i> Master Performance Table <kbd>8</kbd></button>
         </div>
 
         <!-- ============================================================= -->
@@ -2784,24 +2784,28 @@ try:
                     <kbd>2</kbd>
                 </div>
                 <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
-                    <span class="text-slate-300">Geospatial Studio</span>
+                    <span class="text-slate-300">Sequential Rating Matrix (20★)</span>
                     <kbd>3</kbd>
                 </div>
                 <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
-                    <span class="text-slate-300">Plugin Explorer</span>
+                    <span class="text-slate-300">Geospatial Studio</span>
                     <kbd>4</kbd>
                 </div>
                 <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
-                    <span class="text-slate-300">Forecast Simulator</span>
+                    <span class="text-slate-300">Plugin Explorer</span>
                     <kbd>5</kbd>
                 </div>
                 <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
-                    <span class="text-slate-300">Master Data Table</span>
+                    <span class="text-slate-300">Ecosystem Pipelines</span>
                     <kbd>6</kbd>
                 </div>
                 <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
-                    <span class="text-slate-300">Ecosystem Pipelines</span>
+                    <span class="text-slate-300">Forecast Simulator</span>
                     <kbd>7</kbd>
+                </div>
+                <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
+                    <span class="text-slate-300">Master Data Table</span>
+                    <kbd>8</kbd>
                 </div>
                 <div class="p-3 rounded-2xl bg-obsidian-950 border border-white/5 flex items-center justify-between">
                     <span class="text-slate-300">Command Palette</span>
@@ -3258,12 +3262,12 @@ try:
 
             if (e.key === '1') switchTab('overview');
             else if (e.key === '2') switchTab('audit');
-            else if (e.key === '8') switchTab('stars');
-            else if (e.key === '3') switchTab('carto');
-            else if (e.key === '4') switchTab('deepdive');
-            else if (e.key === '5') switchTab('simulator');
-            else if (e.key === '6') switchTab('table');
-            else if (e.key === '7') switchTab('pipelines');
+            else if (e.key === '3') switchTab('stars');
+            else if (e.key === '4') switchTab('carto');
+            else if (e.key === '5') switchTab('deepdive');
+            else if (e.key === '6') switchTab('pipelines');
+            else if (e.key === '7') switchTab('simulator');
+            else if (e.key === '8') switchTab('table');
             else if (e.key.toLowerCase() === 't') toggleTheme();
             else if (e.key.toLowerCase() === 'b') openBundleModal();
             else if (e.key === '?' || (e.shiftKey && e.key === '/')) openShortcutsModal();

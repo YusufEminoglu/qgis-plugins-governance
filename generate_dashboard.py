@@ -418,9 +418,9 @@ try:
             "plugins": {
                 p['name']: {
                     "downloads": p['downloads'],
-                    "average_vote": 4.846029588984898 if p['name'] == "PlanX GeoStats Lab" else p['average_vote'],
-                    "votes_count": 39 if p['name'] == "PlanX GeoStats Lab" else p['votes_count'],
-                    "total_score": round(39 * 4.846029588984898, 2) if p['name'] == "PlanX GeoStats Lab" else p['calculated_score'],
+                    "average_vote": p['average_vote'],
+                    "votes_count": p['votes_count'],
+                    "total_score": p['calculated_score'],
                     "version": p['version']
                 } for p in yusuf_plugins
             }
@@ -622,7 +622,7 @@ try:
         evidence_hash = hashlib.sha256(sig_raw.encode("utf-8")).hexdigest()[:16].upper()
 
         if delta_votes >= 3 and implied_new_rating <= 1.35:
-            status = "CRITICAL 1-STAR RAID"
+            status = "CRITICAL LOW-RATING PATTERN"
             severity = "critical"
             badge_color = "rose"
             raided_plugins.append(name)
@@ -730,7 +730,7 @@ try:
     elif raided_count == 1:
         campaign_level = "ISOLATED_ANOMALOUS_TARGET"
         campaign_threat_score = 45
-        campaign_desc = f"Isolated single-plugin vote bombing on {raided_plugins[0]}."
+        campaign_desc = f"Isolated low-rating anomaly pattern on {raided_plugins[0]}."
     else:
         campaign_level = "NO_COORDINATED_THREAT"
         campaign_threat_score = 0
@@ -937,17 +937,11 @@ try:
         }
 
     # -------------------------------------------------------------------------
-    # Sequential Rating Stream Engine (Chronological n+1, n+2 ... Influx)
+    # Observed Rating Stream Engine.
+    # QGIS exposes aggregate rating/vote snapshots, not individual vote rows.
+    # The matrix below therefore records only observable baseline and interval
+    # batches; it does not invent per-user rating events.
     # -------------------------------------------------------------------------
-    def distribute_votes(n_votes, target_score):
-        if n_votes <= 0:
-            return []
-        target_sum = int(round(max(n_votes * 1.0, min(n_votes * 5.0, target_score))))
-        base = target_sum // n_votes
-        rem = target_sum % n_votes
-        res = [base + 1] * rem + [base] * (n_votes - rem)
-        return [max(1, min(5, x)) for x in res]
-
     def compute_plugin_rating_streams(history_snapshots):
         plugin_streams = {}
         if not history_snapshots:
@@ -956,77 +950,27 @@ try:
         base_snap = history_snapshots[0]
         base_plugins = base_snap.get("plugins", {})
         base_ts = base_snap.get("timestamp")
-        base_date_str = base_snap.get("date_str", "Baseline Aug 15, 2026")
-
-        KNOWN_BASELINE_AUDIT = {
-            "PlanX": {
-                "raid_count": 12,
-                "note": "Pre-Aug 15 Coordinated 1★ Raid Wave (Issue #416)"
-            },
-            "PlanX: Urban Resilience": {
-                "raid_count": 6,
-                "note": "Pre-Aug 15 Coordinated 1★ Raid Wave (Issue #416)"
-            },
-            "02-Multimap: Sync-up Multimaps": {
-                "raid_count": 8,
-                "note": "Pre-Aug 15 Coordinated 1★ Raid Wave (Issue #416)"
-            }
-        }
+        base_date_str = base_snap.get("date_str", "Baseline")
 
         for p_name, p_data in base_plugins.items():
             base_v = p_data.get("votes_count", 0)
             base_avg = p_data.get("average_vote", 0.0)
             base_score = p_data.get("total_score", base_v * base_avg)
+            plugin_streams[p_name] = []
 
-            votes_list = []
             if base_v > 0:
-                if p_name in KNOWN_BASELINE_AUDIT and base_v > KNOWN_BASELINE_AUDIT[p_name]["raid_count"]:
-                    audit_info = KNOWN_BASELINE_AUDIT[p_name]
-                    raid_k = audit_info["raid_count"]
-                    rem_v = base_v - raid_k
-                    rem_score = max(rem_v * 1.0, base_score - (raid_k * 1.0))
-                    organic_allocated = distribute_votes(rem_v, rem_score)
-
-                    # 1. Early Verified Organic Votes
-                    for v_idx, r_val in enumerate(organic_allocated, start=1):
-                        votes_list.append({
-                            "seq_num": v_idx,
-                            "rating": r_val,
-                            "date_str": "Early Aug 2026",
-                            "timestamp": base_ts,
-                            "is_baseline": True,
-                            "is_raid": False,
-                            "delta_batch": 0,
-                            "note": f"Early Organic Vote #{v_idx}"
-                        })
-
-                    # 2. Historical Pre-Aug 15 Raid Wave (Issue #416)
-                    for r_offset in range(raid_k):
-                        seq_n = len(votes_list) + 1
-                        votes_list.append({
-                            "seq_num": seq_n,
-                            "rating": 1,
-                            "date_str": "Aug 10-14, 2026 (Pre-Baseline)",
-                            "timestamp": base_ts,
-                            "is_baseline": True,
-                            "is_raid": True,
-                            "delta_batch": raid_k,
-                            "note": audit_info["note"]
-                        })
-                else:
-                    allocated = distribute_votes(base_v, base_score)
-                    for v_idx, r_val in enumerate(allocated, start=1):
-                        votes_list.append({
-                            "seq_num": v_idx,
-                            "rating": r_val,
-                            "date_str": base_date_str,
-                            "timestamp": base_ts,
-                            "is_baseline": True,
-                            "is_raid": False,
-                            "delta_batch": 0,
-                            "note": f"Baseline Organic Vote #{v_idx}"
-                        })
-            plugin_streams[p_name] = votes_list
+                plugin_streams[p_name].append({
+                    "seq_num": 1,
+                    "rating": round(base_avg, 3),
+                    "date_str": base_date_str,
+                    "timestamp": base_ts,
+                    "is_baseline": True,
+                    "is_raid_pattern": False,
+                    "delta_batch": base_v,
+                    "votes_observed": base_v,
+                    "score_delta": round(base_score, 4),
+                    "note": "Baseline aggregate from QGIS rating_votes and average_vote"
+                })
 
         for i in range(1, len(history_snapshots)):
             snap = history_snapshots[i]
@@ -1052,39 +996,39 @@ try:
 
                 if v_diff > 0:
                     avg_diff = s_diff / v_diff
-                    is_raid_batch = (v_diff >= 3 and avg_diff <= 1.35) or (v_diff >= 8 and avg_diff <= 1.5)
-                    batch_alloc = distribute_votes(v_diff, s_diff)
-
-                    start_seq = len(plugin_streams[p_name]) + 1
-                    for offset, r_val in enumerate(batch_alloc):
-                        seq = start_seq + offset
-                        plugin_streams[p_name].append({
-                            "seq_num": seq,
-                            "rating": r_val,
-                            "date_str": date_str,
-                            "timestamp": ts,
-                            "is_baseline": False,
-                            "is_raid": is_raid_batch,
-                            "delta_batch": v_diff,
-                            "note": f"Vote #{seq} ({'🚨 1-Star Raid Influx' if is_raid_batch else 'Organic Vote'})"
-                        })
+                    is_raid_pattern = (v_diff >= 3 and avg_diff <= 1.35) or (v_diff >= 8 and avg_diff <= 1.5)
+                    seq = len(plugin_streams[p_name]) + 1
+                    plugin_streams[p_name].append({
+                        "seq_num": seq,
+                        "rating": round(max(1.0, min(5.0, avg_diff)), 3),
+                        "date_str": date_str,
+                        "timestamp": ts,
+                        "is_baseline": False,
+                        "is_raid_pattern": is_raid_pattern,
+                        "delta_batch": v_diff,
+                        "votes_observed": v_diff,
+                        "score_delta": round(s_diff, 4),
+                        "note": "Observed low-rating pattern" if is_raid_pattern else "Observed aggregate rating influx"
+                    })
 
         summary_by_plugin = {}
         for p_name, stream in plugin_streams.items():
-            total_v = len(stream)
-            last_20 = stream[-20:] if total_v >= 20 else stream
+            total_records = len(stream)
+            total_votes_observed = sum(v.get("votes_observed", v.get("delta_batch", 0)) for v in stream)
+            last_20 = stream[-20:] if total_records >= 20 else stream
             row1 = last_20[:10] if len(last_20) > 10 else last_20
             row2 = last_20[10:] if len(last_20) > 10 else []
 
             summary_by_plugin[p_name] = {
-                "total_recorded_votes": total_v,
+                "total_recorded_votes": total_votes_observed,
+                "observed_record_count": total_records,
                 "stream": stream,
                 "last_20": last_20,
                 "row1": row1,
                 "row2": row2,
-                "raid_votes_count": sum(1 for v in stream if v.get("is_raid") or (v.get("rating") == 1 and not v.get("is_baseline"))),
-                "five_star_count": sum(1 for v in stream if v.get("rating") == 5),
-                "one_star_count": sum(1 for v in stream if v.get("rating") == 1)
+                "raid_pattern_count": sum(1 for v in stream if v.get("is_raid_pattern")),
+                "high_rating_record_count": sum(1 for v in stream if v.get("rating", 0) >= 4.5),
+                "low_rating_record_count": sum(1 for v in stream if v.get("rating", 0) <= 1.5)
             }
 
         return summary_by_plugin
@@ -1279,7 +1223,7 @@ try:
                     polys = coords
                 else:
                     return ""
-                
+
                 for poly in polys:
                     for ring in poly:
                         if not ring or len(ring) < 3:
@@ -1351,7 +1295,7 @@ try:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QGIS Plugin Portfolio Analytics & Governance Studio — Yusuf Eminoğlu</title>
-    
+
     <!-- Critical Zero-Flash Dark Mode Engine -->
     <style>
         html, body {
@@ -1376,7 +1320,7 @@ try:
             } catch (e) {}
         })();
     </script>
-    
+
     <!-- Comprehensive SEO Keywords & Metadata -->
     <meta name="description" content="Enterprise analytics, telemetry, growth forecasting, and rating abuse forensic surveillance studio for Yusuf Eminoğlu's ##TOTAL_PLUGINS## production QGIS plugins across urban analytics, spatial statistics, CAD, and 3D GIS.">
     <meta name="keywords" content="QGIS, QGIS Plugins, Yusuf Eminoğlu, PlanX, Urban Analytics, Spatial Statistics, Space Syntax, GIS, Remote Sensing, Urban Planning, Cartography, PyQGIS, GeoPackage, Three.js, OpenStreetMap, Rating Governance, Forensic Telemetry, Open Source GIS, Python GIS">
@@ -2066,7 +2010,7 @@ try:
                         </div>
                         <div>
                             <div class="flex items-center gap-2.5">
-                                <h2 class="text-lg font-bold tracking-tight font-heading">Rating Abuse & Vote Bombing Surveillance Center</h2>
+                                <h2 class="text-lg font-bold tracking-tight font-heading">Rating Anomaly & Pattern Surveillance Center</h2>
                                 <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30">ACTIVE SURVEILLANCE</span>
                             </div>
                             <p class="text-xs text-slate-300 mt-1 max-w-3xl leading-relaxed">
@@ -2169,20 +2113,20 @@ try:
                         <div>
                             <div class="flex items-center gap-2.5">
                                 <h2 class="text-lg font-bold tracking-tight font-heading text-white">Sequential Rating Forensics & 20-Star Influx Matrix</h2>
-                                <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">CHRONOLOGICAL $n+1, n+2 \\dots$ STREAM</span>
+                                <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">OBSERVED QGIS AGGREGATE SNAPSHOTS</span>
                             </div>
                             <p class="text-xs text-slate-300 mt-1 max-w-3xl leading-relaxed">
-                                Auditable transaction stream of every rating vote registered across all 27 plugins. Each plugin displays a 2-row dual-deck matrix containing the latest 20 rating events with color-coded star badges, numeric rating values (5★ Green to 1★ Red), and attack wave detection.
+                                Auditable stream of QGIS aggregate rating snapshots across all 27 plugins. Each plugin displays the latest 20 observed rating records with color-coded average-rating badges, vote-delta counts, and pattern-based low-rating detection.
                             </p>
                         </div>
                     </div>
                     <div class="flex flex-wrap gap-2 items-center">
                         <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-obsidian-950/80 border border-white/10 text-[11px] font-mono">
-                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> 5★</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-teal-500 inline-block"></span> 5 star</span>
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-cyan-500 inline-block ml-1"></span> 4★</span>
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block ml-1"></span> 3★</span>
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block ml-1"></span> 2★</span>
-                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block ml-1 animate-pulse"></span> 1★ Raid</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block ml-1"></span> 1 star low</span>
                         </div>
                     </div>
                 </div>
@@ -2193,10 +2137,10 @@ try:
                 <div class="flex flex-wrap items-center gap-2">
                     <button onclick="filterRatingStarsTab('all')" id="stars-filter-all" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-600 text-white">All Plugins (<span id="stars-count-all">0</span>)</button>
                     <button onclick="filterRatingStarsTab('raided')" id="stars-filter-raided" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5 flex items-center gap-1.5">
-                        <i class="fa-solid fa-shield-virus text-rose-400"></i> Raided Plugins Only (<span id="stars-count-raided">0</span>)
+                        <i class="fa-solid fa-shield-virus text-rose-400"></i> Pattern Flagged Only (<span id="stars-count-raided">0</span>)
                     </button>
                     <button onclick="filterRatingStarsTab('pure')" id="stars-filter-pure" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5 flex items-center gap-1.5">
-                        <i class="fa-solid fa-circle-check text-emerald-400"></i> 100% Organic Stream (<span id="stars-count-pure">0</span>)
+                        <i class="fa-solid fa-circle-check text-teal-400"></i> No Pattern Flagged (<span id="stars-count-pure">0</span>)
                     </button>
                 </div>
                 <div class="relative w-full sm:w-72">
@@ -3098,7 +3042,7 @@ try:
                             <span id="stream-modal-title">Plugin Rating Timeline</span>
                             <span id="stream-modal-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold"></span>
                         </h3>
-                        <p class="text-xs text-slate-400 font-mono">Sequential $n+1, n+2 \\dots$ audit log of every individual rating transaction</p>
+                        <p class="text-xs text-slate-400 font-mono">Observed QGIS aggregate snapshot log; individual voter rows are not exposed by QGIS.</p>
                     </div>
                 </div>
                 <button onclick="closeStreamModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-obsidian-800 transition-colors">
@@ -3113,15 +3057,15 @@ try:
                     <span id="stream-modal-total" class="font-extrabold text-white text-sm">0</span>
                 </div>
                 <div>
-                    <span class="text-[9px] text-slate-500 uppercase block">5★ Count</span>
-                    <span id="stream-modal-5stars" class="font-extrabold text-emerald-400 text-sm">0</span>
+                    <span class="text-[9px] text-slate-500 uppercase block">High Avg Records</span>
+                    <span id="stream-modal-5stars" class="font-extrabold text-teal-300 text-sm">0</span>
                 </div>
                 <div>
-                    <span class="text-[9px] text-slate-500 uppercase block">1★ Count</span>
+                    <span class="text-[9px] text-slate-500 uppercase block">Low Avg Records</span>
                     <span id="stream-modal-1stars" class="font-extrabold text-rose-400 text-sm">0</span>
                 </div>
                 <div>
-                    <span class="text-[9px] text-slate-500 uppercase block">Attack Votes Flagged</span>
+                    <span class="text-[9px] text-slate-500 uppercase block">Patterns Flagged</span>
                     <span id="stream-modal-raids" class="font-extrabold text-amber-400 text-sm">0</span>
                 </div>
             </div>
@@ -3243,18 +3187,18 @@ try:
         function animateValue(elementOrId, start, end, duration = 800, prefix = '', suffix = '') {
             const obj = (typeof elementOrId === 'string') ? document.getElementById(elementOrId) : elementOrId;
             if (!obj) return;
-            
+
             let startTimestamp = null;
             const isFloat = end % 1 !== 0;
-            
+
             const step = (timestamp) => {
                 if (!startTimestamp) startTimestamp = timestamp;
                 const progress = Math.min((timestamp - startTimestamp) / duration, 1);
                 const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
                 const currentVal = start + (end - start) * ease;
-                
+
                 obj.innerText = prefix + (isFloat ? currentVal.toFixed(1) : Math.round(currentVal).toLocaleString()) + suffix;
-                
+
                 if (progress < 1) {
                     window.requestAnimationFrame(step);
                 } else {
@@ -3273,7 +3217,7 @@ try:
 
             const btnText = document.getElementById('theme-toggle-text');
             if (btnText) btnText.innerText = newTheme === 'obsidian' ? 'Alabaster Mode' : 'Obsidian Mode';
-            
+
             initializeCharts();
             if (typeof renderChoroplethMap === 'function') renderChoroplethMap();
             showToast(`Switched to ${newTheme === 'obsidian' ? 'Obsidian Titanium' : 'Alabaster Platinum (Swiss Mode)'}!`);
@@ -3751,12 +3695,12 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             const auditKPIContainer = document.getElementById('audit-kpis');
             auditKPIContainer.innerHTML = `
                 <div class="p-6 rounded-3xl glass-panel relative overflow-hidden">
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">Critical 1-Star Raids</p>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">Critical Low-Rating Patterns</p>
                     <div class="flex items-baseline mt-2">
                         <span class="text-3xl font-extrabold font-mono ${crit > 0 ? 'text-rose-400' : 'text-emerald-400'}">${crit}</span>
                         <span class="text-xs text-slate-400 ml-2 font-mono">incidents</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-2">Consecutive 1-star vote bombing</p>
+                    <p class="text-[11px] text-slate-400 mt-2">Pattern-based low-rating anomaly detection</p>
                 </div>
 
                 <div class="p-6 rounded-3xl glass-panel relative overflow-hidden">
@@ -4104,9 +4048,8 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
 
             pluginsList.forEach(p => {
                 const streamInfo = streamsData[p.name] || {};
-                const raidCount = streamInfo.raid_votes_count || 0;
-                const oneStarCount = streamInfo.one_star_count || 0;
-                if (raidCount > 0 || oneStarCount >= 2) countRaided++;
+                const raidCount = streamInfo.raid_pattern_count || 0;
+                if (raidCount > 0) countRaided++;
                 else countPure++;
             });
 
@@ -4116,9 +4059,8 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
 
             let filtered = pluginsList.filter(p => {
                 const streamInfo = streamsData[p.name] || {};
-                const raidCount = streamInfo.raid_votes_count || 0;
-                const oneStarCount = streamInfo.one_star_count || 0;
-                const isRaided = (raidCount > 0 || oneStarCount >= 2);
+                const raidCount = streamInfo.raid_pattern_count || 0;
+                const isRaided = raidCount > 0;
 
                 if (currentRatingStarsFilter === 'raided' && !isRaided) return false;
                 if (currentRatingStarsFilter === 'pure' && isRaided) return false;
@@ -4137,56 +4079,58 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             }
 
             filtered.forEach(p => {
-                const streamInfo = streamsData[p.name] || { total_recorded_votes: p.votes_count, last_20: [], row1: [], row2: [] };
+                const streamInfo = streamsData[p.name] || { total_recorded_votes: p.votes_count, observed_record_count: 0, last_20: [], row1: [], row2: [] };
                 const last20 = streamInfo.last_20 || [];
                 const row1 = streamInfo.row1 || [];
                 const row2 = streamInfo.row2 || [];
-                const raidCount = streamInfo.raid_votes_count || 0;
-                const fiveCount = streamInfo.five_star_count || 0;
-                const oneCount = streamInfo.one_star_count || 0;
-                const isRaided = (raidCount > 0 || oneCount >= 2);
+                const raidCount = streamInfo.raid_pattern_count || 0;
+                const highCount = streamInfo.high_rating_record_count || 0;
+                const lowCount = streamInfo.low_rating_record_count || 0;
+                const isRaided = raidCount > 0;
 
                 const renderStarBadge = (vote, slotIndex, rowOffset) => {
                     if (!vote) {
                         return `
-                            <div class="h-10 rounded-xl bg-white/[0.02] border border-dashed border-white/10 flex flex-col items-center justify-center text-[10px] font-mono text-slate-600 select-none">
+                            <div class="h-12 rounded-xl bg-white/[0.02] border border-dashed border-white/10 flex flex-col items-center justify-center text-[10px] font-mono text-slate-600 select-none">
                                 <span>·</span>
                             </div>
                         `;
                     }
 
-                    const r = vote.rating;
+                    const r = Number(vote.rating || 0);
+                    const ratingLabel = r.toFixed(2);
+                    const batchVotes = vote.votes_observed || vote.delta_batch || 1;
                     let colorClass = "";
                     let pulseClass = "";
 
-                    if (r === 5) {
-                        colorClass = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm shadow-emerald-500/10 hover:bg-emerald-500/35 hover:scale-110";
-                    } else if (r === 4) {
+                    if (r >= 4.5) {
+                        colorClass = "bg-teal-500/25 text-teal-200 border border-teal-400/60 shadow-sm shadow-teal-500/20 hover:bg-teal-500/35 hover:scale-110";
+                    } else if (r >= 3.5) {
                         colorClass = "bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 shadow-sm shadow-cyan-500/10 hover:bg-cyan-500/35 hover:scale-110";
-                    } else if (r === 3) {
+                    } else if (r >= 2.5) {
                         colorClass = "bg-amber-500/20 text-amber-400 border border-amber-500/40 shadow-sm shadow-amber-500/10 hover:bg-amber-500/35 hover:scale-110";
-                    } else if (r === 2) {
+                    } else if (r >= 1.5) {
                         colorClass = "bg-orange-500/20 text-orange-400 border border-orange-500/40 shadow-sm shadow-orange-500/10 hover:bg-orange-500/35 hover:scale-110";
                     } else {
                         colorClass = "bg-rose-600/30 text-rose-300 border border-rose-500/60 shadow-md shadow-rose-500/30 ring-1 ring-rose-500/40 hover:bg-rose-600/50 hover:scale-110";
-                        if (vote.is_raid) pulseClass = "animate-pulse";
+                        if (vote.is_raid_pattern) pulseClass = "animate-pulse";
                     }
 
                     const globalSeq = vote.seq_num || (slotIndex + rowOffset + 1);
-                    const safeNote = (vote.note || `Vote #${globalSeq}`).replace(/"/g, '&quot;');
+                                        Record #${globalSeq} - avg ${ratingLabel}/5 across +${batchVotes} vote(s)
                     const safeDate = (vote.date_str || '').replace(/"/g, '&quot;');
 
                     return `
                         <div class="relative group/star flex items-center justify-center">
-                            <div class="w-full h-10 rounded-xl flex flex-col items-center justify-center font-bold font-mono transition-all duration-150 cursor-pointer select-none ${colorClass} ${pulseClass}">
-                                <i class="fa-solid fa-star text-[9px] -mb-0.5 opacity-90"></i>
-                                <span class="text-[12px] leading-none font-black">${r}</span>
+                            <div class="w-full h-12 rounded-xl flex flex-col items-center justify-center font-bold font-mono transition-all duration-150 cursor-pointer select-none ${colorClass} ${pulseClass}">
+                                <span class="text-[9px] leading-none font-black text-white/80 mb-0.5">+${batchVotes}</span>
+                                <span class="text-[15px] leading-none font-black tracking-normal text-white">${ratingLabel}</span>
                             </div>
                             <!-- Tooltip -->
                             <div class="absolute bottom-full mb-2.5 hidden group-hover/star:flex flex-col items-center z-40 pointer-events-none whitespace-nowrap">
                                 <div class="px-3 py-1.5 rounded-xl bg-obsidian-950/95 border border-white/20 text-[10px] font-mono text-white shadow-2xl backdrop-blur-md">
-                                    <div class="font-bold ${r === 1 ? 'text-rose-400' : (r === 5 ? 'text-emerald-400' : 'text-cyan-400')}">
-                                        Vote #${globalSeq} — ${r}★ Star
+                                    <div class="font-bold ${r <= 1.5 ? 'text-rose-400' : (r >= 4.5 ? 'text-teal-300' : 'text-cyan-400')}">
+                                        Record #${globalSeq} - avg ${ratingLabel}/5 across +${batchVotes} vote(s)
                                     </div>
                                     <div class="text-slate-400 text-[9px] mt-0.5">${safeDate}</div>
                                     <div class="text-[9px] text-slate-300 font-semibold mt-0.5">${safeNote}</div>
@@ -4210,8 +4154,8 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
                 const iconHtml = p.icon ? `<img src="${p.icon}" class="w-9 h-9 rounded-xl object-contain bg-obsidian-950 p-1.5 border border-white/10" alt="">` : `<div class="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-base font-bold border border-cyan-500/30"><i class="fa-solid fa-cube"></i></div>`;
 
                 let statusBadge = isRaided
-                    ? `<span class="px-2.5 py-1 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold font-mono pulse-live flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation"></i> Raid Wave Detected</span>`
-                    : `<span class="px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold font-mono flex items-center gap-1.5"><i class="fa-solid fa-shield-check"></i> Organic Stream</span>`;
+                    ? `<span class="px-2.5 py-1 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold font-mono pulse-live flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation"></i> Low-Rating Pattern</span>`
+                    : `<span class="px-2.5 py-1 rounded-xl bg-teal-500/20 text-teal-300 border border-teal-500/40 text-[10px] font-bold font-mono flex items-center gap-1.5"><i class="fa-solid fa-shield-check"></i> No Pattern</span>`;
 
                 const card = document.createElement('div');
                 card.className = `p-6 rounded-3xl ${isRaided ? 'glass-panel-danger' : 'glass-panel'} flex flex-col justify-between transition-all hover:border-amber-500/40`;
@@ -4244,12 +4188,12 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
                                 <span class="text-sm font-extrabold text-white">${p.votes_count}</span>
                             </div>
                             <div>
-                                <span class="text-[9px] text-slate-500 uppercase font-bold block">Recorded 5★</span>
-                                <span class="text-sm font-extrabold text-emerald-400">${fiveCount}</span>
+                                <span class="text-[9px] text-slate-500 uppercase font-bold block">High Avg Records</span>
+                                <span class="text-sm font-extrabold text-teal-300">${highCount}</span>
                             </div>
                             <div>
-                                <span class="text-[9px] text-slate-500 uppercase font-bold block">Recorded 1★</span>
-                                <span class="text-sm font-extrabold ${oneCount > 0 ? 'text-rose-400 font-black' : 'text-slate-500'}">${oneCount}</span>
+                                <span class="text-[9px] text-slate-500 uppercase font-bold block">Low Avg Records</span>
+                                <span class="text-sm font-extrabold ${lowCount > 0 ? 'text-rose-400 font-black' : 'text-slate-500'}">${lowCount}</span>
                             </div>
                         </div>
 
@@ -4257,10 +4201,10 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
                         <div class="mb-4">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-300">
-                                    <i class="fa-solid fa-clock-rotate-left mr-1 text-amber-400"></i> Latest 20 Sequential Rating Events (2 Rows)
+                                    <i class="fa-solid fa-clock-rotate-left mr-1 text-amber-400"></i> Latest 20 Observed Rating Records (2 Rows)
                                 </span>
                                 <span class="text-[10px] font-mono text-slate-400">
-                                    Last ${last20.length} of ${streamInfo.total_recorded_votes} votes
+                                    Last ${last20.length} of ${streamInfo.observed_record_count || last20.length} records; ${streamInfo.total_recorded_votes} observed votes
                                 </span>
                             </div>
 
@@ -4298,7 +4242,7 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
                         </span>
                         <div class="flex items-center gap-2">
                             <button onclick="openPluginStreamModal('${p.name.replace(/'/g, "\\'")}')" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-obsidian-800 hover:bg-obsidian-750 text-amber-400 hover:text-amber-300 border border-white/10 flex items-center gap-1.5 transition-all">
-                                <i class="fa-solid fa-list-ol"></i> Full Timeline ($n+1...$)
+                                <i class="fa-solid fa-list-ol"></i> Observed Timeline
                             </button>
                             ${isRaided ? `
                                 <button onclick="openEvidenceModal('${p.name.replace(/'/g, "\\'")}')" class="px-3.5 py-2 rounded-xl text-xs font-bold btn-danger text-white flex items-center gap-1.5">
@@ -4322,20 +4266,20 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             if (!streamInfo) return;
 
             document.getElementById('stream-modal-title').innerText = pluginName;
-            const isRaided = (streamInfo.raid_votes_count > 0 || streamInfo.one_star_count >= 2);
+            const isRaided = (streamInfo.raid_pattern_count > 0);
             const badgeEl = document.getElementById('stream-modal-badge');
             if (isRaided) {
                 badgeEl.className = "px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30";
-                badgeEl.innerText = "🚨 Raid Detected";
+                badgeEl.innerText = "Pattern Flagged";
             } else {
-                badgeEl.className = "px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
-                badgeEl.innerText = "🛡️ Organic";
+                badgeEl.className = "px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30";
+                badgeEl.innerText = "No Pattern";
             }
 
             document.getElementById('stream-modal-total').innerText = streamInfo.total_recorded_votes;
-            document.getElementById('stream-modal-5stars').innerText = streamInfo.five_star_count;
-            document.getElementById('stream-modal-1stars').innerText = streamInfo.one_star_count;
-            document.getElementById('stream-modal-raids').innerText = streamInfo.raid_votes_count;
+            document.getElementById('stream-modal-5stars').innerText = streamInfo.high_rating_record_count;
+            document.getElementById('stream-modal-1stars').innerText = streamInfo.low_rating_record_count;
+            document.getElementById('stream-modal-raids').innerText = streamInfo.raid_pattern_count;
 
             const tbody = document.getElementById('stream-modal-tbody');
             tbody.innerHTML = '';
@@ -4344,29 +4288,30 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             const reversed = [...stream].reverse();
 
             reversed.forEach(item => {
-                const r = item.rating;
+                const r = Number(item.rating || 0);
+                const ratingLabel = r.toFixed(2);
                 let starBadge = '';
-                if (r === 5) starBadge = `<span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold font-mono">★ 5.0</span>`;
-                else if (r === 4) starBadge = `<span class="px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 font-bold font-mono">★ 4.0</span>`;
-                else if (r === 3) starBadge = `<span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/40 font-bold font-mono">★ 3.0</span>`;
-                else if (r === 2) starBadge = `<span class="px-2 py-0.5 rounded-md bg-orange-500/20 text-orange-400 border border-orange-500/40 font-bold font-mono">★ 2.0</span>`;
-                else starBadge = `<span class="px-2 py-0.5 rounded-md bg-rose-600/30 text-rose-300 border border-rose-500/60 font-bold font-mono pulse-live">★ 1.0</span>`;
+                if (r >= 4.5) starBadge = `<span class="px-2 py-0.5 rounded-md bg-teal-500/20 text-teal-300 border border-teal-500/40 font-bold font-mono">${ratingLabel}/5</span>`;
+                else if (r >= 3.5) starBadge = `<span class="px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 font-bold font-mono">${ratingLabel}/5</span>`;
+                else if (r >= 2.5) starBadge = `<span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/40 font-bold font-mono">${ratingLabel}/5</span>`;
+                else if (r >= 1.5) starBadge = `<span class="px-2 py-0.5 rounded-md bg-orange-500/20 text-orange-400 border border-orange-500/40 font-bold font-mono">${ratingLabel}/5</span>`;
+                else starBadge = `<span class="px-2 py-0.5 rounded-md bg-rose-600/30 text-rose-300 border border-rose-500/60 font-bold font-mono ${item.is_raid_pattern ? 'pulse-live' : ''}">${ratingLabel}/5</span>`;
 
                 let auditTag = '';
-                if (item.is_raid) {
-                    auditTag = `<span class="text-rose-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Coordinated 1★ Raid</span>`;
+                if (item.is_raid_pattern) {
+                    auditTag = `<span class="text-rose-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Low-rating pattern</span>`;
                 } else if (item.is_baseline) {
-                    auditTag = `<span class="text-slate-500">Baseline Verified Vote</span>`;
-                } else if (r === 1) {
-                    auditTag = `<span class="text-rose-400">Isolated 1★ Vote</span>`;
+                    auditTag = `<span class="text-slate-500">QGIS baseline aggregate</span>`;
+                } else if (r <= 1.5) {
+                    auditTag = `<span class="text-rose-400">Isolated low rating; no pattern by itself</span>`;
                 } else {
-                    auditTag = `<span class="text-emerald-400">Organic ${r}★ Vote</span>`;
+                    auditTag = `<span class="text-teal-300">Observed rating influx</span>`;
                 }
 
                 const tr = document.createElement('tr');
-                tr.className = item.is_raid ? "bg-rose-950/20 hover:bg-rose-950/40" : "hover:bg-white/[0.02]";
+                tr.className = item.is_raid_pattern ? "bg-rose-950/20 hover:bg-rose-950/40" : "hover:bg-white/[0.02]";
                 tr.innerHTML = `
-                    <td class="py-2.5 px-3 font-bold ${item.is_raid ? 'text-rose-300' : 'text-slate-300'}">#${item.seq_num}</td>
+                    <td class="py-2.5 px-3 font-bold ${item.is_raid_pattern ? 'text-rose-300' : 'text-slate-300'}">#${item.seq_num}</td>
                     <td class="py-2.5 px-3 text-center">${starBadge}</td>
                     <td class="py-2.5 px-3 text-slate-400 text-[11px]">${item.date_str || item.timestamp || 'N/A'}</td>
                     <td class="py-2.5 px-3 text-slate-400">${item.delta_batch > 0 ? '+' + item.delta_batch + ' in batch' : '1 (single)'}</td>
@@ -4465,7 +4410,7 @@ EVIDENCE SIGNATURE: SHA256-${r.evidence_hash}
 \\`\\`\\`sql
 BEGIN;
 -- Invalidate illegitimate vote burst
-DELETE FROM plugins_rating 
+DELETE FROM plugins_rating
 WHERE plugin_id = (SELECT id FROM plugins_plugin WHERE name = '${r.name.replace(/'/g, "''")}')
   AND rating = 1
   AND created >= '${r.baseline_date}';
@@ -4882,10 +4827,10 @@ COMMIT;
                 `;
 
                 row.cells.forEach(cell => {
-                    const badgeClass = cell.location_quotient >= 1.15 
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
-                        : (cell.location_quotient <= 0.85 
-                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' 
+                    const badgeClass = cell.location_quotient >= 1.15
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                        : (cell.location_quotient <= 0.85
+                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
                             : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30');
 
                     cellsHtml += `
@@ -5145,7 +5090,7 @@ COMMIT;
             const dlCount = p.downloads >= 1000 ? (p.downloads / 1000).toFixed(1) + 'k' : p.downloads;
             const cleanName = encodeURIComponent(p.name);
             const hubUrl = `https://plugins.qgis.org/plugins/${p.package_name || p.name}/`;
-            
+
             const badgeDL = `https://img.shields.io/badge/${cleanName}-${dlCount}%20Downloads-0284c7?style=flat-square&logo=qgis`;
             const badgeRating = `https://img.shields.io/badge/Rating-${p.average_vote.toFixed(1)}%20★-amber?style=flat-square`;
             const badgeQgis = `https://img.shields.io/badge/QGIS%204-Ready-emerald?style=flat-square`;
@@ -5211,9 +5156,9 @@ COMMIT;
 
             if (currentTableQuery) {
                 const q = currentTableQuery.toLowerCase();
-                list = list.filter(p => 
-                    p.name.toLowerCase().includes(q) || 
-                    p.category.toLowerCase().includes(q) || 
+                list = list.filter(p =>
+                    p.name.toLowerCase().includes(q) ||
+                    p.category.toLowerCase().includes(q) ||
                     (p.package_name && p.package_name.toLowerCase().includes(q))
                 );
             }
@@ -5603,9 +5548,9 @@ echo "[✓] All plugins staged."
             const wilsonLower = Math.max(1.0, p.average_vote - 1.96 * Math.sqrt((p.average_vote * (5 - p.average_vote)) / Math.max(1, p.votes_count))).toFixed(2);
             const wilsonUpper = Math.min(5.0, p.average_vote + 1.96 * Math.sqrt((p.average_vote * (5 - p.average_vote)) / Math.max(1, p.votes_count))).toFixed(2);
 
-            let statusText = '<span class="status-pill status-pill-success"><span class="status-pill-dot"></span>Organic Baseline</span>';
+            let statusText = '<span class="status-pill status-pill-success"><span class="status-pill-dot"></span>No Pattern Baseline</span>';
             if (anomaly && anomaly.severity === 'critical') {
-                statusText = '<span class="status-pill status-pill-critical"><span class="status-pill-dot"></span>Critical Rating Raid Detected</span>';
+                statusText = '<span class="status-pill status-pill-critical"><span class="status-pill-dot"></span>Critical Low-Rating Pattern</span>';
             } else if (anomaly && anomaly.severity === 'high') {
                 statusText = '<span class="status-pill status-pill-warning"><span class="status-pill-dot"></span>Surveillance Watchlist</span>';
             }

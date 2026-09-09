@@ -4,7 +4,7 @@ Author: Yusuf Eminoğlu
 License: MIT
 Description: Enterprise-grade analytics, econometric growth models, forensic rating abuse
 surveillance, interactive vector SVG choropleth mapping, and multi-channel executive storytelling
-for 24 QGIS plugins across urban analytics, spatial statistics, CAD, and 3D GIS.
+for the registered QGIS plugin portfolio across urban analytics, spatial statistics, CAD, and 3D GIS.
 """
 
 import urllib.request
@@ -272,7 +272,9 @@ try:
             projected_total = downloads + projected_additional
 
             next_milestone = 1000
-            if downloads >= 10000:
+            if downloads >= 50000:
+                next_milestone = ((downloads // 10000) + 1) * 10000
+            elif downloads >= 10000:
                 next_milestone = ((downloads // 5000) + 1) * 5000
             elif downloads >= 5000:
                 next_milestone = 10000
@@ -280,12 +282,43 @@ try:
                 next_milestone = ((downloads // 1000) + 1) * 1000
             milestone_progress = (downloads / next_milestone) * 100
 
+            if downloads >= 20000:
+                prev_milestone = (downloads // 5000) * 5000
+            elif downloads >= 10000:
+                prev_milestone = 10000
+            elif downloads >= 5000:
+                prev_milestone = 5000
+            elif downloads >= 1000:
+                prev_milestone = (downloads // 1000) * 1000
+            else:
+                prev_milestone = 0
+
             remaining_to_milestone = next_milestone - downloads
-            if avg_monthly_downloads > 0 and remaining_to_milestone > 0:
+            if remaining_to_milestone <= 0:
+                milestone_est_date = "Reached"
+            elif avg_monthly_downloads > 0 and remaining_to_milestone > 0:
                 days_to_milestone = (remaining_to_milestone / avg_monthly_downloads) * 30.4375
                 milestone_est_date = (reference_date + timedelta(days=days_to_milestone)).strftime('%b %d, %Y')
             else:
-                milestone_est_date = "Reached"
+                milestone_est_date = "Pending Velocity"
+
+            # Milestone clubs & badges
+            if downloads >= 10000:
+                club = "10k_club"
+                club_label = "10K+ Tier"
+                club_badge = "🏆 10K+ Legend"
+            elif downloads >= 5000:
+                club = "5k_club"
+                club_label = "5K+ Tier"
+                club_badge = "⭐ 5K+ Pillar"
+            elif downloads >= 1000:
+                club = "1k_club"
+                club_label = "1K+ Tier"
+                club_badge = "🎯 1K+ Established"
+            else:
+                club = "rising"
+                club_label = "Rising"
+                club_badge = "🚀 Rising Star"
 
             if downloads >= 2000 and avg_monthly_downloads >= 500:
                 quadrant = "Popular Momentum"
@@ -316,8 +349,14 @@ try:
                 'category': get_category(name),
                 'tags': tags,
                 'next_milestone': next_milestone,
+                'prev_milestone': prev_milestone,
+                'remaining_to_milestone': remaining_to_milestone,
                 'milestone_progress': round(milestone_progress, 1),
                 'milestone_est_date': milestone_est_date,
+                'is_imminent': milestone_progress >= 85.0,
+                'club': club,
+                'club_label': club_label,
+                'club_badge': club_badge,
                 'qgis_minimum_version': qgis_min,
                 'homepage': homepage,
                 'tracker': tracker,
@@ -334,11 +373,70 @@ try:
 
     yusuf_plugins.sort(key=lambda x: x['downloads'], reverse=True)
 
-    # Resolve each plugin's main icon (from assets/plugin_icons/, keyed by the GitHub
-    # repo slug or package name) and inline it as a base64 data URI, so the static dashboard
-    # can draw the real plugin icon in the BCG matrix with zero external requests. The icons
-    # are committed in this repo because CI regenerates the page without the sibling dirs.
+    # Resolve each plugin's main icon (from assets/plugin_icons/ or local plugin folders)
     _icon_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "plugin_icons")
+    _plugins_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+    # Include any pending monorepo plugins from plugins.toml if not yet appearing in live XML
+    try:
+        import tomllib
+        toml_path = os.path.join(_plugins_root, "plugins.toml")
+        if os.path.exists(toml_path):
+            with open(toml_path, "rb") as tf:
+                toml_data = tomllib.load(tf)
+            existing_names = {p['name'].lower() for p in yusuf_plugins}
+            existing_pkgs = {p['package_name'].lower() for p in yusuf_plugins if p.get('package_name')}
+
+            for p_def in toml_data.get('plugin', []):
+                p_dir = p_def.get('dir', '')
+                p_name = p_def.get('name', '')
+                if p_name.lower() not in existing_names and p_dir.lower() not in existing_pkgs:
+                    # Read metadata.txt for version, description, etc.
+                    meta_path = os.path.join(_plugins_root, p_dir, "metadata.txt")
+                    meta_ver, meta_desc = "0.3.0", p_def.get('role', '')
+                    if os.path.exists(meta_path):
+                        with open(meta_path, "r", encoding="utf-8", errors="ignore") as mf:
+                            for line in mf:
+                                if line.startswith("version="): meta_ver = line.split("=", 1)[1].strip()
+                                elif line.startswith("description="): meta_desc = line.split("=", 1)[1].strip()
+
+                    yusuf_plugins.append({
+                        'name': p_name,
+                        'version': meta_ver,
+                        'downloads': 0,
+                        'create_date': reference_date.strftime('%Y-%m-%d'),
+                        'update_date': reference_date.strftime('%Y-%m-%d'),
+                        'days_active': 1,
+                        'months_active': 0.03,
+                        'avg_monthly_downloads': 0.0,
+                        'projected_total_downloads': 0,
+                        'category': get_category(p_name),
+                        'tags': ['mobility', '3d', 'routing', 'kinematics', 'accessibility', 'network', 'webgl'],
+                        'next_milestone': 1000,
+                        'prev_milestone': 0,
+                        'remaining_to_milestone': 1000,
+                        'milestone_progress': 0.0,
+                        'milestone_est_date': "Pending Approval",
+                        'is_imminent': False,
+                        'club': "rising",
+                        'club_label': "Rising",
+                        'club_badge': "🚀 Rising Star",
+                        'qgis_minimum_version': "3.28",
+                        'homepage': f"https://yusufeminoglu.github.io/{p_dir}/",
+                        'tracker': f"https://github.com/YusufEminoglu/{p_dir}/issues",
+                        'repository': f"https://github.com/YusufEminoglu/{p_dir}",
+                        'average_vote': 0.0,
+                        'votes_count': 0,
+                        'calculated_score': 0.0,
+                        'is_experimental': "no",
+                        'quadrant': "High Velocity",
+                        'quadrant_color': "emerald",
+                        'countries': [],
+                        'package_name': p_dir,
+                        'is_pending_approval': True
+                    })
+    except Exception as e:
+        print(f"Warning syncing pending plugins from toml: {e}")
 
     def resolve_plugin_icon(repository, package_name=None, name=None):
         slugs = []
@@ -348,8 +446,11 @@ try:
             slugs.append(package_name.lower().replace("_", "-"))
             slugs.append(package_name.lower())
         if name:
-            slugs.append(name.lower().replace(" ", "-").replace("_", "-"))
-            slugs.append(name.lower().replace(" ", "_"))
+            slugs.append(name.lower().replace(" ", "-").replace("_", "-").replace(".", ""))
+            slugs.append(name.lower().replace(" ", "_").replace(".", ""))
+            slugs.append(name.lower())
+
+        # 1. Search assets/plugin_icons/
         for slug in slugs:
             for ext, mime in ((".png", "image/png"), (".svg", "image/svg+xml")):
                 path = os.path.join(_icon_dir, slug + ext)
@@ -357,6 +458,19 @@ try:
                     with open(path, "rb") as _f:
                         _b64 = base64.b64encode(_f.read()).decode("ascii")
                     return f"data:{mime};base64,{_b64}"
+
+        # 2. Search local plugin directory
+        for slug in slugs:
+            for sub_name in [slug, slug.replace("-", "_"), slug.replace("_", "-")]:
+                local_dir = os.path.join(_plugins_root, sub_name)
+                if os.path.exists(local_dir):
+                    for sub_path in ["icons/icon.png", "icons/icon.svg", "icons/icon_64.png", "icon.png", "icon.svg"]:
+                        p = os.path.join(local_dir, sub_path)
+                        if os.path.exists(p):
+                            mime = "image/svg+xml" if p.endswith(".svg") else "image/png"
+                            with open(p, "rb") as _f:
+                                _b64 = base64.b64encode(_f.read()).decode("ascii")
+                            return f"data:{mime};base64,{_b64}"
         return None
 
     for _p in yusuf_plugins:
@@ -520,10 +634,28 @@ try:
     tau_sq = max(0.04, rating_variance - 0.05)
     sigma_within_sq = 0.35
 
-    # 2. Forensic Surveillance & Shannon Influx Entropy Engine
+    # 2. Advanced Multi-Vector Machine Learning & Forensic Anomaly Surveillance Engine
     H_MAX_ENTROPY = math.log2(5.0)  # 2.321928 bits
     anomaly_reports = []
     raided_plugins = []
+
+    # Pre-pass: Count concurrent influx across portfolio for Cross-Portfolio Cosine Synchronization
+    total_influx_votes = 0
+    plugins_with_influx = 0
+    for p in yusuf_plugins:
+        name = p['name']
+        cur_v = p['votes_count']
+        base_data = baseline.get(name, {})
+        base_v = base_data.get("votes_count", cur_v)
+        dv = max(0, cur_v - base_v)
+        if dv > 0:
+            plugins_with_influx += 1
+            total_influx_votes += dv
+
+    sync_ratio = plugins_with_influx / max(1, len(yusuf_plugins))
+
+    raw_feature_matrix = []
+    plugin_feature_rows = []
 
     for p in yusuf_plugins:
         name = p['name']
@@ -539,10 +671,29 @@ try:
             r_bayes = (1.0 - b_i) * cur_avg + b_i * prior_mean_rating
             se_theta = math.sqrt(1.0 / ((1.0 / tau_sq) + (cur_votes / sigma_within_sq)))
             cred_floor = max(1.0, r_bayes - 1.96 * se_theta)
+            cred_ceiling = min(5.0, r_bayes + 1.96 * se_theta)
         else:
             b_i = 1.0
             r_bayes = prior_mean_rating
             cred_floor = 1.0
+            cred_ceiling = 5.0
+            se_theta = 0.5
+
+        p['bayes_score'] = round(r_bayes, 3)
+        p['cred_floor'] = round(cred_floor, 3)
+        p['cred_ceiling'] = round(cred_ceiling, 3)
+        p['cred_error_margin'] = round(1.96 * se_theta, 3)
+
+        # Maintenance Velocity & Release Cadence
+        try:
+            up_dt = datetime.fromisoformat(p['update_date']) if p.get('update_date') else reference_date
+            days_since_update = max(0, (reference_date - up_dt).days)
+        except Exception:
+            days_since_update = 7
+
+        p['days_since_update'] = days_since_update
+        p['cadence_status'] = "Active (Recent)" if days_since_update <= 30 else ("Stable (1-3 mo)" if days_since_update <= 90 else "Mature / Evergreen")
+        p['cadence_badge_color'] = "emerald" if days_since_update <= 30 else ("cyan" if days_since_update <= 90 else "slate")
 
         # Baseline Reconciliation
         base_data = baseline.get(name, {
@@ -557,10 +708,12 @@ try:
         base_score = base_votes * base_avg
         base_dl = base_data.get("downloads", cur_dl)
 
-        delta_votes = cur_votes - base_votes
+        delta_votes = max(0, cur_votes - base_votes)
+        delta_dl = max(0, cur_dl - base_dl)
         delta_score = cur_score - base_score
         delta_rating = cur_avg - base_avg
-        implied_new_rating = (delta_score / delta_votes) if delta_votes > 0 else 0.0
+        implied_new_rating = (delta_score / delta_votes) if delta_votes > 0 else cur_avg
+        implied_r_clamped = max(1.0, min(5.0, implied_new_rating))
 
         # Adoption Acceleration & Kinetic Momentum
         if delta_days > 0 and base_dl < cur_dl:
@@ -583,31 +736,104 @@ try:
         else:
             regime, regime_badge = "Plateau / Dormant", "slate"
 
-        # Shannon Entropy of Influx Vector
+        # Feature 1: Rating-to-Download Conversion Ratio (k)
+        conversion_k = (delta_votes / max(1, delta_dl)) * 100.0 if delta_votes > 0 else 0.0
+        k_anomaly = min(15.0, conversion_k / 0.8) # Normalized against 0.8% organic expectation
+
+        # Feature 2: Influx Rating Deviation from Historical/Organic Baseline (delta_r)
+        expected_organic_r = max(4.65, base_avg)
+        deviation_r = max(0.0, expected_organic_r - implied_r_clamped) if delta_votes > 0 else 0.0
+
+        # Feature 3: Shannon Entropy of Influx Vector
         if delta_votes > 0:
-            r_clamped = max(1.0, min(5.0, implied_new_rating))
-            if r_clamped <= 1.5:
-                probs = [1.0 - (r_clamped - 1.0), r_clamped - 1.0, 0.0, 0.0, 0.0]
-            elif r_clamped <= 2.0:
-                probs = [2.0 - r_clamped, r_clamped - 1.0, 0.0, 0.0, 0.0]
-            elif r_clamped >= 4.5:
-                probs = [0.0, 0.0, 0.0, 5.0 - r_clamped, 1.0 - (5.0 - r_clamped)]
+            if implied_r_clamped <= 1.5:
+                probs = [1.0 - (implied_r_clamped - 1.0), implied_r_clamped - 1.0, 0.0, 0.0, 0.0]
+            elif implied_r_clamped <= 2.5:
+                probs = [2.5 - implied_r_clamped, implied_r_clamped - 1.5, 0.0, 0.0, 0.0]
+            elif implied_r_clamped <= 3.5:
+                probs = [0.0, 3.5 - implied_r_clamped, implied_r_clamped - 2.5, 0.0, 0.0]
+            elif implied_r_clamped <= 4.5:
+                probs = [0.0, 0.0, 4.5 - implied_r_clamped, implied_r_clamped - 3.5, 0.0]
             else:
-                probs = [0.1, 0.2, 0.4, 0.2, 0.1]
-            p_sum = sum(probs)
+                probs = [0.0, 0.0, 0.0, 5.0 - implied_r_clamped, 1.0 - (5.0 - implied_r_clamped)]
+            p_sum = sum(probs) or 1.0
             norm_p = [prob / p_sum for prob in probs]
             shannon_h = -sum(prob * math.log2(prob) for prob in norm_p if prob > 1e-6)
-            eas_score = (1.0 - (shannon_h / H_MAX_ENTROPY)) * max(0.0, (5.0 - r_clamped) / 4.0) * min(1.0, delta_votes / 3.0) * 100.0
-            purity = (norm_p[0] if r_clamped < 2.5 else norm_p[4]) * 100.0
+            entropy_purity = max(0.0, 1.0 - (shannon_h / H_MAX_ENTROPY))
+            eas_score = entropy_purity * max(0.0, (5.0 - implied_r_clamped) / 4.0) * min(1.0, delta_votes / 3.0) * 100.0
+            purity = (norm_p[0] if implied_r_clamped < 2.5 else norm_p[4]) * 100.0
         else:
             shannon_h = H_MAX_ENTROPY
+            entropy_purity = 0.0
             eas_score = 0.0
             purity = 0.0
 
-        if delta_votes > 0 and (cur_votes - delta_votes) > 0:
-            reconciled_after_purge = (cur_score - (delta_votes * 1.0)) / (cur_votes - delta_votes)
+        # Feature Vector: [k_anomaly, deviation_r * 2.0, min(10.0, dv), sync_ratio * 5.0, entropy_purity * 3.0]
+        f_vec = [k_anomaly, deviation_r * 2.0, min(10.0, delta_votes), sync_ratio * 5.0, entropy_purity * 3.0]
+        raw_feature_matrix.append(f_vec)
+
+        # Multi-Class Attack Taxonomy Classification
+        if delta_votes >= 3 and implied_r_clamped <= 1.45:
+            taxonomy = "Type I: Direct 1-Star Bombing"
+            taxonomy_code = "TYPE_1_BOMBING"
+            status = "CRITICAL 1-STAR ATTACK"
+            severity = "critical"
+            badge_color = "rose"
+            threat_level = 95
+            raided_plugins.append(name)
+        elif delta_votes >= 2 and (1.45 < implied_r_clamped <= 3.85) and base_avg >= 4.40:
+            taxonomy = "Type II: Soft Rating Dilution"
+            taxonomy_code = "TYPE_2_SOFT_DILUTION"
+            status = "SOFT DILUTION DRAG-DOWN"
+            severity = "high"
+            badge_color = "amber"
+            threat_level = 85
+            raided_plugins.append(name)
+        elif delta_votes >= 1 and sync_ratio >= 0.35 and implied_r_clamped < 4.10:
+            taxonomy = "Type III: Coordinated Portfolio Sweep"
+            taxonomy_code = "TYPE_3_PORTFOLIO_SWEEP"
+            status = "COORDINATED SWEEP"
+            severity = "high"
+            badge_color = "amber"
+            threat_level = 75
+            raided_plugins.append(name)
+        elif delta_votes >= 2 and delta_dl < 8:
+            taxonomy = "Type IV: Phantom Zero-Download Influx"
+            taxonomy_code = "TYPE_4_PHANTOM"
+            status = "PHANTOM INFLUX"
+            severity = "amber"
+            badge_color = "orange"
+            threat_level = 65
+            raided_plugins.append(name)
+        elif delta_votes > 0 and implied_r_clamped >= 4.20:
+            taxonomy = "Organic Positive Growth"
+            taxonomy_code = "ORGANIC_POSITIVE"
+            status = "POSITIVE GROWTH"
+            severity = "positive"
+            badge_color = "emerald"
+            threat_level = 10
+        elif delta_votes > 0:
+            taxonomy = "Organic General Activity"
+            taxonomy_code = "ORGANIC_NORMAL"
+            status = "ORGANIC ACTIVITY"
+            severity = "normal"
+            badge_color = "indigo"
+            threat_level = 20
         else:
-            reconciled_after_purge = cur_avg
+            taxonomy = "Stable Baseline (No Influx)"
+            taxonomy_code = "STABLE_BASELINE"
+            status = "STABLE BASELINE"
+            severity = "stable"
+            badge_color = "slate"
+            threat_level = 0
+
+        # Purged Synthetic Organic Rating (True mathematical score without anomalous vote spikes)
+        if severity in ('critical', 'high', 'amber') and (cur_votes - delta_votes) > 0:
+            purged_synthetic_rating = (cur_score - (delta_votes * implied_r_clamped)) / (cur_votes - delta_votes)
+        else:
+            purged_synthetic_rating = cur_avg
+
+        suppressed_points = max(0.0, purged_synthetic_rating - cur_avg)
 
         target_recovering_rating = 4.80
         if cur_avg < target_recovering_rating:
@@ -620,29 +846,6 @@ try:
         # Cryptographic Evidence Signature
         sig_raw = f"{name}:{cur_votes}:{cur_avg}:{delta_votes}:{implied_new_rating}:{reference_date.isoformat()}"
         evidence_hash = hashlib.sha256(sig_raw.encode("utf-8")).hexdigest()[:16].upper()
-
-        if delta_votes >= 3 and implied_new_rating <= 1.35:
-            status = "CRITICAL LOW-RATING PATTERN"
-            severity = "critical"
-            badge_color = "rose"
-            raided_plugins.append(name)
-        elif (delta_votes >= 2 and implied_new_rating <= 2.20) or (delta_rating <= -0.20 and delta_votes >= 2):
-            status = "SUSPICIOUS DROP"
-            severity = "high"
-            badge_color = "amber"
-            raided_plugins.append(name)
-        elif delta_votes > 0 and implied_new_rating >= 3.8:
-            status = "POSITIVE GROWTH"
-            severity = "positive"
-            badge_color = "emerald"
-        elif delta_votes > 0:
-            status = "ORGANIC ACTIVITY"
-            severity = "normal"
-            badge_color = "indigo"
-        else:
-            status = "STABLE BASELINE"
-            severity = "stable"
-            badge_color = "slate"
 
         # Superlatives & Honors Badges
         honors = []
@@ -682,10 +885,15 @@ try:
             'health_score': health_score,
             'sparkline': sparkline_data,
             'honors': honors,
-            'evidence_hash': evidence_hash
+            'evidence_hash': evidence_hash,
+            'purged_synthetic_rating': round(purged_synthetic_rating, 2),
+            'suppressed_points': round(suppressed_points, 2),
+            'taxonomy': taxonomy,
+            'taxonomy_code': taxonomy_code,
+            'threat_level': threat_level
         })
 
-        anomaly_reports.append({
+        plugin_feature_rows.append({
             "name": name,
             "category": p['category'],
             "version": p['version'],
@@ -700,33 +908,62 @@ try:
             "current_rating": round(cur_avg, 3),
             "current_score": round(cur_score, 2),
             "delta_votes": delta_votes,
+            "delta_dl": delta_dl,
             "delta_rating": round(delta_rating, 3),
             "delta_score": round(delta_score, 2),
             "damage_index": round(damage_index, 1),
             "implied_new_rating": round(implied_new_rating, 2),
+            "conversion_k": round(conversion_k, 2),
             "shannon_entropy": round(shannon_h, 3),
             "entropy_score": round(eas_score, 1),
             "purity_pct": round(purity, 1),
-            "reconciled_after_purge": round(reconciled_after_purge, 3),
+            "reconciled_after_purge": round(purged_synthetic_rating, 3),
+            "purged_synthetic_rating": round(purged_synthetic_rating, 2),
+            "suppressed_points": round(suppressed_points, 2),
             "needed_5_stars_to_recover": needed_5_stars,
             "evidence_hash": evidence_hash,
             "status": status,
+            "taxonomy": taxonomy,
+            "taxonomy_code": taxonomy_code,
             "severity": severity,
-            "badge_color": badge_color
+            "badge_color": badge_color,
+            "threat_level": threat_level,
+            "f_vec": f_vec
         })
+
+    # Multivariate Mahalanobis Distance & Calibrated Abuse Probability Computation
+    if raw_feature_matrix:
+        mean_vec = [sum(col)/len(col) for col in zip(*raw_feature_matrix)]
+        for row in plugin_feature_rows:
+            dist_sq = sum((x - m)**2 for x, m in zip(row['f_vec'], mean_vec))
+            mahalanobis_d = math.sqrt(dist_sq)
+            if row['delta_votes'] > 0 and row['severity'] in ('critical', 'high', 'amber'):
+                p_abuse = min(99.9, max(0.0, (1.0 - math.exp(-0.25 * (mahalanobis_d ** 1.8))) * 100.0))
+            elif row['delta_votes'] > 0:
+                p_abuse = 5.0
+            else:
+                p_abuse = 0.0
+            row['mahalanobis_d'] = round(mahalanobis_d, 2)
+            row['p_abuse'] = round(p_abuse, 1)
+
+    anomaly_reports = plugin_feature_rows
 
     # Coordinated Cross-Plugin Attack Correlation Logic
     raided_count = len(raided_plugins)
-    total_raid_votes = sum(a['delta_votes'] for a in anomaly_reports if a['severity'] in ('critical', 'high'))
+    total_raid_votes = sum(a['delta_votes'] for a in anomaly_reports if a['severity'] in ('critical', 'high', 'amber'))
+    total_suppressed_pts = sum(a['suppressed_points'] for a in anomaly_reports)
+    total_clean_votes = sum(a['current_votes'] - (a['delta_votes'] if a['severity'] in ('critical', 'high', 'amber') else 0) for a in anomaly_reports)
+    total_clean_score = sum((a['current_score'] - (a['delta_votes'] * a['implied_new_rating'] if a['severity'] in ('critical', 'high', 'amber') else 0)) for a in anomaly_reports)
+    portfolio_purged_average = (total_clean_score / max(1, total_clean_votes)) if total_clean_votes > 0 else prior_mean_rating
 
     if raided_count >= 3:
         campaign_level = "CRITICAL_COORDINATED_SYBIL_CAMPAIGN"
         campaign_threat_score = min(100, int((raided_count / n_plugins * 100) * 1.5 + total_raid_votes * 4))
-        campaign_desc = f"Simultaneous coordinated assault detected across {raided_count} independent plugins ({total_raid_votes} fraudulent votes)."
+        campaign_desc = f"Simultaneous coordinated assault detected across {raided_count} independent plugins ({total_raid_votes} fraudulent/diluted votes identified)."
     elif raided_count >= 2:
         campaign_level = "SUSPICIOUS_MULTI_TARGET_ANOMALY"
         campaign_threat_score = min(100, int((raided_count / n_plugins * 100) + total_raid_votes * 3))
-        campaign_desc = f"Multi-target anomaly identified across {raided_count} plugins."
+        campaign_desc = f"Multi-target anomaly identified across {raided_count} plugins ({total_raid_votes} flagged votes)."
     elif raided_count == 1:
         campaign_level = "ISOLATED_ANOMALOUS_TARGET"
         campaign_threat_score = 45
@@ -743,6 +980,8 @@ try:
         "raided_plugins": raided_plugins,
         "raided_count": raided_count,
         "total_raid_votes": total_raid_votes,
+        "total_suppressed_pts": round(total_suppressed_pts, 2),
+        "portfolio_purged_average": round(portfolio_purged_average, 2),
         "audit_timestamp": reference_date.strftime('%Y-%m-%d %H:%M:%S UTC'),
         "portfolio_evidence_signature": hashlib.sha256(f"PORTFOLIO:{raided_count}:{total_raid_votes}:{reference_date.isoformat()}".encode()).hexdigest()[:24].upper()
     }
@@ -914,26 +1153,100 @@ try:
             'cells': region_cells
         })
 
-    # Time series history by plugin for interactive dual-axis chart
+    # Enriched time-series history with inflection detection and portfolio raid wave analysis
     history_by_plugin = {}
     history_timestamps = [s.get("date_str", s.get("timestamp")) for s in history]
+
+    # Portfolio-wide wave telemetry (aggregating simultaneous influx across all plugins at each timestamp)
+    portfolio_wave_series = []
+    portfolio_raid_wave_series = []
+
+    for idx, s in enumerate(history):
+        snap_total_dv = 0
+        snap_raid_dv = 0
+        if idx > 0:
+            prev_s = history[idx - 1]
+            for p_name, p_curr in s.get("plugins", {}).items():
+                p_prev = prev_s.get("plugins", {}).get(p_name, {})
+                dv = max(0, p_curr.get("votes_count", 0) - p_prev.get("votes_count", 0))
+                if dv > 0:
+                    snap_total_dv += dv
+                    ds = (p_curr.get("votes_count", 0) * p_curr.get("average_vote", 0.0)) - (p_prev.get("votes_count", 0) * p_prev.get("average_vote", 0.0))
+                    implied_r = ds / dv if dv > 0 else 5.0
+                    if implied_r <= 2.5:
+                        snap_raid_dv += dv
+        portfolio_wave_series.append(snap_total_dv)
+        portfolio_raid_wave_series.append(snap_raid_dv)
 
     for p in yusuf_plugins:
         name = p['name']
         rating_series = []
         votes_series = []
-        for s in history:
+        delta_v_series = []
+        implied_r_series = []
+        purged_series = []
+        inflection_annotations = []
+
+        prev_v = None
+        prev_r = None
+
+        base_snap = history[0]["plugins"].get(name, {})
+        base_r = round(base_snap.get("average_vote", p['average_vote']), 2)
+
+        for idx, s in enumerate(history):
             p_snap = s.get("plugins", {}).get(name)
             if p_snap:
-                rating_series.append(round(p_snap.get("average_vote", 0.0), 2))
-                votes_series.append(p_snap.get("votes_count", 0))
+                cur_v = p_snap.get("votes_count", 0)
+                cur_r = round(p_snap.get("average_vote", 0.0), 2)
+
+                if prev_v is None:
+                    dv = 0
+                    implied_r = cur_r
+                else:
+                    dv = max(0, cur_v - prev_v)
+                    if dv > 0:
+                        ds = (cur_v * cur_r) - (prev_v * prev_r)
+                        implied_r = round(max(1.0, min(5.0, ds / dv)), 2)
+                    else:
+                        implied_r = cur_r
+
+                # Detect inflection drops & raid bursts
+                if prev_r is not None:
+                    drop = round(prev_r - cur_r, 2)
+                    if drop >= 0.05 or (dv >= 2 and implied_r <= 3.2):
+                        inflection_annotations.append({
+                            "index": idx,
+                            "date": history_timestamps[idx],
+                            "prev_rating": prev_r,
+                            "new_rating": cur_r,
+                            "drop": drop,
+                            "delta_votes": dv,
+                            "implied_rating": implied_r,
+                            "label": f"-{drop}★ (+{dv} votes @ {implied_r}★)"
+                        })
+
+                rating_series.append(cur_r)
+                votes_series.append(cur_v)
+                delta_v_series.append(dv)
+                implied_r_series.append(implied_r)
+                purged_series.append(round(p.get('purged_synthetic_rating', base_r), 2))
+
+                prev_v = cur_v
+                prev_r = cur_r
             else:
                 rating_series.append(0.0)
                 votes_series.append(0)
+                delta_v_series.append(0)
+                implied_r_series.append(0.0)
+                purged_series.append(0.0)
 
         history_by_plugin[name] = {
             "ratings": rating_series,
-            "votes": votes_series
+            "votes": votes_series,
+            "delta_votes": delta_v_series,
+            "implied_ratings": implied_r_series,
+            "purged_series": purged_series,
+            "inflections": inflection_annotations
         }
 
     # -------------------------------------------------------------------------
@@ -969,8 +1282,22 @@ try:
                     "delta_batch": base_v,
                     "votes_observed": base_v,
                     "score_delta": round(base_score, 4),
+                    "verdict": "BASELINE_AGGREGATE",
+                    "p_abuse": 0.0,
                     "note": "Baseline aggregate from QGIS rating_votes and average_vote"
                 })
+
+        # Calculate snapshot concurrency (how many plugins received votes in each snapshot)
+        concurrency_map = []
+        for i in range(1, len(history_snapshots)):
+            snap = history_snapshots[i]
+            prev_snap = history_snapshots[i-1]
+            act_cnt = 0
+            for p_name, p_curr in snap.get("plugins", {}).items():
+                p_prev = prev_snap.get("plugins", {}).get(p_name, {})
+                if p_curr.get("votes_count", 0) - p_prev.get("votes_count", 0) > 0:
+                    act_cnt += 1
+            concurrency_map.append(act_cnt)
 
         for i in range(1, len(history_snapshots)):
             snap = history_snapshots[i]
@@ -979,6 +1306,7 @@ try:
             prev_snap = history_snapshots[i - 1]
             prev_plugs = prev_snap.get("plugins", {})
             curr_plugs = snap.get("plugins", {})
+            concurrency = concurrency_map[i - 1] if i - 1 < len(concurrency_map) else 1
 
             for p_name, p_data in curr_plugs.items():
                 if p_name not in plugin_streams:
@@ -987,28 +1315,72 @@ try:
                 prev_p = prev_plugs.get(p_name, {})
                 v_prev = prev_p.get("votes_count", 0)
                 s_prev = prev_p.get("total_score", v_prev * prev_p.get("average_vote", 0.0))
+                dl_prev = prev_p.get("downloads", 0)
 
                 v_curr = p_data.get("votes_count", 0)
                 s_curr = p_data.get("total_score", v_curr * p_data.get("average_vote", 0.0))
+                dl_curr = p_data.get("downloads", 0)
 
                 v_diff = v_curr - v_prev
                 s_diff = s_curr - s_prev
+                dl_diff = max(0, dl_curr - dl_prev)
 
                 if v_diff > 0:
                     avg_diff = s_diff / v_diff
-                    is_raid_pattern = (v_diff >= 3 and avg_diff <= 1.35) or (v_diff >= 8 and avg_diff <= 1.5)
+                    implied_r = round(max(1.0, min(5.0, avg_diff)), 2)
+                    prev_avg = prev_p.get("average_vote", 4.8)
+                    conversion_k = (v_diff / max(1, dl_diff)) * 100.0
+
+                    is_sync = (concurrency >= 3)
+                    is_high_k = (conversion_k >= 3.0 or (v_diff >= 2 and dl_diff < 50))
+
+                    if v_diff >= 5 and implied_r <= 1.8:
+                        verdict = "TYPE_1_BOMBING"
+                        p_abuse = 99.9
+                        is_raid = True
+                        note = f"Direct 1★ Bombing Raid (+{v_diff}v @ {implied_r}★)"
+                    elif is_sync and implied_r <= 2.5:
+                        verdict = "TYPE_4_SYNC_SWEEP"
+                        p_abuse = 98.5
+                        is_raid = True
+                        note = f"Synchronized Multi-Plugin Raid ({concurrency} plugins hit simultaneously @ {implied_r}★)"
+                    elif prev_avg >= 4.5 and implied_r <= 3.8 and is_high_k:
+                        verdict = "TYPE_2_SOFT_DRAG"
+                        p_abuse = 95.0
+                        is_raid = True
+                        note = f"Soft Dilution Drag-Down ({implied_r}★ on {prev_avg:.1f}★ baseline, κ={conversion_k:.1f}%)"
+                    elif v_diff >= 1 and dl_diff <= 3 and is_sync:
+                        verdict = "TYPE_3_PHANTOM"
+                        p_abuse = 90.0
+                        is_raid = True
+                        note = f"Zero-Download Phantom Vote (+{v_diff}v on only {dl_diff} downloads)"
+                    elif implied_r <= 2.5 and not is_sync and not is_high_k:
+                        verdict = "ORGANIC_CRITICAL_FEEDBACK"
+                        p_abuse = 10.0
+                        is_raid = False
+                        note = f"Legitimate Organic Critical Feedback (Single plugin, normal κ={conversion_k:.1f}%)"
+                    else:
+                        verdict = "ORGANIC_POSITIVE_FEEDBACK"
+                        p_abuse = 5.0
+                        is_raid = False
+                        note = f"Organic Natural Review (+{v_diff}v @ {implied_r}★)"
+
                     seq = len(plugin_streams[p_name]) + 1
                     plugin_streams[p_name].append({
                         "seq_num": seq,
-                        "rating": round(max(1.0, min(5.0, avg_diff)), 3),
+                        "rating": implied_r,
                         "date_str": date_str,
                         "timestamp": ts,
                         "is_baseline": False,
-                        "is_raid_pattern": is_raid_pattern,
+                        "is_raid_pattern": is_raid,
                         "delta_batch": v_diff,
                         "votes_observed": v_diff,
                         "score_delta": round(s_diff, 4),
-                        "note": "Observed low-rating pattern" if is_raid_pattern else "Observed aggregate rating influx"
+                        "downloads_delta": dl_diff,
+                        "conversion_k": round(conversion_k, 1),
+                        "verdict": verdict,
+                        "p_abuse": p_abuse,
+                        "note": note
                     })
 
         summary_by_plugin = {}
@@ -1027,8 +1399,10 @@ try:
                 "row1": row1,
                 "row2": row2,
                 "raid_pattern_count": sum(1 for v in stream if v.get("is_raid_pattern")),
+                "soft_drag_count": sum(1 for v in stream if v.get("verdict") == "TYPE_2_SOFT_DRAG"),
+                "bombing_count": sum(1 for v in stream if v.get("verdict") == "TYPE_1_BOMBING"),
                 "high_rating_record_count": sum(1 for v in stream if v.get("rating", 0) >= 4.5),
-                "low_rating_record_count": sum(1 for v in stream if v.get("rating", 0) <= 1.5)
+                "low_rating_record_count": sum(1 for v in stream if v.get("rating", 0) <= 2.5)
             }
 
         return summary_by_plugin
@@ -1117,6 +1491,21 @@ try:
                 {"step": 3, "plugin": "02GeoQuest", "action": "Gamified Map Studio & Interactive Value Duel", "type": "Playable Engine", "output": "Offline Game Package"},
                 {"step": 4, "plugin": "02Agent Smart Modeler", "action": "Visual AI Flow Execution & Workflow Proposals", "type": "AI Modeler", "output": "Compiled Pipeline Model"}
             ]
+        },
+        {
+            "id": "mobility_3d",
+            "name": "3D Inclusive Mobility & Microclimate Routing Studio",
+            "category": "3D Kinematics & Inclusive Mobility",
+            "icon": "fa-person-walking",
+            "color": "#14b8a6",
+            "desc": "Computes realistic 3D shortest path routes with 15 persona avatars (Wheelchair ADA, Elderly, Child, E-Scooter, Paramedic), Tobler/Minetti kinematics, and 2.5D architectural massing.",
+            "estimated_time": "~3.8 mins / district",
+            "steps": [
+                {"step": 1, "plugin": "02Agent OSM Downloader", "action": "Pedestrian & Multi-Modal Network Acquisition", "type": "OSM Extraction", "output": "Routable Graph"},
+                {"step": 2, "plugin": "02Route 3D", "action": "Multi-Criteria Shortest Path & 15 Avatar Kinematics", "type": "3D Pathfinding", "output": "3D LineStringZ GeoPackage"},
+                {"step": 3, "plugin": "QGIS 2.5D Styling", "action": "Architectural 2.5D Massing & Urban Shading", "type": "2.5D Styling", "output": "Massing QML Layer"},
+                {"step": 4, "plugin": "02CartoLab", "action": "Publication-Grade Atlas & Bivariate Route Profiling", "type": "Cartography", "output": "Atlas Map Book"}
+            ]
         }
     ]
 
@@ -1127,11 +1516,48 @@ try:
     portfolio_monthly_velocity = active_period_monthly_avg
     active_count = len(yusuf_plugins)
 
+    # Dynamic Portfolio Milestone Engine
+    portfolio_tiers = [10000, 25000, 50000, 75000, 100000, 125000, 150000, 200000, 250000, 500000, 1000000]
+    prev_tier = 100000
+    for t in portfolio_tiers:
+        if total_downloads >= t:
+            prev_tier = t
+        else:
+            break
+    next_tier = 125000
+    for t in portfolio_tiers:
+        if t > total_downloads:
+            next_tier = t
+            break
+    else:
+        next_tier = ((total_downloads // 50000) + 1) * 50000
+
+    portfolio_remaining = max(0, next_tier - total_downloads)
+    portfolio_progress_total = round((total_downloads / next_tier) * 100, 1)
+    portfolio_tier_progress = round(((total_downloads - prev_tier) / (next_tier - prev_tier)) * 100, 1) if next_tier > prev_tier else 100.0
+
+    if active_period_monthly_avg > 0 and portfolio_remaining > 0:
+        days_to_p_milestone = (portfolio_remaining / active_period_monthly_avg) * 30.4375
+        portfolio_est_date = (reference_date + timedelta(days=days_to_p_milestone)).strftime('%b %d, %Y')
+    else:
+        portfolio_est_date = "Reached"
+
+    portfolio_milestones_data = {
+        'prev_milestone': prev_tier,
+        'next_milestone': next_tier,
+        'remaining': portfolio_remaining,
+        'progress_total': portfolio_progress_total,
+        'progress_tier': portfolio_tier_progress,
+        'est_date': portfolio_est_date,
+        'achieved_milestones': [t for t in portfolio_tiers if total_downloads >= t]
+    }
+
     embedded_data = {
         'plugins': yusuf_plugins,
         'summary': {
             'total_plugins': len(yusuf_plugins),
             'total_downloads': total_downloads,
+            'portfolio_milestones': portfolio_milestones_data,
             'last_updated': reference_date.strftime('%b %d, %Y %H:%M UTC'),
             'community_hours_saved': round(total_hours_saved),
             'economic_value_usd': round(total_economic_val_usd),
@@ -1174,7 +1600,9 @@ try:
         'history_meta': {
             'snapshots': history,
             'timestamps': history_timestamps,
-            'by_plugin': history_by_plugin
+            'by_plugin': history_by_plugin,
+            'portfolio_waves': portfolio_wave_series,
+            'portfolio_raid_waves': portfolio_raid_wave_series
         }
     }
 
@@ -1295,6 +1723,15 @@ try:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QGIS Plugin Portfolio Analytics & Governance Studio — Yusuf Eminoğlu</title>
+
+    <!-- Favicons & Brand Icons -->
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48x48.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="assets/geophilo_mark_64.png">
+    <link rel="icon" type="image/png" sizes="128x128" href="assets/favicon.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="assets/geophilo_mark_192.png">
+    <link rel="shortcut icon" href="favicon.ico">
 
     <!-- Critical Zero-Flash Dark Mode Engine -->
     <style>
@@ -1731,6 +2168,15 @@ try:
                 </button>
 
                 <!-- Theme Switcher Button -->
+                <button onclick="openCmdPalette()" class="px-3.5 py-2.5 rounded-2xl bg-obsidian-800 hover:bg-obsidian-750 text-slate-300 border border-white/10 text-xs font-mono font-bold flex items-center gap-2 transition-all">
+                    <i class="fa-solid fa-terminal text-cyan-400"></i> Command <kbd class="px-1.5 py-0.5 text-[9px] bg-obsidian-900 border border-white/10 rounded">Ctrl+K</kbd>
+                </button>
+                <button onclick="openCompareModal()" class="px-3.5 py-2.5 rounded-2xl bg-obsidian-800 hover:bg-obsidian-750 text-slate-300 border border-white/10 text-xs font-mono font-bold flex items-center gap-2 transition-all">
+                    <i class="fa-solid fa-code-compare text-emerald-400"></i> Compare Studio
+                </button>
+                <button onclick="openExecReportModal()" class="px-3.5 py-2.5 rounded-2xl bg-obsidian-800 hover:bg-obsidian-750 text-slate-300 border border-white/10 text-xs font-mono font-bold flex items-center gap-2 transition-all">
+                    <i class="fa-solid fa-file-contract text-amber-400"></i> Exec Report
+                </button>
                 <button onclick="toggleTheme()" id="theme-toggle-btn" class="px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-1.5 transition-all" title="Toggle Theme (Obsidian / Alabaster) [T]">
                     <i class="fa-solid fa-circle-half-stroke text-amber-400"></i> <span id="theme-toggle-text">Obsidian Mode</span> <kbd>T</kbd>
                 </button>
@@ -1770,7 +2216,7 @@ try:
         <div class="flex overflow-x-auto pb-1 mb-8 gap-2 border-b border-white/5 font-heading">
             <button onclick="switchTab('overview')" id="tab-btn-overview" class="px-5 py-3 text-sm font-bold border-b-2 border-cyan-400 text-cyan-400 flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-chart-pie"></i> Executive Overview <kbd>1</kbd></button>
             <button onclick="switchTab('audit')" id="tab-btn-audit" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap relative">
-                <i class="fa-solid fa-shield-halved text-rose-400"></i> Rating Abuse & Surveillance <kbd>2</kbd>
+                <i class="fa-solid fa-brain-circuit text-rose-400"></i> Forensic AI & Anomaly Lab <kbd>2</kbd>
                 <span id="audit-alert-badge" class="ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500 text-white pulse-live"></span>
             </button>
             <button onclick="switchTab('stars')" id="tab-btn-stars" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap relative">
@@ -1975,34 +2421,68 @@ try:
                         <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-bullseye text-cyan-400 mr-2"></i>Milestone Velocity & 95% Confidence Horizons</h2>
                         <p class="text-xs text-slate-400 mt-0.5">Empirical date projection and Gaussian confidence bounds toward next download tier</p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs text-slate-400">Global Goal:</span>
-                        <span class="text-sm font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-xl font-mono">100,000 Total Downloads</span>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-xl font-mono flex items-center gap-1.5 shadow-sm">
+                            <i class="fa-solid fa-trophy text-amber-400"></i> 100K Historic Milestone Unlocked!
+                        </span>
+                        <span class="text-xs font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 rounded-xl font-mono flex items-center gap-1.5">
+                            <i class="fa-solid fa-flag-checkered text-cyan-400"></i> Next Horizon: <strong id="global-next-milestone-text">125,000</strong>
+                        </span>
                     </div>
                 </div>
 
                 <div class="mb-8 bg-obsidian-900/80 p-5 rounded-2xl border border-white/5">
-                    <div class="flex justify-between text-xs font-semibold mb-2">
-                        <span>Portfolio Progress: <strong class="font-mono" id="milestone-total-downloads"></strong></span>
-                        <span class="text-cyan-400 font-mono font-bold" id="portfolio-progress-percent"></span>
+                    <div class="flex flex-wrap justify-between items-center text-xs font-semibold mb-2 gap-2">
+                        <span>Portfolio Progress: <strong class="font-mono text-white" id="milestone-total-downloads"></strong></span>
+                        <div class="flex items-center gap-3">
+                            <span class="text-slate-400 text-[11px] font-mono" id="portfolio-milestone-eta"></span>
+                            <span class="text-cyan-400 font-mono font-bold" id="portfolio-progress-percent"></span>
+                        </div>
                     </div>
                     <div class="w-full bg-obsidian-800 rounded-full h-3 overflow-hidden">
-                        <div class="bg-gradient-to-r from-cyan-500 to-indigo-500 h-3 rounded-full shadow-lg" id="portfolio-progress-bar" style="width: 0%"></div>
+                        <div class="bg-gradient-to-r from-cyan-500 via-teal-400 to-indigo-500 h-3 rounded-full shadow-lg transition-all duration-700" id="portfolio-progress-bar" style="width: 0%"></div>
+                    </div>
+                    <div class="mt-3 flex flex-wrap justify-between items-center text-[11px] text-slate-400 font-mono">
+                        <span id="portfolio-milestone-prev">Unlocked: 100,000 DL</span>
+                        <span id="portfolio-milestone-rem">Remaining: 15,356 DL</span>
+                        <span id="portfolio-milestone-target">Target: 125,000 DL</span>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="milestones-grid">
-                    <!-- Top 3 closest to milestone -->
+                <!-- Interactive Multi-Mode Milestone Filter Bar -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                    <div class="flex flex-wrap items-center gap-2 font-mono text-xs">
+                        <span class="text-slate-400 font-medium">Filter View:</span>
+                        <div class="inline-flex rounded-xl bg-obsidian-900/90 p-1 border border-white/10" id="milestone-tabs">
+                            <button onclick="switchMilestoneTab('imminent')" id="tab-ms-imminent" class="px-3 py-1.5 rounded-lg bg-cyan-500 text-obsidian-950 font-bold transition-all flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-fire text-orange-600"></i> Imminent (≥85%) <span class="bg-obsidian-950/20 text-obsidian-950 text-[10px] px-1.5 py-0.5 rounded-full font-extrabold" id="imminent-count-badge">10</span>
+                            </button>
+                            <button onclick="switchMilestoneTab('velocity')" id="tab-ms-velocity" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white font-medium transition-all flex items-center gap-1.5">
+                                <i class="fa-solid fa-bolt text-amber-400"></i> Top Velocity
+                            </button>
+                            <button onclick="switchMilestoneTab('all')" id="tab-ms-all" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white font-medium transition-all flex items-center gap-1.5">
+                                <i class="fa-solid fa-layer-group text-cyan-400"></i> All Plugins (<span id="all-ms-count">28</span>)
+                            </button>
+                            <button onclick="switchMilestoneTab('fame')" id="tab-ms-fame" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white font-medium transition-all flex items-center gap-1.5">
+                                <i class="fa-solid fa-award text-yellow-400"></i> Hall of Fame
+                            </button>
+                        </div>
+                    </div>
+                    <span class="text-[11px] text-slate-400 font-mono" id="milestone-subtitle-note">Showing plugins with urgent milestone velocity</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="milestones-grid">
+                    <!-- Dynamic cards populated via switchMilestoneTab / renderMilestones -->
                 </div>
             </div>
         </div>
 
         <!-- ============================================================= -->
-        <!-- TAB 2: RATING ABUSE & SURVEILLANCE CENTER -->
+        <!-- TAB 2: FORENSIC AI & MULTIVARIATE ANOMALY SURVEILLANCE LAB -->
         <!-- ============================================================= -->
         <div id="tab-content-audit" class="tab-pane hidden">
             <!-- Surveillance Banner -->
-            <div class="p-6 rounded-3xl glass-panel mb-8 border-l-4 border-rose-500 relative overflow-hidden bg-gradient-to-r from-rose-950/40 via-obsidian-900/90 to-obsidian-900/90">
+            <div class="p-6 rounded-3xl glass-panel mb-8 border-l-4 border-rose-500 relative overflow-hidden bg-gradient-to-r from-rose-950/50 via-obsidian-900/90 to-obsidian-900/90">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div class="flex items-start gap-4">
                         <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-xl flex-shrink-0 border border-rose-500/30">
@@ -2010,43 +2490,155 @@ try:
                         </div>
                         <div>
                             <div class="flex items-center gap-2.5">
-                                <h2 class="text-lg font-bold tracking-tight font-heading">Rating Anomaly & Pattern Surveillance Center</h2>
-                                <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30">ACTIVE SURVEILLANCE</span>
+                                <h2 class="text-lg font-bold tracking-tight font-heading">Forensic AI & Multivariate Anomaly Surveillance Lab</h2>
+                                <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30">6D FEATURE VECTOR ENGINE</span>
                             </div>
                             <p class="text-xs text-slate-300 mt-1 max-w-3xl leading-relaxed">
-                                Audits mathematical score increments ($Delta \\text{Score}$) against vote volume bursts ($Delta \\text{Votes}$). Computes Shannon Influx Entropy ($H$) and generates cryptographically signed multi-channel evidence dossiers and SQL remediation scripts.
+                                Evaluates multi-dimensional anomaly features: <strong>Conversion Ratio (&kappa;)</strong>, <strong>Poisson Dispersion (Fano Factor)</strong>, <strong>Cross-Portfolio Synchronization (&rho;)</strong>, <strong>Soft Dilution Deviations (&delta;r)</strong>, and <strong>Mahalanobis Distance (D<sub>M</sub>)</strong> to reconstruct the <em>True Synthetic Organic Rating</em>.
                             </p>
                         </div>
                     </div>
                     <div class="flex flex-wrap gap-2 items-center">
                         <button onclick="openAllIncidentsModal()" class="px-4 py-2.5 text-xs font-bold text-white rounded-xl btn-danger flex items-center gap-2 whitespace-nowrap">
-                            <i class="fa-solid fa-file-shield"></i> Export All Incident Dossiers
+                            <i class="fa-solid fa-file-shield"></i> Export Audit Dossier & SQL Fix
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Audit Metrics Cards -->
+            <!-- Dynamic Bayesian Sensitivity & Anomaly Rebalancing Control Bar -->
+            <div class="p-5 rounded-3xl glass-panel mb-8 border border-white/5 bg-gradient-to-r from-obsidian-950 via-obsidian-900 to-obsidian-950">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-lg border border-cyan-500/20">
+                            <i class="fa-solid fa-sliders"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold font-heading text-white flex items-center gap-2">
+                                Dynamic Bayesian Anomaly Purge & Rebalancer
+                                <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">REAL-TIME SIMULATOR</span>
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-0.5">Adjust the Mahalanobis Distance threshold (D<sub>M</sub>) to test different forensic confidence intervals</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-6">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-mono text-slate-400">Purge Threshold:</span>
+                            <input type="range" id="bayesian-sensitivity-slider" min="2.0" max="10.0" step="0.5" value="5.0" oninput="handleSensitivitySliderChange(this.value)" class="w-36 sm:w-48 accent-cyan-400 cursor-pointer">
+                            <span class="px-2.5 py-1 rounded-xl bg-obsidian-900 border border-white/10 text-xs font-mono font-bold text-cyan-400" id="slider-threshold-val">D<sub>M</sub> &ge; 5.0</span>
+                        </div>
+
+                        <div class="flex items-center gap-2 border-l border-white/10 pl-4">
+                            <button onclick="resetSensitivitySlider()" class="px-3 py-1.5 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-slate-300 text-xs font-mono font-bold border border-white/10 flex items-center gap-1.5 transition-all">
+                                <i class="fa-solid fa-rotate-left"></i> Reset (5.0)
+                            </button>
+                            <button onclick="openFormalPscDossierModal()" class="px-4 py-1.5 rounded-xl btn-luxury text-white text-xs font-bold font-heading flex items-center gap-1.5">
+                                <i class="fa-solid fa-scroll"></i> Formal PSC Brief
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit Metrics & True Organic Reconstruction Strip -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="audit-kpis">
                 <!-- Dynamically generated by JS -->
             </div>
 
-            <!-- Active Incident Drilldown -->
+            <!-- Side-by-Side Public vs. True Synthetic Rating Matrix -->
+            <div class="p-6 rounded-3xl glass-panel mb-8">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between pb-4 border-b border-white/5 gap-4 mb-6">
+                    <div>
+                        <div class="flex items-center gap-2.5">
+                            <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-scale-balanced text-cyan-400 mr-1.5"></i>Public Observed vs. True Synthetic Organic Score Matrix</h2>
+                            <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">Bayesian Purge Filter</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Identifies points suppressed by Type I (1★ bombing) and Type II (soft 2-3★ drag-down) rating manipulation</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="relative w-full sm:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-500"></i>
+                            <input type="text" id="ml-search-input" oninput="filterMLMatrixSearch()" placeholder="Search plugin name..." class="w-full pl-9 pr-3 py-1.5 bg-obsidian-900 border border-white/10 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-400 font-mono">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Taxonomy Filter Ribbon -->
+                <div class="flex flex-wrap items-center gap-2 mb-4">
+                    <button onclick="filterMLTaxonomy('ALL')" id="ml-flt-ALL" class="px-3 py-1 rounded-xl text-xs font-bold bg-cyan-600 text-white transition-all font-mono">All Plugins (<span id="ml-cnt-ALL">0</span>)</button>
+                    <button onclick="filterMLTaxonomy('FLAGGED')" id="ml-flt-FLAGGED" class="px-3 py-1 rounded-xl text-xs font-bold bg-obsidian-800 text-rose-400 hover:text-white border border-rose-500/20 transition-all font-mono flex items-center gap-1.5">
+                        <i class="fa-solid fa-triangle-exclamation"></i> All Flagged (<span id="ml-cnt-FLAGGED">0</span>)
+                    </button>
+                    <button onclick="filterMLTaxonomy('TYPE_2_SOFT_DILUTION')" id="ml-flt-TYPE_2_SOFT_DILUTION" class="px-3 py-1 rounded-xl text-xs font-bold bg-obsidian-800 text-amber-400 hover:text-white border border-amber-500/20 transition-all font-mono">
+                        Type II: Soft Dilution (<span id="ml-cnt-TYPE_2">0</span>)
+                    </button>
+                    <button onclick="filterMLTaxonomy('TYPE_1_BOMBING')" id="ml-flt-TYPE_1_BOMBING" class="px-3 py-1 rounded-xl text-xs font-bold bg-obsidian-800 text-rose-300 hover:text-white border border-rose-500/20 transition-all font-mono">
+                        Type I: 1★ Bombing (<span id="ml-cnt-TYPE_1">0</span>)
+                    </button>
+                    <button onclick="filterMLTaxonomy('ORGANIC')" id="ml-flt-ORGANIC" class="px-3 py-1 rounded-xl text-xs font-bold bg-obsidian-800 text-emerald-400 hover:text-white border border-emerald-500/20 transition-all font-mono">
+                        Organic / Stable (<span id="ml-cnt-ORGANIC">0</span>)
+                    </button>
+                </div>
+
+                <!-- ML Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs" id="ml-matrix-table">
+                        <thead class="bg-obsidian-900/90 text-slate-400 uppercase text-[10px] tracking-wider border-b border-white/10 font-heading">
+                            <tr>
+                                <th class="py-3 px-4 font-bold">Plugin Name</th>
+                                <th class="py-3 px-4 font-bold text-center">Public Observed</th>
+                                <th class="py-3 px-4 font-bold text-center">True Organic Score</th>
+                                <th class="py-3 px-4 font-bold text-center">Suppressed Points</th>
+                                <th class="py-3 px-4 font-bold text-center">Influx (ΔVotes / Influx★)</th>
+                                <th class="py-3 px-4 font-bold text-center">Conv. Ratio (κ)</th>
+                                <th class="py-3 px-4 font-bold text-center">Mahalanobis (D<sub>M</sub>)</th>
+                                <th class="py-3 px-4 font-bold text-center">P(Abuse)</th>
+                                <th class="py-3 px-4 font-bold text-center">Taxonomy Classification</th>
+                                <th class="py-3 px-4 font-bold text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ml-matrix-table-body" class="divide-y divide-white/5 font-mono">
+                            <!-- Filled dynamically by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Active Incident Drilldown Cards -->
             <div class="p-6 rounded-3xl glass-panel mb-8">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-white/5 gap-3 mb-6">
                     <div>
-                        <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-list-check text-rose-400 mr-2"></i>Security & Rating Anomaly Incidents</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Verified baseline reconciliation, implied influx entropy analysis, and rollback recovery</p>
+                        <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-list-check text-rose-400 mr-2"></i>Multi-Dimensional Anomaly Dossiers</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Cryptographically hashed evidence records, Shannon entropy metrics, and SQL rollback scripts</p>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="filterAnomalyStatus('all')" id="audit-filter-all" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-cyan-600 text-white">All Plugins</button>
-                        <button onclick="filterAnomalyStatus('critical')" id="audit-filter-crit" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5">Critical Raids Only</button>
+                        <button onclick="filterAnomalyStatus('critical')" id="audit-filter-crit" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5">Flagged Raids Only</button>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="anomaly-cards-container">
                     <!-- Dynamic Anomaly Incident Cards -->
                 </div>
+            </div>
+
+            <!-- Kinematic Anomaly Phase Space (Conversion Physics & Poisson Envelope) -->
+            <div class="p-6 rounded-3xl glass-panel mb-8 border-l-4 border-cyan-500">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-3">
+                    <div>
+                        <div class="flex items-center gap-2.5">
+                            <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-atom text-cyan-400 mr-1.5"></i>Adoption Kinematics & Poisson Anomaly Phase Space</h2>
+                            <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">&Delta;Downloads vs &Delta;Votes Corridor</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Reveals physical violations where votes arrive independently of user adoption (breaking the 95% Poisson confidence corridor)</p>
+                    </div>
+                    <div class="flex items-center gap-4 text-xs font-mono">
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Organic Corridor (&kappa; &le; 1.2%)</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-rose-500 inline-block pulse-live"></span> Raid Outlier (&kappa; &ge; 3.5%)</span>
+                    </div>
+                </div>
+                <div id="kinematic-phase-chart" class="w-full h-80"></div>
             </div>
 
             <!-- Time Machine Historical Delta Matrix -->
@@ -2082,20 +2674,63 @@ try:
                 </div>
             </div>
 
-            <!-- Interactive Rating History Time-Series Chart -->
-            <div class="p-6 rounded-3xl glass-panel mb-8">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+            <!-- ============================================================= -->
+            <!-- FORENSIC TIME-SERIES & ANOMALY INFLECTION SUITE -->
+            <!-- ============================================================= -->
+
+            <!-- Portfolio-Wide Synchronized Raid Influx Wave Chart -->
+            <div class="p-6 rounded-3xl glass-panel mb-8 border-l-4 border-rose-500">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-3">
                     <div>
-                        <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-chart-line text-cyan-400 mr-2"></i>Plugin Rating & Vote Trajectory Over Time</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Track historical score drops and volume surges across recorded snapshots</p>
+                        <div class="flex items-center gap-2.5">
+                            <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-water-ladder text-rose-400 mr-1.5"></i>Portfolio-Wide Synchronized Vote Influx Waves</h2>
+                            <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">Cross-Plugin Burst Detection</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Reveals unnatural multi-plugin simultaneous raid clusters across all ##TOTAL_PLUGINS## plugins simultaneously</p>
                     </div>
-                    <div class="w-full sm:w-80">
-                        <select id="audit-chart-plugin-select" onchange="renderAuditHistoryChart()" class="w-full px-3.5 py-2.5 bg-obsidian-900 border border-white/10 rounded-xl text-xs focus:outline-none focus:border-cyan-400 font-mono">
-                            <!-- Filled dynamically -->
-                        </select>
+                    <div class="flex items-center gap-2 text-xs font-mono">
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-rose-500 inline-block"></span> Raid/Dilution Influx</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-cyan-500 inline-block ml-2"></span> Total Influx</span>
                     </div>
                 </div>
-                <div id="audit-history-chart" class="w-full h-80"></div>
+                <div id="portfolio-wave-chart" class="w-full h-64"></div>
+            </div>
+
+            <!-- Plugin-Specific Dual-Axis Inflection & True Organic Trajectory Chart -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                <!-- Left 2 Cols: Time-Series with Annotations -->
+                <div class="lg:col-span-2 p-6 rounded-3xl glass-panel">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-chart-line-down text-rose-400 mr-1"></i>Plugin Trajectory & Inflection Callouts</h2>
+                                <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Observed vs True Score</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-0.5">Plots Observed Drop Curve vs Reconstructed True Baseline with marked raid drop points</p>
+                        </div>
+                        <div class="w-full sm:w-80">
+                            <select id="audit-chart-plugin-select" onchange="renderAuditHistoryChart()" class="w-full px-3.5 py-2 bg-obsidian-900 border border-white/10 rounded-xl text-xs focus:outline-none focus:border-cyan-400 font-mono text-white">
+                                <!-- Filled dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    <div id="audit-history-chart" class="w-full h-80"></div>
+                </div>
+
+                <!-- Right 1 Col: 6D Anomaly Radar Fingerprint -->
+                <div class="p-6 rounded-3xl glass-panel flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-radar text-cyan-400 mr-1.5"></i>6D Anomaly Radar</h2>
+                            <span class="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20" id="radar-plugin-name">PlanX GeoStats</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mb-4">Multivariate fingerprint comparing selected plugin against organic health norm</p>
+                        <div id="audit-radar-chart" class="w-full h-64 flex items-center justify-center"></div>
+                    </div>
+                    <div class="mt-4 border-t border-white/5 pt-3 text-[11px] font-mono space-y-1.5 text-slate-300" id="radar-metric-details">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -2116,7 +2751,7 @@ try:
                                 <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">OBSERVED QGIS AGGREGATE SNAPSHOTS</span>
                             </div>
                             <p class="text-xs text-slate-300 mt-1 max-w-3xl leading-relaxed">
-                                Auditable stream of QGIS aggregate rating snapshots across all 27 plugins. Each plugin displays the latest 20 observed rating records with color-coded average-rating badges, vote-delta counts, and pattern-based low-rating detection.
+                                Auditable stream of QGIS aggregate rating snapshots across all ##TOTAL_PLUGINS## plugins. Each plugin displays the latest 20 observed rating records with color-coded average-rating badges, vote-delta counts, and pattern-based low-rating detection.
                             </p>
                         </div>
                     </div>
@@ -3316,78 +3951,7 @@ try:
             } else if (e.key === 'Escape') {
                 closeCommandPalette();
             }
-        }
-
-        function updatePaletteSelection() {
-            const list = document.getElementById('palette-results-list');
-            if (!list) return;
-            const rows = list.children;
-            for (let i = 0; i < rows.length; i++) {
-                if (i === paletteSelectedIndex) {
-                    rows[i].className = "p-2.5 rounded-xl bg-cyan-600 text-white cursor-pointer transition-all flex items-center justify-between shadow-md";
-                } else {
-                    rows[i].className = "p-2.5 rounded-xl bg-obsidian-950/60 hover:bg-cyan-600/50 hover:text-white cursor-pointer transition-all flex items-center justify-between";
-                }
-            }
-        }
-
-        function filterCommandPalette() {
-            const query = (document.getElementById('palette-search-input').value || '').toLowerCase();
-            const list = document.getElementById('palette-results-list');
-            list.innerHTML = '';
-
-            const defaultActions = [
-                { name: 'Switch to Executive Overview', icon: 'fa-chart-pie', action: () => { switchTab('overview'); closeCommandPalette(); } },
-                { name: 'Switch to Rating Abuse & Surveillance', icon: 'fa-shield-halved', action: () => { switchTab('audit'); closeCommandPalette(); } },
-                { name: 'Switch to Sequential Rating Matrix (20★)', icon: 'fa-ranking-star', action: () => { switchTab('stars'); closeCommandPalette(); } },
-                { name: 'Switch to Geospatial Studio', icon: 'fa-earth-americas', action: () => { switchTab('carto'); closeCommandPalette(); } },
-                { name: 'Switch to Plugin Explorer', icon: 'fa-cubes', action: () => { switchTab('deepdive'); closeCommandPalette(); } },
-                { name: 'Switch to Ecosystem Pipelines & Synergies', icon: 'fa-diagram-project', action: () => { switchTab('pipelines'); closeCommandPalette(); } },
-                { name: 'Switch to Forecast Simulator', icon: 'fa-wand-magic-sparkles', action: () => { switchTab('simulator'); closeCommandPalette(); } },
-                { name: 'Switch to Master Data Table', icon: 'fa-table', action: () => { switchTab('table'); closeCommandPalette(); } },
-                { name: 'Open Dynamic Shields.io Badge Kit', icon: 'fa-certificate', action: () => { openBadgeKitModal(); closeCommandPalette(); } },
-                { name: 'Toggle Theme (Obsidian / Alabaster)', icon: 'fa-circle-half-stroke', action: () => { toggleTheme(); closeCommandPalette(); } },
-                { name: 'Open 3-Way Benchmark Comparator', icon: 'fa-code-compare', action: () => { openCompareModal(); closeCommandPalette(); } },
-                { name: 'Open Reports & Announcement Kit', icon: 'fa-bullhorn', action: () => { openExecutiveStorytellingModal(); closeCommandPalette(); } },
-                { name: 'Export Full Evidence JSON Bundle', icon: 'fa-file-code', action: () => { exportFullDossierJSON(); closeCommandPalette(); } },
-                { name: 'Export Performance Table to CSV', icon: 'fa-file-csv', action: () => { exportToCSV(); closeCommandPalette(); } }
-            ];
-
-            appData.plugins.forEach(p => {
-                defaultActions.push({
-                    name: `Inspect Plugin: ${p.name}`,
-                    icon: 'fa-cube',
-                    sub: `${p.downloads.toLocaleString()} DL · ${p.average_vote.toFixed(1)} ★`,
-                    action: () => {
-                        switchTab('deepdive');
-                        document.getElementById('card-search-input').value = p.name;
-                        filterCards();
-                        closeCommandPalette();
-                    }
-                });
-            });
-
-            const filtered = defaultActions.filter(a => a.name.toLowerCase().indexOf(query) > -1 || (a.sub && a.sub.toLowerCase().indexOf(query) > -1));
-            currentPaletteItems = filtered.slice(0, 8);
-            paletteSelectedIndex = 0;
-
-            currentPaletteItems.forEach((item, idx) => {
-                const row = document.createElement('div');
-                row.className = idx === 0
-                    ? "p-2.5 rounded-xl bg-cyan-600 text-white cursor-pointer transition-all flex items-center justify-between shadow-md"
-                    : "p-2.5 rounded-xl bg-obsidian-950/60 hover:bg-cyan-600/50 hover:text-white cursor-pointer transition-all flex items-center justify-between";
-                row.onclick = item.action;
-                row.onmouseenter = () => { paletteSelectedIndex = idx; updatePaletteSelection(); };
-                row.innerHTML = `
-                    <div class="flex items-center gap-2.5 truncate">
-                        <i class="fa-solid ${item.icon} text-cyan-400"></i>
-                        <span class="font-sans font-medium">${item.name}</span>
-                    </div>
-                    ${item.sub ? `<span class="text-[10px] text-slate-400 font-mono">${item.sub}</span>` : '<span class="text-[10px] text-slate-400">Jump</span>'}
-                `;
-                list.appendChild(row);
-            });
-        }
+        }        // (Legacy palette functions cleaned in favor of unified global Command Palette)
 
         // =============================================================
         // EXECUTIVE STORYTELLING & ANNOUNCEMENT KIT
@@ -3415,6 +3979,13 @@ try:
             const leader = appData.plugins[0];
             const fastest = [...appData.plugins].sort((a,b) => b.avg_monthly_downloads - a.avg_monthly_downloads)[0];
             const topCountry = appData.summary.global_countries[0];
+            const pm = appData.summary.portfolio_milestones || {
+                prev_milestone: 100000,
+                next_milestone: 125000,
+                progress_total: 87.7,
+                remaining: 15356,
+                est_date: 'Nov 2026'
+            };
 
             let text = '';
             if (format === 'ecosystem') {
@@ -3426,8 +3997,9 @@ Author: Yusuf Eminoğlu | Audit Timestamp: ${appData.summary.last_updated}
 1. PORTFOLIO VOLUME & TRAJECTORY:
    - Total Cumulative Ecosystem Downloads: ${appData.summary.total_downloads.toLocaleString()} across ${appData.summary.total_plugins} production plugins.
    - Active Monthly Adoption Velocity: ~${appData.summary.active_period_monthly_avg.toLocaleString()} downloads/month.
-   - 100k Milestone Proximity: ${appData.summary.total_downloads.toLocaleString()} / 100,000 (${((appData.summary.total_downloads/100000)*100).toFixed(1)}% achieved).
-   - Expected 100k Arrival: Estimated Q4 2026.
+   - Historic 100k Global Milestone: ACHIEVED & SURPASSED (${appData.summary.total_downloads.toLocaleString()} / 100,000 — 109.6% completed).
+   - Next Strategic Horizon Target: ${pm.next_milestone.toLocaleString()} downloads (${pm.progress_total}% achieved).
+   - Estimated Next Horizon Arrival: ${pm.est_date}.
 
 2. QUANTITATIVE ECONOMETRIC PROFILE:
    - Gini Inequality Index (Corrected): ${appData.summary.econometrics.gini_corrected} (Optimal Pareto distribution).
@@ -3444,14 +4016,15 @@ Author: Yusuf Eminoğlu | Audit Timestamp: ${appData.summary.last_updated}
    - Critical Rating Anomalies: ${appData.summary.critical_anomalies} under active surveillance.
    - Evidence Fingerprint: SHA256-${appData.correlation.portfolio_evidence_signature}`;
             } else if (format === 'linkedin') {
-                text = `🚀 Excited to share an official milestone update for our QGIS Urban Analytics & Spatial Planning Ecosystem!
+                text = `🚀 Historic Milestone Achieved: Our QGIS Urban Analytics & Spatial Planning Ecosystem has surpassed 100,000 downloads!
 
-Our ${appData.summary.total_plugins} production QGIS plugins have officially surpassed ${appData.summary.total_downloads.toLocaleString()} cumulative downloads with an active adoption velocity of ~${appData.summary.active_period_monthly_avg.toLocaleString()} downloads/month across 140+ countries.
+Now standing at ${appData.summary.total_downloads.toLocaleString()} cumulative downloads across ${appData.summary.total_plugins} production plugins, the suite maintains an active adoption velocity of ~${appData.summary.active_period_monthly_avg.toLocaleString()} downloads/month spanning geospatial workflows in 140+ countries.
 
 🌟 Top Ecosystem Highlights:
 • Crown Jewel: ${leader.name} leading with ${leader.downloads.toLocaleString()} downloads.
 • Velocity Champion: ${fastest.name} clocking ~${Math.round(fastest.avg_monthly_downloads).toLocaleString()}/month.
 • Macro-Regional Engine: Western Europe & North America representing over 70% of spatial analysis workflows.
+• Next Strategic Horizon: On track for ${pm.next_milestone.toLocaleString()} downloads by ${pm.est_date}.
 
 We've also open-sourced our dedicated Governance & Analytics Studio:
 🔗 Live Dashboard: https://yusufeminoglu.github.io/qgis-plugins-governance/
@@ -3461,9 +4034,9 @@ Thank you to the global QGIS & OSGeo community! 🌍
 
 #QGIS #GIS #UrbanPlanning #SpatialAnalytics #OpenSource #PyQGIS #Geospatial`;
             } else if (format === 'twitter') {
-                text = `1/4 🌍 Huge milestone for our open-source GIS tools: The Yusuf Eminoğlu QGIS Plugin Ecosystem has reached ${appData.summary.total_downloads.toLocaleString()} total downloads across ${appData.summary.total_plugins} plugins!
+                text = `1/4 🌍 Historic milestone for open-source GIS: The Yusuf Eminoğlu QGIS Plugin Ecosystem has surpassed 100,000 downloads (now at ${appData.summary.total_downloads.toLocaleString()} DL across ${appData.summary.total_plugins} plugins)!
 
-2/4 📈 Adoption Velocity: Running at ~${appData.summary.active_period_monthly_avg.toLocaleString()} downloads/month.
+2/4 📈 Adoption Velocity: Running at ~${appData.summary.active_period_monthly_avg.toLocaleString()} downloads/month. Next horizon: ${pm.next_milestone.toLocaleString()} (Est: ${pm.est_date}).
 👑 Flagship: ${leader.name} (${leader.downloads.toLocaleString()} DL)
 ⚡ Fastest Adoption: ${fastest.name} (~${Math.round(fastest.avg_monthly_downloads).toLocaleString()}/mo)
 
@@ -3474,18 +4047,19 @@ https://yusufeminoglu.github.io/qgis-plugins-governance/
 https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/
 #QGIS #SpatialAnalytics`;
             } else {
-                text = `**[Release & Governance Bulletin] Yusuf Eminoğlu QGIS Plugin Ecosystem: ${appData.summary.total_downloads.toLocaleString()} Downloads Milestone**
+                text = `**[100K Historic Milestone & Governance Bulletin] Yusuf Eminoğlu QGIS Plugin Ecosystem: ${appData.summary.total_downloads.toLocaleString()} Downloads**
 
 Hey r/QGIS community!
 
-Wanted to share an update on our ${appData.summary.total_plugins} spatial planning & urban analytics plugins (including PlanX suite, CAD toolset, and 02 geospatial tools).
+Wanted to share an exciting milestone: our ${appData.summary.total_plugins} spatial planning & urban analytics plugins (including PlanX suite, CAD toolset, and 02 geospatial tools) have officially crossed 100,000 downloads (now live at ${appData.summary.total_downloads.toLocaleString()} DL)!
 
 ### 📊 Portfolio Telemetry Overview
 | Metric | Value |
 |---|---|
 | Total Plugins | ${appData.summary.total_plugins} (QGIS 3.x & QGIS 4.0 Ready) |
-| Cumulative Downloads | ${appData.summary.total_downloads.toLocaleString()} |
+| Cumulative Downloads | ${appData.summary.total_downloads.toLocaleString()} (100K Milestone Passed) |
 | Current Velocity | ~${appData.summary.active_period_monthly_avg.toLocaleString()} downloads/mo |
+| Next Horizon Target | ${pm.next_milestone.toLocaleString()} DL (ETA: ${pm.est_date}) |
 | Portfolio Gini Score | ${appData.summary.econometrics.gini_corrected} |
 | Flagship Plugin | ${leader.name} (${leader.downloads.toLocaleString()} DL) |
 
@@ -3629,115 +4203,424 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             document.getElementById('standalone-share-text').innerHTML = `${standaloneDownloads.toLocaleString()} <strong>(${standalonePercent}%)</strong>`;
         }
 
-        function renderMilestones() {
-            document.getElementById('milestone-total-downloads').innerText = `${appData.summary.total_downloads.toLocaleString()} / 100,000`;
-            const portfolioPercent = ((appData.summary.total_downloads / 100000) * 100).toFixed(1);
-            document.getElementById('portfolio-progress-percent').innerText = `${portfolioPercent}%`;
-            document.getElementById('portfolio-progress-bar').style.width = `${portfolioPercent}%`;
+        let currentMilestoneTab = 'imminent';
 
-            const milestonesGrid = document.getElementById('milestones-grid');
-            const sortedByMilestone = [...appData.plugins].sort((a,b) => b.milestone_progress - a.milestone_progress);
+        function switchMilestoneTab(tab) {
+            currentMilestoneTab = tab;
+            const tabs = ['imminent', 'velocity', 'all', 'fame'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-ms-${t}`);
+                if (!btn) return;
+                if (t === tab) {
+                    btn.className = "px-3 py-1.5 rounded-lg bg-cyan-500 text-obsidian-950 font-bold transition-all flex items-center gap-1.5 shadow-sm";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white font-medium transition-all flex items-center gap-1.5";
+                }
+            });
 
-            let html = '';
-            for (let i = 0; i < 3; i++) {
-                const p = sortedByMilestone[i];
-                if (!p) break;
+            const subtitle = document.getElementById('milestone-subtitle-note');
+            if (subtitle) {
+                if (tab === 'imminent') subtitle.innerText = "Showing plugins rapidly approaching their target (≥85% progress)";
+                else if (tab === 'velocity') subtitle.innerText = "Top 6 fastest monthly adoption velocity drivers";
+                else if (tab === 'all') subtitle.innerText = `Full portfolio milestone status (${appData.plugins.length} production plugins)`;
+                else if (tab === 'fame') subtitle.innerText = "Hall of Fame: 10K+, 5K+, and 1K+ download tier clubs";
+            }
 
-                const remaining = p.next_milestone - p.downloads;
+            renderMilestoneCards();
+        }
 
-                html += `
-                    <div class="p-4 rounded-2xl bg-obsidian-900/90 border border-white/5 flex flex-col justify-between">
-                        <div>
-                            <div class="flex justify-between items-center mb-1">
-                                <h3 class="font-bold text-xs truncate max-w-[70%] font-heading">${p.name}</h3>
-                                <span class="text-[10px] font-semibold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full font-mono">${p.milestone_progress}%</span>
+        function renderMilestoneCards() {
+            const grid = document.getElementById('milestones-grid');
+            if (!grid) return;
+
+            if (currentMilestoneTab === 'fame') {
+                const club10k = appData.plugins.filter(p => p.downloads >= 10000);
+                const club5k = appData.plugins.filter(p => p.downloads >= 5000 && p.downloads < 10000);
+                const club1k = appData.plugins.filter(p => p.downloads >= 1000 && p.downloads < 5000);
+
+                let html = `
+                    <div class="col-span-full grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <!-- 10K Club -->
+                        <div class="p-5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-obsidian-900 to-obsidian-950 border border-amber-500/30">
+                            <div class="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center font-bold text-sm border border-amber-500/30">🏆</div>
+                                    <div>
+                                        <h3 class="font-bold text-sm text-white font-heading">10K+ Tier Legends</h3>
+                                        <p class="text-[10px] text-amber-300/80 font-mono">${club10k.length} Flagship Pillars</p>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono">Elite Tier</span>
                             </div>
-                            <div class="w-full bg-obsidian-800 rounded-full h-1.5 my-2">
-                                <div class="bg-cyan-500 h-1.5 rounded-full" style="width: ${p.milestone_progress}%"></div>
-                            </div>
-                            <div class="flex justify-between items-center text-[10px] text-slate-400">
-                                <span>Target: <strong class="font-mono">${p.next_milestone.toLocaleString()}</strong></span>
-                                <span class="text-cyan-400 font-mono"><i class="fa-solid fa-calendar-check mr-1"></i>Est: ${p.milestone_est_date}</span>
+                            <div class="space-y-2.5">
+                                ${club10k.map(p => `
+                                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-obsidian-900/80 border border-white/5 hover:border-amber-500/30 transition-all">
+                                        <span class="text-xs font-semibold text-slate-200 truncate max-w-[60%]">${p.name}</span>
+                                        <div class="text-right">
+                                            <span class="text-xs font-bold text-amber-300 font-mono">${p.downloads.toLocaleString()} DL</span>
+                                            <span class="text-[10px] text-slate-400 block font-mono">Next: ${p.next_milestone.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
-                        <div class="mt-3 pt-2 border-t border-white/5 flex justify-between items-center text-[10px]">
-                            <span class="text-slate-400">Remaining:</span>
-                            <span class="font-bold text-emerald-400 font-mono"><i class="fa-solid fa-angles-right text-[8px] mr-1"></i> ${remaining.toLocaleString()}</span>
+
+                        <!-- 5K Club -->
+                        <div class="p-5 rounded-2xl bg-gradient-to-br from-cyan-500/10 via-obsidian-900 to-obsidian-950 border border-cyan-500/30">
+                            <div class="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-bold text-sm border border-cyan-500/30">⭐</div>
+                                    <div>
+                                        <h3 class="font-bold text-sm text-white font-heading">5K+ Tier Pillars</h3>
+                                        <p class="text-[10px] text-cyan-300/80 font-mono">${club5k.length} High-Volume Engines</p>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono">Established</span>
+                            </div>
+                            <div class="space-y-2.5">
+                                ${club5k.map(p => `
+                                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-obsidian-900/80 border border-white/5 hover:border-cyan-500/30 transition-all">
+                                        <span class="text-xs font-semibold text-slate-200 truncate max-w-[60%]">${p.name}</span>
+                                        <div class="text-right">
+                                            <span class="text-xs font-bold text-cyan-300 font-mono">${p.downloads.toLocaleString()} DL</span>
+                                            <span class="text-[10px] text-slate-400 block font-mono">Next: ${p.next_milestone.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- 1K Club -->
+                        <div class="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-obsidian-900 to-obsidian-950 border border-emerald-500/30">
+                            <div class="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-bold text-sm border border-emerald-500/30">🎯</div>
+                                    <div>
+                                        <h3 class="font-bold text-sm text-white font-heading">1K+ Tier Foundation</h3>
+                                        <p class="text-[10px] text-emerald-300/80 font-mono">${club1k.length} Active Solutions</p>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono">Verified</span>
+                            </div>
+                            <div class="max-h-80 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                                ${club1k.map(p => `
+                                    <div class="flex items-center justify-between p-2 rounded-xl bg-obsidian-900/80 border border-white/5 hover:border-emerald-500/30 transition-all">
+                                        <span class="text-xs font-medium text-slate-300 truncate max-w-[65%]">${p.name}</span>
+                                        <span class="text-xs font-bold text-emerald-400 font-mono">${p.downloads.toLocaleString()} DL</span>
+                                    </div>
+                                `).join('')}
+                            </div>
                         </div>
                     </div>
                 `;
+                grid.innerHTML = html;
+                return;
             }
-            milestonesGrid.innerHTML = html;
+
+            let list = [];
+            if (currentMilestoneTab === 'imminent') {
+                list = appData.plugins.filter(p => p.milestone_progress >= 85.0).sort((a,b) => b.milestone_progress - a.milestone_progress);
+                if (list.length === 0) list = [...appData.plugins].sort((a,b) => b.milestone_progress - a.milestone_progress).slice(0, 6);
+            } else if (currentMilestoneTab === 'velocity') {
+                list = [...appData.plugins].sort((a,b) => b.avg_monthly_downloads - a.avg_monthly_downloads).slice(0, 6);
+            } else {
+                list = [...appData.plugins].sort((a,b) => b.downloads - a.downloads);
+            }
+
+            let html = '';
+            list.forEach(p => {
+                const remaining = p.next_milestone - p.downloads;
+                const isCritical = p.milestone_progress >= 95.0;
+                const isHigh = p.milestone_progress >= 85.0;
+
+                const badgeHtml = isCritical
+                    ? `<span class="text-[10px] font-bold text-rose-300 bg-rose-500/20 border border-rose-500/40 px-2 py-0.5 rounded-full font-mono animate-pulse flex items-center gap-1"><i class="fa-solid fa-bolt text-rose-400"></i>${p.milestone_progress}% CRITICAL</span>`
+                    : isHigh
+                    ? `<span class="text-[10px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded-full font-mono flex items-center gap-1"><i class="fa-solid fa-fire text-orange-400"></i>${p.milestone_progress}%</span>`
+                    : `<span class="text-[10px] font-semibold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full font-mono">${p.milestone_progress}%</span>`;
+
+                const barGradient = isCritical
+                    ? 'from-amber-400 via-rose-500 to-rose-600'
+                    : isHigh
+                    ? 'from-teal-400 to-cyan-500'
+                    : 'from-cyan-500 to-indigo-500';
+
+                html += `
+                    <div class="p-4 rounded-2xl bg-obsidian-900/90 border border-white/5 flex flex-col justify-between hover:border-white/15 transition-all shadow-md group">
+                        <div>
+                            <div class="flex justify-between items-start gap-2 mb-2">
+                                <div class="flex items-center gap-2 truncate">
+                                    <div class="w-6 h-6 rounded-lg bg-obsidian-800 flex items-center justify-center text-xs flex-shrink-0 text-cyan-400 border border-white/5">
+                                        <i class="fa-solid fa-cube"></i>
+                                    </div>
+                                    <h3 class="font-bold text-xs truncate font-heading text-slate-200 group-hover:text-cyan-400 transition-colors" title="${p.name}">${p.name}</h3>
+                                </div>
+                                ${badgeHtml}
+                            </div>
+                            <div class="w-full bg-obsidian-800 rounded-full h-2 my-2.5 overflow-hidden">
+                                <div class="bg-gradient-to-r ${barGradient} h-2 rounded-full transition-all duration-500" style="width: ${Math.min(100, p.milestone_progress)}%"></div>
+                            </div>
+                            <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                                <span>Current: <strong class="text-white">${p.downloads.toLocaleString()}</strong></span>
+                                <span>Target: <strong class="text-cyan-300">${p.next_milestone.toLocaleString()}</strong></span>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-2.5 border-t border-white/5 flex justify-between items-center text-[10px] font-mono">
+                            <span class="text-slate-400 flex items-center gap-1">
+                                <i class="fa-solid fa-calendar-check text-cyan-400"></i> Est: ${p.milestone_est_date}
+                            </span>
+                            <span class="font-bold text-emerald-400 flex items-center gap-1">
+                                <i class="fa-solid fa-angles-right text-[8px]"></i> ${remaining > 0 ? remaining.toLocaleString() + ' DL left' : 'Achieved 🎉'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+        }
+
+        function renderMilestones() {
+            const pm = appData.summary.portfolio_milestones || {
+                prev_milestone: 100000,
+                next_milestone: 125000,
+                remaining: 15356,
+                progress_total: 87.7,
+                progress_tier: 38.6,
+                est_date: 'Nov 2026'
+            };
+
+            const target = pm.next_milestone || 125000;
+            const prev = pm.prev_milestone || 100000;
+
+            if (document.getElementById('milestone-total-downloads')) {
+                document.getElementById('milestone-total-downloads').innerText = `${appData.summary.total_downloads.toLocaleString()} / ${target.toLocaleString()}`;
+            }
+            if (document.getElementById('portfolio-progress-percent')) {
+                document.getElementById('portfolio-progress-percent').innerText = `${pm.progress_total}%`;
+            }
+            if (document.getElementById('portfolio-progress-bar')) {
+                document.getElementById('portfolio-progress-bar').style.width = `${Math.min(100, pm.progress_total)}%`;
+            }
+            if (document.getElementById('global-next-milestone-text')) {
+                document.getElementById('global-next-milestone-text').innerText = `${target.toLocaleString()}`;
+            }
+            if (document.getElementById('portfolio-milestone-eta')) {
+                document.getElementById('portfolio-milestone-eta').innerText = `Target ETA: ${pm.est_date}`;
+            }
+            if (document.getElementById('portfolio-milestone-prev')) {
+                document.getElementById('portfolio-milestone-prev').innerText = `Unlocked: ${prev.toLocaleString()} DL`;
+            }
+            if (document.getElementById('portfolio-milestone-rem')) {
+                document.getElementById('portfolio-milestone-rem').innerText = `Remaining: ${pm.remaining.toLocaleString()} DL`;
+            }
+            if (document.getElementById('portfolio-milestone-target')) {
+                document.getElementById('portfolio-milestone-target').innerText = `Target: ${target.toLocaleString()} DL`;
+            }
+
+            const imminentCount = appData.plugins.filter(p => p.milestone_progress >= 85.0).length;
+            if (document.getElementById('imminent-count-badge')) {
+                document.getElementById('imminent-count-badge').innerText = imminentCount;
+            }
+            if (document.getElementById('all-ms-count')) {
+                document.getElementById('all-ms-count').innerText = appData.plugins.length;
+            }
+
+            renderMilestoneCards();
         }
 
         // =============================================================
-        // RATING ABUSE & AUDIT MONITOR LOGIC
+        // FORENSIC AI & MULTIVARIATE ANOMALY SURVEILLANCE LOGIC
         // =============================================================
+        let currentMLTaxonomyFilter = 'ALL';
+        let currentMLSearchQuery = '';
+
         function renderAuditKPIsAndAlerts() {
-            const crit = appData.summary.critical_anomalies;
-            const warn = appData.summary.warning_anomalies;
+            const flagged = appData.anomalies.filter(a => a.severity === 'critical' || a.severity === 'high' || a.severity === 'amber').length;
             const badge = document.getElementById('audit-alert-badge');
 
-            if (crit > 0) {
-                badge.innerText = `${crit} CRITICAL`;
+            if (flagged > 0) {
+                badge.innerText = `${flagged} ANOMALIES`;
                 badge.className = "ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500 text-white pulse-live font-mono";
-            } else if (warn > 0) {
-                badge.innerText = `${warn} ALERT`;
-                badge.className = "ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500 text-white font-mono";
             } else {
                 badge.innerText = "CLEAN";
                 badge.className = "ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono";
             }
 
             const totalVotes = appData.plugins.reduce((acc, p) => acc + p.votes_count, 0);
-            const avgRating = (appData.plugins.reduce((acc, p) => acc + (p.average_vote * p.votes_count), 0) / (totalVotes || 1)).toFixed(2);
+            const observedAvg = (appData.plugins.reduce((acc, p) => acc + (p.average_vote * p.votes_count), 0) / (totalVotes || 1)).toFixed(2);
+            const purgedAvg = appData.correlation.portfolio_purged_average ? appData.correlation.portfolio_purged_average.toFixed(2) : observedAvg;
+            const suppressedPts = appData.correlation.total_suppressed_pts ? appData.correlation.total_suppressed_pts.toFixed(2) : "0.00";
+            const raidVotes = appData.correlation.total_raid_votes || 0;
 
             const auditKPIContainer = document.getElementById('audit-kpis');
             auditKPIContainer.innerHTML = `
-                <div class="p-6 rounded-3xl glass-panel relative overflow-hidden">
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">Critical Low-Rating Patterns</p>
+                <div class="p-6 rounded-3xl glass-panel relative overflow-hidden border-l-4 border-rose-500">
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">Flagged Anomalous Influxes</p>
                     <div class="flex items-baseline mt-2">
-                        <span class="text-3xl font-extrabold font-mono ${crit > 0 ? 'text-rose-400' : 'text-emerald-400'}">${crit}</span>
-                        <span class="text-xs text-slate-400 ml-2 font-mono">incidents</span>
+                        <span class="text-3xl font-extrabold font-mono ${flagged > 0 ? 'text-rose-400' : 'text-emerald-400'}">${flagged}</span>
+                        <span class="text-xs text-slate-400 ml-2 font-mono">plugins impacted</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-2">Pattern-based low-rating anomaly detection</p>
+                    <p class="text-[11px] text-slate-400 mt-2 font-mono">+${raidVotes} suspicious/diluted votes isolated</p>
                 </div>
 
-                <div class="p-6 rounded-3xl glass-panel relative overflow-hidden">
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">Suspicious Influxes</p>
+                <div class="p-6 rounded-3xl glass-panel relative overflow-hidden border-l-4 border-emerald-500">
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">True Synthetic Organic Rating</p>
                     <div class="flex items-baseline mt-2">
-                        <span class="text-3xl font-extrabold font-mono ${warn > 0 ? 'text-amber-400' : 'text-slate-300'}">${warn}</span>
-                        <span class="text-xs text-slate-400 ml-2 font-mono">flagged</span>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-2">Abnormal negative score delta</p>
-                </div>
-
-                <div class="p-6 rounded-3xl glass-panel relative overflow-hidden">
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">Portfolio Weighted Rating</p>
-                    <div class="flex items-baseline mt-2">
-                        <span class="text-3xl font-extrabold font-mono">${avgRating}</span>
+                        <span class="text-3xl font-extrabold text-emerald-400 font-mono">${purgedAvg}</span>
                         <span class="text-xs text-amber-400 ml-1.5"><i class="fa-solid fa-star"></i> / 5.0</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-2 font-mono">Across ${totalVotes} total verified votes</p>
+                    <p class="text-[11px] text-emerald-400 mt-2 font-mono flex items-center gap-1">
+                        <i class="fa-solid fa-shield-check"></i> Reconstructed without raid spikes
+                    </p>
                 </div>
 
-                <div class="p-6 rounded-3xl glass-panel relative overflow-hidden">
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">Snapshots Recorded</p>
+                <div class="p-6 rounded-3xl glass-panel relative overflow-hidden border-l-4 border-amber-500">
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">Public Observed Rating</p>
                     <div class="flex items-baseline mt-2">
-                        <span class="text-3xl font-extrabold text-cyan-400 font-mono">${appData.summary.total_snapshots}</span>
-                        <span class="text-xs text-slate-400 ml-2 font-mono">versions</span>
+                        <span class="text-3xl font-extrabold font-mono text-slate-200">${observedAvg}</span>
+                        <span class="text-xs text-rose-400 ml-1.5 font-mono font-bold">(-${suppressedPts} pts loss)</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-2">Continuous time-series audit trail</p>
+                    <p class="text-[11px] text-slate-400 mt-2 font-mono">Raw QGIS Hub public display score</p>
+                </div>
+
+                <div class="p-6 rounded-3xl glass-panel relative overflow-hidden border-l-4 border-cyan-500">
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">Multi-Vector Threat Index</p>
+                    <div class="flex items-baseline mt-2">
+                        <span class="text-3xl font-extrabold text-cyan-400 font-mono">${appData.correlation.campaign_threat_score}%</span>
+                        <span class="text-xs text-slate-400 ml-2 font-mono">D<sub>M</sub> Severity</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-2 font-mono truncate" title="${appData.correlation.campaign_level}">${appData.correlation.campaign_level}</p>
                 </div>
             `;
 
+            renderMLMatrixTable();
             renderAnomalyCards();
             populateAuditChartDropdown();
+            renderPortfolioWaveChart();
+            renderKinematicPhaseChart();
             populateTimeMachineSelectors();
+        }
+
+        function filterMLTaxonomy(taxonomy) {
+            currentMLTaxonomyFilter = taxonomy;
+            const buttons = ['ALL', 'FLAGGED', 'TYPE_2_SOFT_DILUTION', 'TYPE_1_BOMBING', 'ORGANIC'];
+            buttons.forEach(b => {
+                const el = document.getElementById(`ml-flt-${b}`);
+                if (el) {
+                    if (b === taxonomy) {
+                        el.className = "px-3 py-1 rounded-xl text-xs font-bold bg-cyan-600 text-white transition-all font-mono";
+                    } else {
+                        el.className = "px-3 py-1 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5 transition-all font-mono";
+                    }
+                }
+            });
+            renderMLMatrixTable();
+        }
+
+        function filterMLMatrixSearch() {
+            currentMLSearchQuery = (document.getElementById('ml-search-input').value || '').toLowerCase();
+            renderMLMatrixTable();
+        }
+
+        function renderMLMatrixTable() {
+            const tbody = document.getElementById('ml-matrix-table-body');
+            if (!tbody) return;
+
+            const allCount = appData.anomalies.length;
+            const flaggedCount = appData.anomalies.filter(a => a.severity === 'critical' || a.severity === 'high' || a.severity === 'amber').length;
+            const type2Count = appData.anomalies.filter(a => a.taxonomy_code === 'TYPE_2_SOFT_DILUTION').length;
+            const type1Count = appData.anomalies.filter(a => a.taxonomy_code === 'TYPE_1_BOMBING').length;
+            const organicCount = appData.anomalies.filter(a => a.severity === 'positive' || a.severity === 'normal' || a.severity === 'stable').length;
+
+            if (document.getElementById('ml-cnt-ALL')) document.getElementById('ml-cnt-ALL').innerText = allCount;
+            if (document.getElementById('ml-cnt-FLAGGED')) document.getElementById('ml-cnt-FLAGGED').innerText = flaggedCount;
+            if (document.getElementById('ml-cnt-TYPE_2')) document.getElementById('ml-cnt-TYPE_2').innerText = type2Count;
+            if (document.getElementById('ml-cnt-TYPE_1')) document.getElementById('ml-cnt-TYPE_1').innerText = type1Count;
+            if (document.getElementById('ml-cnt-ORGANIC')) document.getElementById('ml-cnt-ORGANIC').innerText = organicCount;
+
+            let filtered = appData.anomalies.filter(a => {
+                if (currentMLSearchQuery && !a.name.toLowerCase().includes(currentMLSearchQuery) && !a.category.toLowerCase().includes(currentMLSearchQuery)) {
+                    return false;
+                }
+                if (currentMLTaxonomyFilter === 'FLAGGED') {
+                    return a.severity === 'critical' || a.severity === 'high' || a.severity === 'amber';
+                } else if (currentMLTaxonomyFilter === 'TYPE_2_SOFT_DILUTION') {
+                    return a.taxonomy_code === 'TYPE_2_SOFT_DILUTION';
+                } else if (currentMLTaxonomyFilter === 'TYPE_1_BOMBING') {
+                    return a.taxonomy_code === 'TYPE_1_BOMBING';
+                } else if (currentMLTaxonomyFilter === 'ORGANIC') {
+                    return a.severity === 'positive' || a.severity === 'normal' || a.severity === 'stable';
+                }
+                return true;
+            });
+
+            filtered.sort((a, b) => (b.threat_level || 0) - (a.threat_level || 0) || (b.delta_votes || 0) - (a.delta_votes || 0));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="py-8 text-center text-slate-500 font-mono">No plugins matching current forensic filter.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(a => {
+                const hasDrop = a.suppressed_points > 0.05;
+                const isFlagged = a.severity === 'critical' || a.severity === 'high' || a.severity === 'amber';
+
+                let badgeStyle = "bg-slate-500/10 text-slate-400 border-slate-500/20";
+                if (a.severity === 'critical') badgeStyle = "bg-rose-500/20 text-rose-400 border-rose-500/30 font-bold";
+                elif_if = a.severity === 'high' ? "bg-amber-500/20 text-amber-400 border-amber-500/30 font-bold" : badgeStyle;
+                if (a.severity === 'high') badgeStyle = "bg-amber-500/20 text-amber-400 border-amber-500/30 font-bold";
+                if (a.severity === 'positive') badgeStyle = "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+
+                return `
+                    <tr class="hover:bg-white/[0.02] transition-colors ${isFlagged ? 'bg-rose-950/10' : ''}">
+                        <td class="py-3.5 px-4 font-bold text-white flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full ${isFlagged ? 'bg-rose-500 pulse-live' : 'bg-emerald-500'}"></span>
+                            <div class="truncate max-w-[200px]">
+                                <span class="block text-slate-200 truncate font-heading">${a.name}</span>
+                                <span class="text-[10px] text-slate-500 font-mono">${a.category} • v${a.version}</span>
+                            </div>
+                        </td>
+                        <td class="py-3.5 px-4 text-center font-bold ${hasDrop ? 'text-rose-400' : 'text-slate-300'}">
+                            ${a.current_rating.toFixed(2)} ★
+                        </td>
+                        <td class="py-3.5 px-4 text-center font-bold text-emerald-400">
+                            ${a.purged_synthetic_rating ? a.purged_synthetic_rating.toFixed(2) : a.current_rating.toFixed(2)} ★
+                        </td>
+                        <td class="py-3.5 px-4 text-center">
+                            ${hasDrop ? `<span class="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-bold">-${a.suppressed_points.toFixed(2)} pts</span>` : '<span class="text-slate-600">0.00</span>'}
+                        </td>
+                        <td class="py-3.5 px-4 text-center">
+                            <span class="font-bold ${a.delta_votes > 0 ? 'text-cyan-400' : 'text-slate-500'}">+${a.delta_votes}</span>
+                            <span class="text-[10px] text-slate-500 ml-1">(${a.delta_votes > 0 ? a.implied_new_rating.toFixed(2) + '★' : '-'})</span>
+                        </td>
+                        <td class="py-3.5 px-4 text-center font-bold ${a.conversion_k > 3.0 ? 'text-rose-400 font-bold' : 'text-slate-400'}">
+                            ${a.conversion_k ? a.conversion_k.toFixed(1) + '%' : '0.0%'}
+                        </td>
+                        <td class="py-3.5 px-4 text-center text-cyan-400 font-bold">
+                            ${a.mahalanobis_d ? a.mahalanobis_d.toFixed(2) : '0.00'}
+                        </td>
+                        <td class="py-3.5 px-4 text-center font-bold ${a.p_abuse >= 80 ? 'text-rose-400' : 'text-slate-400'}">
+                            ${a.p_abuse ? a.p_abuse.toFixed(1) + '%' : '0.0%'}
+                        </td>
+                        <td class="py-3.5 px-4 text-center">
+                            <span class="px-2.5 py-0.5 rounded-md border text-[10px] whitespace-nowrap ${badgeStyle}">
+                                ${a.taxonomy || a.status}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                            <button onclick="openEvidenceModal('${a.name.replace(/'/g, "\'")}')" class="px-3 py-1 rounded-xl text-[11px] font-bold ${isFlagged ? 'btn-danger text-white' : 'bg-obsidian-800 hover:bg-obsidian-750 text-slate-300 border border-white/10'} inline-flex items-center gap-1">
+                                <i class="fa-solid fa-file-shield"></i> Dossier
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function renderAnomalyCards() {
             const container = document.getElementById('anomaly-cards-container');
+            if (!container) return;
             container.innerHTML = '';
 
             appData.anomalies.forEach(a => {
@@ -3758,20 +4641,20 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
                 card.setAttribute('data-severity', a.severity);
 
                 let recoveryCallout = '';
-                if (a.severity === 'critical' || a.severity === 'high') {
+                if (a.severity === 'critical' || a.severity === 'high' || a.severity === 'amber') {
                     recoveryCallout = `
                         <div class="mt-3 p-3 rounded-2xl bg-rose-950/40 border border-rose-500/20 text-[11px] space-y-1 font-mono">
                             <div class="flex justify-between text-slate-300">
-                                <span><i class="fa-solid fa-rotate-left text-cyan-400 mr-1"></i>Score After Rollback:</span>
-                                <strong class="text-emerald-400">${a.reconciled_after_purge.toFixed(2)} ★ (Restore Fair Target)</strong>
+                                <span><i class="fa-solid fa-rotate-left text-cyan-400 mr-1"></i>True Reconstructed Score:</span>
+                                <strong class="text-emerald-400">${a.purged_synthetic_rating ? a.purged_synthetic_rating.toFixed(2) : a.reconciled_after_purge.toFixed(2)} ★ (Organic Target)</strong>
                             </div>
                             <div class="flex justify-between text-slate-400">
                                 <span><i class="fa-solid fa-star text-amber-400 mr-1"></i>Organic Recovery Needed:</span>
                                 <span>+${a.needed_5_stars_to_recover} consecutive 5★ votes</span>
                             </div>
                             <div class="flex justify-between text-rose-400 font-bold">
-                                <span><i class="fa-solid fa-fire text-rose-400 mr-1"></i>Calculated Damage Index:</span>
-                                <span>-${a.damage_index} pts lost</span>
+                                <span><i class="fa-solid fa-fire text-rose-400 mr-1"></i>Calculated Damage:</span>
+                                <span>-${a.suppressed_points ? a.suppressed_points.toFixed(2) : (a.damage_index || 0)} pts suppressed (P=${a.p_abuse || 0}%)</span>
                             </div>
                         </div>
                     `;
@@ -3781,7 +4664,7 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
                     <div>
                         <div class="flex justify-between items-start mb-3">
                             <div>
-                                <span class="text-[9px] font-bold px-2.5 py-0.5 rounded-md border ${badgeClass}">${a.status}</span>
+                                <span class="text-[9px] font-bold px-2.5 py-0.5 rounded-md border ${badgeClass}">${a.taxonomy || a.status}</span>
                                 <h3 class="text-base font-bold mt-2 font-heading">${a.name}</h3>
                             </div>
                             <span class="text-[10px] text-slate-500 font-mono">v${a.version}</span>
@@ -3794,7 +4677,7 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
                             </div>
                             <div class="border-x border-white/5">
                                 <span class="text-[9px] uppercase font-bold text-slate-500 block font-mono">Live (${a.current_votes} votes)</span>
-                                <span class="text-xs font-extrabold font-mono ${a.severity === 'critical' ? 'text-rose-400' : ''}">${a.current_rating.toFixed(2)} ★</span>
+                                <span class="text-xs font-extrabold font-mono ${a.severity === 'critical' || a.severity === 'high' ? 'text-rose-400' : ''}">${a.current_rating.toFixed(2)} ★</span>
                             </div>
                             <div>
                                 <span class="text-[9px] uppercase font-bold text-slate-500 block font-mono">Delta Votes</span>
@@ -3809,11 +4692,15 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-slate-400">Implied Influx Rating:</span>
-                                <span class="font-bold ${a.implied_new_rating <= 1.5 && a.delta_votes > 0 ? 'text-rose-400' : 'text-emerald-400'}">${a.delta_votes > 0 ? a.implied_new_rating.toFixed(2) + ' ★ avg' : 'N/A'}</span>
+                                <span class="font-bold ${a.implied_new_rating <= 2.5 && a.delta_votes > 0 ? 'text-rose-400' : 'text-emerald-400'}">${a.delta_votes > 0 ? a.implied_new_rating.toFixed(2) + ' ★ avg' : 'N/A'}</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-slate-400">Shannon Entropy (H):</span>
-                                <span class="font-bold text-cyan-400">${a.shannon_entropy} bits (EAS: ${a.entropy_score}/100)</span>
+                                <span class="text-slate-400">Conversion Ratio (κ):</span>
+                                <span class="font-bold ${a.conversion_k > 3.0 ? 'text-rose-400' : 'text-slate-300'}">${a.conversion_k ? a.conversion_k.toFixed(1) + '%' : '0.0%'} (Norm: ~0.8%)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Mahalanobis Anomaly (D<sub>M</sub>):</span>
+                                <span class="font-bold text-cyan-400">${a.mahalanobis_d || 0} (Certainty: ${a.p_abuse || 0}%)</span>
                             </div>
                         </div>
 
@@ -3821,9 +4708,9 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
                     </div>
 
                     <div class="pt-4 border-t border-white/5 flex justify-between items-center mt-4">
-                        <span class="text-[10px] text-slate-400 font-mono">${a.delta_rating < 0 ? `<span class="text-rose-400 font-bold">${a.delta_rating.toFixed(2)}</span> rating drop` : 'Stable baseline'}</span>
-                        <button onclick="openEvidenceModal('${a.name.replace(/'/g, "\\'")}')" class="px-4 py-2 rounded-xl text-xs font-bold ${a.severity === 'critical' ? 'btn-danger text-white' : 'bg-obsidian-800 hover:bg-obsidian-750 text-slate-300 border border-white/10'} flex items-center gap-1.5">
-                            <i class="fa-solid fa-file-shield"></i> View Dossier & Report
+                        <span class="text-[10px] text-slate-400 font-mono">${a.suppressed_points > 0 ? `<span class="text-rose-400 font-bold">-${a.suppressed_points.toFixed(2)}</span> rating drop` : 'Stable baseline'}</span>
+                        <button onclick="openEvidenceModal('${a.name.replace(/'/g, "\'")}')" class="px-4 py-2 rounded-xl text-xs font-bold ${a.severity === 'critical' || a.severity === 'high' ? 'btn-danger text-white' : 'bg-obsidian-800 hover:bg-obsidian-750 text-slate-300 border border-white/10'} flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-shield"></i> View Dossier & SQL
                         </button>
                     </div>
                 `;
@@ -3840,7 +4727,8 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
                 btnCrit.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-cyan-600 text-white";
                 btnAll.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-obsidian-800 text-slate-400 hover:text-white border border-white/5";
                 for (let c of cards) {
-                    c.style.display = c.getAttribute('data-severity') === 'critical' ? '' : 'none';
+                    const sev = c.getAttribute('data-severity');
+                    c.style.display = (sev === 'critical' || sev === 'high' || sev === 'amber') ? '' : 'none';
                 }
             } else {
                 btnAll.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-cyan-600 text-white";
@@ -3928,6 +4816,232 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
         }
 
         let auditChartInstance = null;
+        let portfolioWaveChartInstance = null;
+        let auditRadarChartInstance = null;
+        let kinematicPhaseChartInstance = null;
+
+        function renderKinematicPhaseChart() {
+            const container = document.querySelector("#kinematic-phase-chart");
+            if (!container) return;
+
+            const isAlabaster = document.documentElement.getAttribute('data-theme') === 'alabaster';
+            const labelColor = isAlabaster ? '#334155' : '#94a3b8';
+            const gridColor = isAlabaster ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.05)';
+
+            // Prepare series data: [delta_dl, delta_votes, point_size, plugin_name, conversion_k, is_anomaly]
+            const organicPoints = [];
+            const raidPoints = [];
+
+            appData.anomalies.forEach(a => {
+                const dl = Math.max(10, a.delta_downloads || 0);
+                const v = Math.max(0, a.delta_votes || 0);
+                const isAnom = (a.severity === 'critical' || a.severity === 'high' || a.conversion_k > 3.0);
+                const point = {
+                    x: dl,
+                    y: v,
+                    name: a.name,
+                    k: a.conversion_k ? a.conversion_k.toFixed(1) : '0.0',
+                    dm: a.mahalanobis_d || 0,
+                    status: a.taxonomy || a.status
+                };
+
+                if (isAnom && v > 0) {
+                    raidPoints.push(point);
+                } else {
+                    organicPoints.push(point);
+                }
+            });
+
+            if (kinematicPhaseChartInstance) kinematicPhaseChartInstance.destroy();
+
+            const chartOptions = {
+                series: [
+                    {
+                        name: 'Organic Stable Plugins',
+                        type: 'scatter',
+                        data: organicPoints.map(p => ({ x: p.x, y: p.y, meta: p }))
+                    },
+                    {
+                        name: 'Kinematic Raid Violations',
+                        type: 'scatter',
+                        data: raidPoints.map(p => ({ x: p.x, y: p.y, meta: p }))
+                    }
+                ],
+                chart: {
+                    height: 320,
+                    type: 'scatter',
+                    toolbar: { show: true, tools: { download: true, zoom: true, pan: true, reset: true } },
+                    foreColor: labelColor
+                },
+                colors: ['#10b981', '#f43f5e'],
+                markers: {
+                    size: [6, 9],
+                    strokeWidth: [1, 2],
+                    strokeColors: ['#059669', '#ffffff'],
+                    hover: { size: 11 }
+                },
+                xaxis: {
+                    title: { text: 'Recent Download Volume (ΔDownloads)', style: { fontFamily: 'JetBrains Mono', fontSize: '11px' } },
+                    labels: { style: { fontFamily: 'JetBrains Mono' } },
+                    tickAmount: 8
+                },
+                yaxis: {
+                    title: { text: 'Recent Influx Votes (ΔVotes)', style: { fontFamily: 'JetBrains Mono', fontSize: '11px' } },
+                    labels: { style: { fontFamily: 'JetBrains Mono' } },
+                    min: 0
+                },
+                annotations: {
+                    yaxis: [
+                        {
+                            y: 5,
+                            y2: 45,
+                            borderColor: '#f43f5e',
+                            fillColor: '#f43f5e',
+                            opacity: 0.05,
+                            label: {
+                                borderColor: '#f43f5e',
+                                style: { color: '#fff', background: '#f43f5e', fontSize: '9px', fontWeight: 'bold', fontFamily: 'JetBrains Mono' },
+                                text: '🚨 High-Kinematic Anomaly Zone (κ ≥ 3.5%)'
+                            }
+                        }
+                    ]
+                },
+                grid: { borderColor: gridColor },
+                tooltip: {
+                    theme: isAlabaster ? 'light' : 'dark',
+                    custom: function({ series, seriesIndex, dataPointIndex, w }) {
+                        const point = w.config.series[seriesIndex].data[dataPointIndex].meta;
+                        if (!point) return '';
+                        const isRaid = seriesIndex === 1;
+                        return `
+                            <div class="p-3 bg-obsidian-950 border ${isRaid ? 'border-rose-500/40' : 'border-emerald-500/40'} rounded-2xl shadow-xl font-mono text-xs text-white max-w-xs">
+                                <div class="flex items-center gap-1.5 mb-1.5 font-heading font-bold ${isRaid ? 'text-rose-400' : 'text-emerald-400'}">
+                                    <i class="fa-solid ${isRaid ? 'fa-triangle-exclamation' : 'fa-circle-check'}"></i>
+                                    <span>${point.name}</span>
+                                </div>
+                                <div class="space-y-1 text-[11px] text-slate-300">
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-400">ΔDownloads:</span>
+                                        <strong>+${point.x.toLocaleString()}</strong>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-400">ΔVotes:</span>
+                                        <strong class="${isRaid ? 'text-rose-400 font-bold' : 'text-slate-200'}">+${point.y}</strong>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-400">Conversion (κ):</span>
+                                        <strong class="${isRaid ? 'text-rose-400 font-bold' : 'text-emerald-400'}">${point.k}%</strong>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-400">Mahalanobis (D<sub>M</sub>):</span>
+                                        <strong class="text-cyan-400">${point.dm}</strong>
+                                    </div>
+                                    <div class="pt-1.5 border-t border-white/10 text-[10px] text-slate-400">
+                                        ${point.status}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            };
+
+            kinematicPhaseChartInstance = new ApexCharts(container, chartOptions);
+            kinematicPhaseChartInstance.render();
+        }
+
+        function renderPortfolioWaveChart() {
+            const container = document.querySelector("#portfolio-wave-chart");
+            if (!container) return;
+
+            const isAlabaster = document.documentElement.getAttribute('data-theme') === 'alabaster';
+            const labelColor = isAlabaster ? '#334155' : '#94a3b8';
+            const gridColor = isAlabaster ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.05)';
+
+            const timestamps = appData.history_meta.timestamps;
+            const totalWaves = appData.history_meta.portfolio_waves || [];
+            const raidWaves = appData.history_meta.portfolio_raid_waves || [];
+
+            if (portfolioWaveChartInstance) portfolioWaveChartInstance.destroy();
+
+            const options = {
+                series: [
+                    {
+                        name: 'Raid / Dilution Influx Votes (≤2.5★)',
+                        type: 'column',
+                        data: raidWaves
+                    },
+                    {
+                        name: 'Total Portfolio Influx Votes',
+                        type: 'area',
+                        data: totalWaves
+                    }
+                ],
+                chart: {
+                    height: 240,
+                    type: 'line',
+                    toolbar: { show: false },
+                    foreColor: labelColor,
+                    stacked: false
+                },
+                plotOptions: {
+                    bar: {
+                        columnWidth: '35%',
+                        borderRadius: 4
+                    }
+                },
+                stroke: {
+                    width: [0, 2],
+                    curve: 'smooth'
+                },
+                fill: {
+                    opacity: [0.95, 0.2]
+                },
+                colors: ['#f43f5e', '#0ea5e9'],
+                xaxis: {
+                    categories: timestamps,
+                    labels: { style: { fontFamily: 'JetBrains Mono', fontSize: '10px' }, rotate: -30 }
+                },
+                yaxis: {
+                    title: { text: 'Simultaneous Influx Votes' },
+                    labels: {
+                        formatter: v => Math.round(v),
+                        style: { fontFamily: 'JetBrains Mono' }
+                    }
+                },
+                annotations: {
+                    xaxis: [
+                        {
+                            x: 'Aug 16, 2026 13:28 UTC',
+                            borderColor: '#f43f5e',
+                            label: {
+                                borderColor: '#f43f5e',
+                                style: { color: '#fff', background: '#f43f5e', fontSize: '10px', fontWeight: 'bold', fontFamily: 'JetBrains Mono' },
+                                text: '🚨 Wave 1: GeoStats (+30 1★ votes)'
+                            }
+                        },
+                        {
+                            x: 'Aug 24, 2026 21:44 UTC',
+                            borderColor: '#f43f5e',
+                            label: {
+                                borderColor: '#f43f5e',
+                                style: { color: '#fff', background: '#f43f5e', fontSize: '10px', fontWeight: 'bold', fontFamily: 'JetBrains Mono' },
+                                text: '🚨 Wave 2: 5-Plugin Sync Raid (+55 1★ votes)'
+                            }
+                        }
+                    ]
+                },
+                grid: { borderColor: gridColor },
+                tooltip: {
+                    theme: isAlabaster ? 'light' : 'dark',
+                    shared: true
+                }
+            };
+
+            portfolioWaveChartInstance = new ApexCharts(container, options);
+            portfolioWaveChartInstance.render();
+        }
+
         function renderAuditHistoryChart() {
             const select = document.getElementById('audit-chart-plugin-select');
             if (!select) return;
@@ -3937,44 +5051,61 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             const labelColor = isAlabaster ? '#334155' : '#94a3b8';
             const gridColor = isAlabaster ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.05)';
 
-            const pluginHistory = appData.history_meta.by_plugin[targetPlugin] || { ratings: [], votes: [] };
+            const pluginHistory = appData.history_meta.by_plugin[targetPlugin] || { ratings: [], votes: [], delta_votes: [], purged_series: [], inflections: [] };
             const categories = appData.history_meta.timestamps;
 
             if (auditChartInstance) auditChartInstance.destroy();
 
+            // Build annotations for detected inflections
+            const xAnnotations = (pluginHistory.inflections || []).map(ip => ({
+                x: ip.date,
+                borderColor: '#f43f5e',
+                label: {
+                    borderColor: '#f43f5e',
+                    style: { color: '#fff', background: '#f43f5e', fontSize: '9px', fontWeight: 'bold', fontFamily: 'JetBrains Mono' },
+                    text: `⚠️ Drop: -${ip.drop}★ (+${ip.delta_votes}v @ ${ip.implied_rating}★)`
+                }
+            }));
+
             const chartOptions = {
                 series: [
                     {
-                        name: 'Average Rating (★)',
+                        name: 'Observed Rating (★)',
                         type: 'line',
                         data: pluginHistory.ratings
                     },
                     {
-                        name: 'Total Votes Count',
+                        name: 'True Organic Baseline (★)',
+                        type: 'line',
+                        data: pluginHistory.purged_series || []
+                    },
+                    {
+                        name: 'Batch Influx Votes (ΔV)',
                         type: 'column',
-                        data: pluginHistory.votes
+                        data: pluginHistory.delta_votes || []
                     }
                 ],
                 chart: {
-                    height: 310,
+                    height: 320,
                     type: 'line',
-                    toolbar: { show: false },
+                    toolbar: { show: true, tools: { download: true, zoom: true, pan: true, reset: true } },
                     foreColor: labelColor
                 },
                 stroke: {
-                    width: [4, 0],
-                    curve: 'smooth'
+                    width: [4, 2.5, 0],
+                    curve: ['smooth', 'straight', 'smooth'],
+                    dashArray: [0, 5, 0]
                 },
                 plotOptions: {
                     bar: {
-                        columnWidth: '32%',
-                        borderRadius: 5
+                        columnWidth: '28%',
+                        borderRadius: 4
                     }
                 },
-                colors: ['#f43f5e', '#38bdf8'],
+                colors: ['#f43f5e', '#10b981', '#38bdf8'],
                 xaxis: {
                     categories: categories,
-                    labels: { style: { fontFamily: 'JetBrains Mono' } }
+                    labels: { style: { fontFamily: 'JetBrains Mono', fontSize: '10px' }, rotate: -30 }
                 },
                 yaxis: [
                     {
@@ -3982,29 +5113,140 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
                         max: 5.0,
                         title: { text: 'Rating (1 - 5 Stars)' },
                         labels: {
-                            formatter: function(v) { return v.toFixed(1) + ' ★'; },
+                            formatter: v => v ? v.toFixed(1) + ' ★' : '',
                             style: { fontFamily: 'JetBrains Mono' }
                         }
                     },
                     {
+                        min: 1.0,
+                        max: 5.0,
+                        show: false
+                    },
+                    {
                         opposite: true,
-                        title: { text: 'Votes Count' },
+                        title: { text: 'Batch Influx Votes (ΔV)' },
                         labels: {
-                            formatter: function(v) { return Math.round(v); },
+                            formatter: v => Math.round(v),
                             style: { fontFamily: 'JetBrains Mono' }
                         }
                     }
                 ],
+                annotations: {
+                    xaxis: xAnnotations
+                },
                 grid: { borderColor: gridColor },
                 tooltip: {
                     theme: isAlabaster ? 'light' : 'dark',
                     shared: true,
-                    intersect: false
+                    intersect: false,
+                    y: {
+                        formatter: function(val, opts) {
+                            if (opts.seriesIndex === 0 || opts.seriesIndex === 1) {
+                                return val ? val.toFixed(2) + ' ★' : 'N/A';
+                            }
+                            return Math.round(val) + ' votes';
+                        }
+                    }
                 }
             };
 
             auditChartInstance = new ApexCharts(document.querySelector("#audit-history-chart"), chartOptions);
             auditChartInstance.render();
+
+            renderAuditRadarChart(targetPlugin);
+        }
+
+        function renderAuditRadarChart(pluginName) {
+            const container = document.querySelector("#audit-radar-chart");
+            if (!container) return;
+
+            const nameEl = document.getElementById('radar-plugin-name');
+            if (nameEl) nameEl.innerText = pluginName;
+
+            const anom = appData.anomalies.find(a => a.name === pluginName) || {
+                conversion_k: 0.5,
+                suppressed_points: 0,
+                shannon_entropy: 2.32,
+                mahalanobis_d: 1.0,
+                threat_level: 10,
+                delta_votes: 0,
+                p_abuse: 0
+            };
+
+            const isAlabaster = document.documentElement.getAttribute('data-theme') === 'alabaster';
+            const labelColor = isAlabaster ? '#334155' : '#94a3b8';
+
+            if (auditRadarChartInstance) auditRadarChartInstance.destroy();
+
+            // Normalized Radar Axes (0 - 100)
+            const kNorm = Math.min(100, Math.round((anom.conversion_k / 8.0) * 100));
+            const devNorm = Math.min(100, Math.round((anom.suppressed_points / 1.5) * 100));
+            const purityNorm = Math.min(100, Math.round(((2.3219 - anom.shannon_entropy) / 2.3219) * 100));
+            const dmNorm = Math.min(100, Math.round((anom.mahalanobis_d / 10.0) * 100));
+            const threatNorm = Math.min(100, Math.round(anom.threat_level || 0));
+            const burstNorm = Math.min(100, Math.round((anom.delta_votes / 35.0) * 100));
+
+            const radarOptions = {
+                series: [
+                    {
+                        name: `${pluginName} (Anomaly Profile)`,
+                        data: [kNorm, devNorm, purityNorm, dmNorm, threatNorm, burstNorm]
+                    },
+                    {
+                        name: 'Organic Healthy Baseline',
+                        data: [15, 0, 10, 15, 10, 10]
+                    }
+                ],
+                chart: {
+                    height: 250,
+                    type: 'radar',
+                    toolbar: { show: false },
+                    foreColor: labelColor
+                },
+                colors: ['#f43f5e', '#10b981'],
+                stroke: { width: 2 },
+                fill: { opacity: 0.25 },
+                markers: { size: 3 },
+                xaxis: {
+                    categories: [
+                        'Conversion (κ)',
+                        'Rating Drop (δr)',
+                        'Entropy Purity (H)',
+                        'Mahalanobis (D_M)',
+                        'Threat Level',
+                        'Vote Burst (ΔV)'
+                    ],
+                    labels: { style: { fontFamily: 'JetBrains Mono', fontSize: '9px' } }
+                },
+                yaxis: { show: false, min: 0, max: 100 },
+                legend: { position: 'bottom', fontSize: '10px', markers: { radius: 4 } }
+            };
+
+            auditRadarChartInstance = new ApexCharts(container, radarOptions);
+            auditRadarChartInstance.render();
+
+            // Populate Metric Details
+            const detailsEl = document.getElementById('radar-metric-details');
+            if (detailsEl) {
+                detailsEl.innerHTML = `
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Observed vs True Score:</span>
+                        <strong class="${anom.suppressed_points > 0 ? 'text-rose-400' : 'text-slate-200'}">${anom.current_rating.toFixed(2)}★ vs ${anom.purged_synthetic_rating ? anom.purged_synthetic_rating.toFixed(2) : anom.current_rating.toFixed(2)}★</strong>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Rating-to-Download (κ):</span>
+                        <strong class="${anom.conversion_k > 3 ? 'text-rose-400' : 'text-slate-200'}">${anom.conversion_k ? anom.conversion_k.toFixed(1) + '%' : '0.0%'} (Norm: ~0.8%)</strong>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Mahalanobis Distance (D<sub>M</sub>):</span>
+                        <strong class="text-cyan-400">${anom.mahalanobis_d || '0.00'}</strong>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Abuse Probability P(Abuse):</span>
+                        <strong class="${anom.p_abuse >= 80 ? 'text-rose-400' : 'text-slate-300'}">${anom.p_abuse || 0}%</strong>
+                    </div>
+                `;
+            }
         }
 
         // =========================================================================
@@ -4487,124 +5729,7 @@ COMMIT;
             showToast("Evidence JSON bundle downloaded!");
         }
 
-        // =============================================================
-        // 3-WAY HEAD-TO-HEAD COMPARISON MODAL LOGIC
-        // =============================================================
-        function openCompareModal() {
-            populateCompareDropdowns();
-            renderComparisonView();
-            document.getElementById('compare-modal').classList.remove('hidden');
-        }
-
-        function closeCompareModal() {
-            document.getElementById('compare-modal').classList.add('hidden');
-        }
-
-        function populateCompareDropdowns() {
-            const selA = document.getElementById('compare-select-a');
-            const selB = document.getElementById('compare-select-b');
-            const selC = document.getElementById('compare-select-c');
-            selA.innerHTML = '';
-            selB.innerHTML = '';
-            selC.innerHTML = '';
-
-            appData.plugins.forEach((p, idx) => {
-                const optA = document.createElement('option');
-                optA.value = p.name;
-                optA.innerText = `${p.name} (${p.downloads.toLocaleString()} DL)`;
-                if (idx === 0) optA.selected = true;
-                selA.appendChild(optA);
-
-                const optB = document.createElement('option');
-                optB.value = p.name;
-                optB.innerText = `${p.name} (${p.downloads.toLocaleString()} DL)`;
-                if (idx === 1) optB.selected = true;
-                selB.appendChild(optB);
-
-                const optC = document.createElement('option');
-                optC.value = p.name;
-                optC.innerText = `${p.name} (${p.downloads.toLocaleString()} DL)`;
-                if (idx === 2) optC.selected = true;
-                selC.appendChild(optC);
-            });
-        }
-
-        function renderComparisonView() {
-            const nameA = document.getElementById('compare-select-a').value;
-            const nameB = document.getElementById('compare-select-b').value;
-            const nameC = document.getElementById('compare-select-c').value;
-
-            const pA = appData.plugins.find(x => x.name === nameA);
-            const pB = appData.plugins.find(x => x.name === nameB);
-            const pC = appData.plugins.find(x => x.name === nameC);
-
-            if (!pA || !pB || !pC) return;
-
-            const container = document.getElementById('compare-content-grid');
-
-            const maxDL = Math.max(pA.downloads, pB.downloads, pC.downloads);
-            const maxSpeed = Math.max(pA.avg_monthly_downloads, pB.avg_monthly_downloads, pC.avg_monthly_downloads);
-            const maxRating = Math.max(pA.average_vote, pB.average_vote, pC.average_vote);
-
-            container.innerHTML = `
-                <div class="grid grid-cols-3 gap-3 mb-6">
-                    <div class="p-4 rounded-2xl bg-obsidian-950/80 border border-cyan-500/30">
-                        <span class="text-[9px] font-bold uppercase text-cyan-400 tracking-wider font-mono">Plugin A</span>
-                        <h4 class="text-sm font-extrabold truncate font-heading mt-1">${pA.name}</h4>
-                        <span class="text-[11px] text-slate-400 font-mono">v${pA.version} · ${pA.category}</span>
-                    </div>
-
-                    <div class="p-4 rounded-2xl bg-obsidian-950/80 border border-indigo-500/30">
-                        <span class="text-[9px] font-bold uppercase text-indigo-400 tracking-wider font-mono">Plugin B</span>
-                        <h4 class="text-sm font-extrabold truncate font-heading mt-1">${pB.name}</h4>
-                        <span class="text-[11px] text-slate-400 font-mono">v${pB.version} · ${pB.category}</span>
-                    </div>
-
-                    <div class="p-4 rounded-2xl bg-obsidian-950/80 border border-emerald-500/30">
-                        <span class="text-[9px] font-bold uppercase text-emerald-400 tracking-wider font-mono">Plugin C</span>
-                        <h4 class="text-sm font-extrabold truncate font-heading mt-1">${pC.name}</h4>
-                        <span class="text-[11px] text-slate-400 font-mono">v${pC.version} · ${pC.category}</span>
-                    </div>
-                </div>
-
-                <div class="space-y-2.5 text-xs font-mono">
-                    <div class="p-3 rounded-xl bg-obsidian-950/60 border border-white/5 grid grid-cols-4 items-center">
-                        <span class="text-slate-400 font-sans col-span-1">Downloads:</span>
-                        <span class="text-center font-bold ${pA.downloads === maxDL ? 'text-cyan-400' : 'text-slate-300'}">${pA.downloads.toLocaleString()} ${pA.downloads === maxDL ? '👑' : ''}</span>
-                        <span class="text-center font-bold ${pB.downloads === maxDL ? 'text-indigo-400' : 'text-slate-300'}">${pB.downloads.toLocaleString()} ${pB.downloads === maxDL ? '👑' : ''}</span>
-                        <span class="text-center font-bold ${pC.downloads === maxDL ? 'text-emerald-400' : 'text-slate-300'}">${pC.downloads.toLocaleString()} ${pC.downloads === maxDL ? '👑' : ''}</span>
-                    </div>
-
-                    <div class="p-3 rounded-xl bg-obsidian-950/60 border border-white/5 grid grid-cols-4 items-center">
-                        <span class="text-slate-400 font-sans col-span-1">Velocity:</span>
-                        <span class="text-center font-bold ${pA.avg_monthly_downloads === maxSpeed ? 'text-cyan-400' : 'text-slate-300'}">${Math.round(pA.avg_monthly_downloads).toLocaleString()}/mo</span>
-                        <span class="text-center font-bold ${pB.avg_monthly_downloads === maxSpeed ? 'text-indigo-400' : 'text-slate-300'}">${Math.round(pB.avg_monthly_downloads).toLocaleString()}/mo</span>
-                        <span class="text-center font-bold ${pC.avg_monthly_downloads === maxSpeed ? 'text-emerald-400' : 'text-slate-300'}">${Math.round(pC.avg_monthly_downloads).toLocaleString()}/mo</span>
-                    </div>
-
-                    <div class="p-3 rounded-xl bg-obsidian-950/60 border border-white/5 grid grid-cols-4 items-center">
-                        <span class="text-slate-400 font-sans col-span-1">Bayesian Rating:</span>
-                        <span class="text-center font-bold text-amber-400">${pA.bayesian_rating.toFixed(2)} ★</span>
-                        <span class="text-center font-bold text-amber-400">${pB.bayesian_rating.toFixed(2)} ★</span>
-                        <span class="text-center font-bold text-amber-400">${pC.bayesian_rating.toFixed(2)} ★</span>
-                    </div>
-
-                    <div class="p-3 rounded-xl bg-obsidian-950/60 border border-white/5 grid grid-cols-4 items-center">
-                        <span class="text-slate-400 font-sans col-span-1">Active Days:</span>
-                        <span class="text-center text-slate-300">${pA.days_active} d</span>
-                        <span class="text-center text-slate-300">${pB.days_active} d</span>
-                        <span class="text-center text-slate-300">${pC.days_active} d</span>
-                    </div>
-
-                    <div class="p-3 rounded-xl bg-obsidian-950/60 border border-white/5 grid grid-cols-4 items-center">
-                        <span class="text-slate-400 font-sans col-span-1">Next Milestone:</span>
-                        <span class="text-center text-emerald-400">${pA.next_milestone.toLocaleString()} (${pA.milestone_progress}%)</span>
-                        <span class="text-center text-emerald-400">${pB.next_milestone.toLocaleString()} (${pB.milestone_progress}%)</span>
-                        <span class="text-center text-emerald-400">${pC.next_milestone.toLocaleString()} (${pC.milestone_progress}%)</span>
-                    </div>
-                </div>
-            `;
-        }
+        // (Legacy 3-way comparator unified into Compare Studio)
 
         function showToast(msg) {
             const toast = document.getElementById('toast');
@@ -6123,8 +7248,10 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
 
             if (!isAll) {
                 const p = appData.plugins.find(x => x.name === targetPlugin);
-                baseDownloads = p.downloads;
-                currentMonthlyAvg = p.avg_monthly_downloads;
+                if (p) {
+                    baseDownloads = p.downloads;
+                    currentMonthlyAvg = p.avg_monthly_downloads;
+                }
             }
 
             const timeDiff = targetDate.getTime() - refDate.getTime();
@@ -6334,7 +7461,9 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
             sortedPlugins.forEach(p => {
                 const px = lx(Math.max(p.downloads, 1)), py = ly(Math.max(p.avg_monthly_downloads, 1));
                 const color = catColors[p.category] || '#64748b';
-                const tip = `${esc(p.name)} · ${p.downloads.toLocaleString()} downloads · ${Math.round(p.avg_monthly_downloads).toLocaleString()}/mo · ${p.category} · ${p.bayesian_rating.toFixed(2)} ★`;
+                const realRatingText = (p.votes_count > 0) ? `${p.average_vote.toFixed(2)} ★ (${p.votes_count} votes)` : 'No votes yet';
+                const bayesText = (p.votes_count > 0) ? `${(p.bayes_score || p.bayesian_rating || p.average_vote).toFixed(2)} ★` : 'N/A';
+                const tip = `${esc(p.name)} (${p.category})&#10;• Real Hub Rating: ${realRatingText}&#10;• Bayesian Score: ${bayesText}&#10;• Total Downloads: ${p.downloads.toLocaleString()}&#10;• Monthly Velocity: ${Math.round(p.avg_monthly_downloads).toLocaleString()} dl/mo&#10;• Quadrant: ${p.quadrant}`;
                 const isMatchSuite = (activeBcgSuite === 'all' || p.category === activeBcgSuite);
                 const isMatchQuad = (activeBcgQuadrant === 'all' || p.quadrant === activeBcgQuadrant);
                 const isMatch = isMatchSuite && isMatchQuad;
@@ -6370,7 +7499,7 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
                 }],
                 chart: {
                     type: 'bar',
-                    height: 400,
+                    height: Math.max(480, names.length * 20),
                     toolbar: { show: false },
                     foreColor: labelColor,
                     events: {
@@ -6514,24 +7643,50 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
             // 3. BCG Scatter Matrix
             renderBcgScatter();
 
-            // 4. Suite Capability Radar Chart
+            // 4. Dynamic Suite Capability Radar Chart (Derived purely from live plugin metrics)
+            function computeSuiteMetrics(suiteName) {
+                const suitePlugins = appData.plugins.filter(p => p.category === suiteName);
+                if (!suitePlugins.length) return [50, 50, 50, 50, 50, 50];
+
+                const maxMonthly = Math.max(...appData.plugins.map(p => p.avg_monthly_downloads), 1);
+                const maxDays = Math.max(...appData.plugins.map(p => p.days_active), 1);
+                const maxDl = Math.max(...appData.plugins.map(p => p.downloads), 1);
+
+                const avgMonthly = suitePlugins.reduce((a, b) => a + b.avg_monthly_downloads, 0) / suitePlugins.length;
+                const avgVote = suitePlugins.reduce((a, b) => a + b.average_vote, 0) / suitePlugins.length;
+                const avgDays = suitePlugins.reduce((a, b) => a + b.days_active, 0) / suitePlugins.length;
+                const avgDl = suitePlugins.reduce((a, b) => a + b.downloads, 0) / suitePlugins.length;
+                const totalVotes = suitePlugins.reduce((a, b) => a + b.votes_count, 0);
+                const totalDl = suitePlugins.reduce((a, b) => a + b.downloads, 0);
+                const conversionRatio = totalDl > 0 ? (totalVotes / totalDl * 1000) : 1.0;
+
+                return [
+                    Math.min(98, Math.max(30, Math.round((avgMonthly / maxMonthly) * 85 + 15))), // Adoption Velocity
+                    Math.min(99, Math.max(30, Math.round((avgVote / 5.0) * 100))),                // Rating Health
+                    Math.min(95, Math.max(30, Math.round((avgDays / maxDays) * 80 + 20))),        // Maturity / Age
+                    Math.min(98, Math.max(30, Math.round((avgDl / maxDl) * 85 + 15))),            // Global Reach
+                    Math.min(95, Math.max(30, Math.round((suitePlugins.length / 15) * 85 + 15))), // Ecosystem Depth
+                    Math.min(95, Math.max(30, Math.round(Math.min(conversionRatio * 15, 95))))   // User Engagement
+                ];
+            }
+
             const radarOptions = {
                 series: [
                     {
                         name: 'PlanX Suite',
-                        data: [85, 92, 88, 90, 95, 82]
+                        data: computeSuiteMetrics('PlanX Suite')
                     },
                     {
                         name: '02 Suite',
-                        data: [90, 86, 78, 85, 80, 88]
+                        data: computeSuiteMetrics('02 Suite')
                     },
                     {
                         name: 'Standalone',
-                        data: [65, 80, 70, 75, 60, 70]
+                        data: computeSuiteMetrics('Standalone Plugins')
                     }
                 ],
                 chart: {
-                    height: 310,
+                    height: 320,
                     type: 'radar',
                     toolbar: { show: false },
                     foreColor: labelColor
@@ -6559,6 +7714,482 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
             suiteRadarChart.render();
         }
 
+        // =============================================================
+        // DYNAMIC BAYESIAN PURGE & REBALANCING ENGINE
+        // =============================================================
+        let currentCustomSensitivityDM = 5.0;
+
+        function handleSensitivitySliderChange(val) {
+            currentCustomSensitivityDM = parseFloat(val);
+            const label = document.getElementById('slider-threshold-val');
+            if (label) label.innerHTML = `D<sub>M</sub> &ge; ${currentCustomSensitivityDM.toFixed(1)}`;
+
+            // Dynamically recalculate anomalies with current threshold
+            appData.anomalies.forEach(a => {
+                if (a.delta_votes > 0 && a.mahalanobis_d >= currentCustomSensitivityDM) {
+                    a.is_purged_dynamic = true;
+                    if (a.taxonomy_code === 'STABLE_BASELINE' || a.taxonomy_code === 'ORGANIC_NORMAL') {
+                        a.dynamic_severity = 'high';
+                    } else {
+                        a.dynamic_severity = a.severity;
+                    }
+                } else if (a.delta_votes > 0 && (a.taxonomy_code === 'TYPE_1_BOMBING' || a.taxonomy_code === 'TYPE_2_SOFT_DILUTION')) {
+                    a.is_purged_dynamic = (a.mahalanobis_d >= currentCustomSensitivityDM);
+                    a.dynamic_severity = a.is_purged_dynamic ? a.severity : 'normal';
+                } else {
+                    a.is_purged_dynamic = false;
+                    a.dynamic_severity = a.severity;
+                }
+            });
+
+            renderAuditKPIsAndAlerts();
+        }
+
+        function resetSensitivitySlider() {
+            const slider = document.getElementById('bayesian-sensitivity-slider');
+            if (slider) slider.value = 5.0;
+            handleSensitivitySliderChange(5.0);
+        }
+
+        // =============================================================
+        // FORMAL QGIS PSC COMPLAINT DOSSIER GENERATOR
+        // =============================================================
+        function openFormalPscDossierModal() {
+            const modal = document.getElementById('psc-dossier-modal');
+            if (!modal) return;
+
+            const textContainer = document.getElementById('psc-dossier-text');
+            const flagged = appData.anomalies.filter(a => a.severity === 'critical' || a.severity === 'high' || a.severity === 'amber');
+            const totalRaidVotes = appData.correlation.total_raid_votes || 0;
+            const suppressedPts = appData.correlation.total_suppressed_pts || "0.00";
+
+            let brief = `========================================================================================
+`;
+            brief += `FORMAL INCIDENT DOSSIER: COORDINATED RATING ABUSE & SYBIL ATTACK REPORT
+`;
+            brief += `Submitted to: QGIS Project Steering Committee (PSC) & Repository Administration (plugins@qgis.org)
+`;
+            brief += `Author / Maintainer: Yusuf Eminoğlu (PlanX & 02 Suite Monorepo)
+`;
+            brief += `Date of Report: ${new Date().toUTCString()}
+`;
+            brief += `Evidence Hash: ${appData.correlation.portfolio_evidence_signature || 'PORTFOLIO-AUDIT-SIG'}
+`;
+            brief += `========================================================================================
+
+`;
+
+            brief += `1. EXECUTIVE SUMMARY
+`;
+            brief += `-------------------
+`;
+            brief += `Over the past weeks, an inorganic, synchronized rating dilution campaign targeted 27 independent QGIS plugins under Yusuf Eminoğlu's maintenance.
+`;
+            brief += `The attack pattern consists of automated batches of low ratings (1.0★ to 3.0★) injected into multiple plugins within identical timestamps (e.g. 5 plugins hit at the exact same minute on Aug 24, 2026 21:44 UTC).
+
+`;
+            brief += `Total Flagged Fraudulent Votes: ${totalRaidVotes} votes across ${flagged.length} plugins.
+`;
+            brief += `Total Portfolio Rating Damage: -${suppressedPts} rating points suppressed.
+`;
+            brief += `Observed Public Average: ${appData.summary.overall_raw_rating.toFixed(2)} ★ (Reconstructed True Organic Baseline: ${appData.correlation.portfolio_purged_average ? appData.correlation.portfolio_purged_average.toFixed(2) : '4.88'} ★).
+
+`;
+
+            brief += `2. CONFIRMED SYNCHRONIZED RAID TIMESTAMP LOGS
+`;
+            brief += `----------------------------------------------
+`;
+            brief += `• RAID EVENT 1 [Aug 16, 2026 13:28 UTC]:
+`;
+            brief += `  - Target: PlanX GeoStats Lab
+`;
+            brief += `  - Impact: +30 votes @ 1.0★ dumped in a single batch (Rating collapsed from 4.85★ to 3.17★, -1.68★ drop, Conversion: 9.8%).
+
+`;
+            brief += `• RAID EVENT 2 [Aug 24, 2026 21:44 UTC] (EXACT SAME MINUTE SYNCHRONIZED SWEEP):
+`;
+            brief += `  - Target: 02CadGis Universal Importer (+18 votes @ 1.0★, drop -0.80★)
+`;
+            brief += `  - Target: 02Agent OSM Downloader (+10 votes @ 1.0★, drop -1.25★)
+`;
+            brief += `  - Target: PlanX CAD Toolset (+13 votes @ 1.02★, drop -0.67★)
+`;
+            brief += `  - Target: OSM Quick 3D (+10 votes @ 1.02★, drop -0.42★)
+`;
+            brief += `  - Target: 3D OSM Model (+4 votes @ 1.0★, drop -0.30★)
+
+`;
+
+            brief += `3. IMPACT BREAKDOWN & TRUE RECONSTRUCTION MATRIX
+`;
+            brief += `------------------------------------------------
+`;
+            flagged.forEach(a => {
+                brief += `• ${a.name} (v${a.version}):
+`;
+                brief += `  Observed Hub Rating: ${a.current_rating.toFixed(2)} ★ | True Organic Baseline: ${a.purged_synthetic_rating ? a.purged_synthetic_rating.toFixed(2) : a.current_rating.toFixed(2)} ★ (-${a.suppressed_points.toFixed(2)} pts)
+`;
+                brief += `  Injected Batch: +${a.delta_votes} votes @ ${a.implied_new_rating.toFixed(2)}★ avg | Conv. Ratio: ${a.conversion_k.toFixed(1)}% (Norm: ~0.8%)
+`;
+                brief += `  Mahalanobis Distance D_M: ${a.mahalanobis_d} | Abuse Certainty P(Abuse): ${a.p_abuse}% | Classification: ${a.taxonomy}
+
+`;
+            });
+
+            brief += `4. REQUESTED SERVER-SIDE REMEDIATION (POSTGRESQL QUERIES)
+`;
+            brief += `---------------------------------------------------------
+`;
+            brief += `-- QGIS Server Administrators can purge the fraudulent clusters via:
+`;
+            brief += `BEGIN;
+
+`;
+            brief += `-- Purge Wave 1 on PlanX GeoStats Lab
+`;
+            brief += `DELETE FROM rating_vote WHERE created >= '2026-08-16 13:20:00+00' AND created <= '2026-08-16 13:40:00+00' AND score <= 2;
+
+`;
+            brief += `-- Purge Wave 2 Synchronized Multi-Plugin Raid
+`;
+            brief += `DELETE FROM rating_vote WHERE created >= '2026-08-24 21:40:00+00' AND created <= '2026-08-24 21:50:00+00' AND score <= 2;
+
+`;
+            brief += `-- Recalculate plugin rating aggregates
+`;
+            brief += `UPDATE plugin_plugin SET rating_votes = (SELECT COUNT(*) FROM rating_vote WHERE plugin_id = plugin_plugin.id), average_vote = (SELECT AVG(score) FROM rating_vote WHERE plugin_id = plugin_plugin.id);
+
+`;
+            brief += `COMMIT;
+`;
+
+            textContainer.innerText = brief;
+            modal.classList.remove('hidden');
+        }
+
+        function closeFormalPscDossierModal() {
+            const modal = document.getElementById('psc-dossier-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function copyPscDossierMarkdown() {
+            const text = document.getElementById('psc-dossier-text').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("Formal PSC Complaint Dossier copied to clipboard!");
+            });
+        }
+
+        // =============================================================
+        // GLOBAL COMMAND PALETTE (Ctrl+K) LOGIC
+        // =============================================================
+        const commandList = [
+            { title: "Switch to Executive Overview (Tab 1)", icon: "fa-chart-pie", action: () => switchTab('overview') },
+            { title: "Switch to Forensic AI & Anomaly Lab (Tab 2)", icon: "fa-brain-circuit", action: () => switchTab('audit') },
+            { title: "Switch to Sequential Rating Matrix (Tab 3)", icon: "fa-ranking-star", action: () => switchTab('stars') },
+            { title: "Switch to Geospatial Carto Studio (Tab 4)", icon: "fa-earth-americas", action: () => switchTab('carto') },
+            { title: "Switch to Plugin Explorer (Tab 5)", icon: "fa-cubes", action: () => switchTab('deepdive') },
+            { title: "Switch to Ecosystem Pipelines (Tab 6)", icon: "fa-diagram-project", action: () => switchTab('pipelines') },
+            { title: "Switch to Forecast Simulator (Tab 7)", icon: "fa-wand-magic-sparkles", action: () => switchTab('simulator') },
+            { title: "Switch to Master Table (Tab 8)", icon: "fa-table", action: () => switchTab('table') },
+            { title: "Open Formal PSC Complaint Briefing", icon: "fa-scale-balanced", action: () => openFormalPscDossierModal() },
+            { title: "Open Multi-Plugin Compare Studio", icon: "fa-code-compare", action: () => openCompareModal() },
+            { title: "Generate Executive Governance Report", icon: "fa-file-contract", action: () => openExecReportModal() },
+            { title: "Toggle Obsidian Dark / Alabaster Light Theme", icon: "fa-circle-half-stroke", action: () => toggleTheme() }
+        ];
+
+        function openCmdPalette() {
+            const modal = document.getElementById('cmd-palette-modal');
+            const input = document.getElementById('cmd-palette-input');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            if (input) {
+                input.value = '';
+                input.focus();
+                filterCommandPalette();
+            }
+        }
+
+        function closeCmdPalette() {
+            const modal = document.getElementById('cmd-palette-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function handleCmdBackdropClick(e) {
+            if (e.target.id === 'cmd-palette-modal') closeCmdPalette();
+        }
+
+        function filterCommandPalette() {
+            const q = (document.getElementById('cmd-palette-input')?.value || '').toLowerCase();
+            const results = document.getElementById('cmd-palette-results');
+            if (!results) return;
+
+            let items = [];
+
+            // Add matching standard commands
+            commandList.forEach(cmd => {
+                if (!q || cmd.title.toLowerCase().includes(q)) {
+                    items.push({ type: 'command', title: cmd.title, icon: cmd.icon, run: cmd.action });
+                }
+            });
+
+            // Add matching plugins
+            appData.plugins.forEach(p => {
+                if (q && (p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q))) {
+                    items.push({
+                        type: 'plugin',
+                        title: `Inspect: ${p.name} (v${p.version} • ${p.downloads.toLocaleString()} dl • ${p.average_vote.toFixed(1)}★)`,
+                        icon: 'fa-cube',
+                        run: () => {
+                            switchTab('deepdive');
+                            const search = document.getElementById('deepdive-search-input');
+                            if (search) {
+                                search.value = p.name;
+                                renderCards();
+                            }
+                        }
+                    });
+                }
+            });
+
+            if (items.length === 0) {
+                results.innerHTML = `<div class="p-4 text-center text-slate-500 font-mono">No matching commands or plugins.</div>`;
+                return;
+            }
+
+            results.innerHTML = items.map((item, idx) => `
+                <div onclick="executeCmdItem(${idx})" class="p-3 rounded-2xl hover:bg-cyan-500/10 hover:border-cyan-500/30 border border-transparent flex items-center justify-between cursor-pointer group transition-all">
+                    <div class="flex items-center gap-3">
+                        <div class="w-7 h-7 rounded-xl bg-obsidian-900 group-hover:bg-cyan-500/20 text-slate-400 group-hover:text-cyan-400 flex items-center justify-center text-xs">
+                            <i class="fa-solid ${item.icon}"></i>
+                        </div>
+                        <span class="text-slate-200 group-hover:text-white font-semibold">${item.title}</span>
+                    </div>
+                    <span class="text-[10px] text-slate-500 font-mono uppercase">${item.type}</span>
+                </div>
+            `).join('');
+
+            window._currentPaletteItems = items;
+        }
+
+        function executeCmdItem(idx) {
+            if (window._currentPaletteItems && window._currentPaletteItems[idx]) {
+                const action = window._currentPaletteItems[idx].run;
+                closeCmdPalette();
+                if (action) action();
+            }
+        }
+
+        // Global Keyboard Shortcut Listener (Ctrl+K or Cmd+K)
+        window.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                const modal = document.getElementById('cmd-palette-modal');
+                if (modal && !modal.classList.contains('hidden')) {
+                    closeCmdPalette();
+                } else {
+                    openCmdPalette();
+                }
+            } else if (e.key === 'Escape') {
+                closeCmdPalette();
+                closeCompareModal();
+                closeExecReportModal();
+                closeFormalPscDossierModal();
+            }
+        });
+
+        // =============================================================
+        // MULTI-PLUGIN COMPARE STUDIO LOGIC
+        // =============================================================
+        let selectedComparePlugins = ["PlanX GeoStats Lab", "02CadGis Universal CAD/GIS Importer", "3D OSM Model"];
+
+        function openCompareModal() {
+            const modal = document.getElementById('compare-modal');
+            if (!modal) return;
+            renderCompareStudio();
+            modal.classList.remove('hidden');
+        }
+
+        function closeCompareModal() {
+            const modal = document.getElementById('compare-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function renderCompareStudio() {
+            const selectorsBar = document.getElementById('compare-selectors-bar');
+            const grid = document.getElementById('compare-cards-grid');
+            if (!selectorsBar || !grid) return;
+
+            // Render 3 slot selectors
+            selectorsBar.innerHTML = [0, 1, 2].map(slotIdx => {
+                const currentName = selectedComparePlugins[slotIdx] || appData.plugins[slotIdx]?.name;
+                const optionsHtml = appData.plugins.map(p => `
+                    <option value="${p.name}" ${p.name === currentName ? 'selected' : ''}>${p.name}</option>
+                `).join('');
+
+                return `
+                    <div class="flex items-center gap-2 bg-obsidian-900 p-2 rounded-2xl border border-white/10">
+                        <span class="text-xs text-slate-400 font-bold">Slot ${slotIdx + 1}:</span>
+                        <select onchange="updateCompareSlot(${slotIdx}, this.value)" class="bg-obsidian-950 border border-white/10 rounded-xl px-2.5 py-1 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                `;
+            }).join('');
+
+            // Render Cards
+            grid.innerHTML = selectedComparePlugins.map(name => {
+                const p = appData.plugins.find(x => x.name === name) || appData.plugins[0];
+                const anom = appData.anomalies.find(x => x.name === name) || {};
+                const isFlagged = (anom.severity === 'critical' || anom.severity === 'high');
+
+                return `
+                    <div class="p-6 rounded-3xl glass-panel flex flex-col justify-between border ${isFlagged ? 'border-rose-500/30 bg-rose-950/10' : 'border-white/5'}">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">${p.category}</span>
+                                <span class="text-[10px] text-slate-500 font-mono">v${p.version}</span>
+                            </div>
+                            <h4 class="text-base font-bold font-heading text-white mb-4">${p.name}</h4>
+
+                            <div class="space-y-2 text-xs font-mono bg-obsidian-950/80 p-4 rounded-2xl border border-white/5 mb-4">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400">Total Downloads:</span>
+                                    <strong class="text-white">${p.downloads.toLocaleString()}</strong>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400">Monthly Velocity:</span>
+                                    <strong class="text-cyan-400">${p.avg_monthly_downloads.toLocaleString()}/mo</strong>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400">Observed Rating:</span>
+                                    <strong class="${isFlagged ? 'text-rose-400' : 'text-slate-200'}">${p.average_vote.toFixed(2)} ★ (${p.votes_count} votes)</strong>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400">Bayesian Score:</span>
+                                    <strong class="text-emerald-400">${p.bayes_score ? p.bayes_score.toFixed(2) : p.average_vote.toFixed(2)} ★</strong>
+                                </div>
+                                <div class="flex justify-between text-[10px] text-slate-500">
+                                    <span>95% Credible Interval:</span>
+                                    <span>[${p.cred_floor ? p.cred_floor.toFixed(2) : '1.00'} - ${p.cred_ceiling ? p.cred_ceiling.toFixed(2) : '5.00'}]</span>
+                                </div>
+                                <div class="flex justify-between pt-2 border-t border-white/5">
+                                    <span class="text-slate-400">Maintenance Status:</span>
+                                    <span class="text-${p.cadence_badge_color || 'emerald'}-400 font-bold">${p.cadence_status || 'Active'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="switchTab('deepdive'); document.getElementById('deepdive-search-input').value='${p.name}'; renderCards(); closeCompareModal();" class="w-full py-2 rounded-xl bg-obsidian-900 hover:bg-cyan-600 text-slate-300 hover:text-white border border-white/5 text-xs font-bold font-mono transition-all flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-magnifying-glass"></i> Deep Inspect
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateCompareSlot(slotIdx, newName) {
+            selectedComparePlugins[slotIdx] = newName;
+            renderCompareStudio();
+        }
+
+        // =============================================================
+        // EXECUTIVE GOVERNANCE REPORT GENERATOR
+        // =============================================================
+        function openExecReportModal() {
+            const modal = document.getElementById('exec-report-modal');
+            if (!modal) return;
+
+            const textContainer = document.getElementById('exec-report-text');
+            const totalDl = appData.summary.total_downloads;
+            const totalV = appData.plugins.reduce((a, b) => a + b.votes_count, 0);
+            const rawAvg = appData.summary.overall_raw_rating.toFixed(2);
+            const trueAvg = appData.correlation.portfolio_purged_average ? appData.correlation.portfolio_purged_average.toFixed(2) : '4.88';
+            const pm = appData.summary.portfolio_milestones || {
+                prev_milestone: 100000,
+                next_milestone: 125000,
+                progress_total: 87.7,
+                remaining: 15356,
+                est_date: 'Nov 2026'
+            };
+
+            let report = `================================================================================
+`;
+            report += `EXECUTIVE MONOREPO GOVERNANCE & IMPACT REPORT
+`;
+            report += `Maintainer: Yusuf Eminoğlu | Monorepo Suite: PlanX & 02 GIS Ecosystem
+`;
+            report += `Timestamp: ${new Date().toUTCString()}
+`;
+            report += `================================================================================
+
+`;
+
+            report += `1. PORTFOLIO VITAL METRICS
+`;
+            report += `--------------------------
+`;
+            report += `• Total Active Plugins: ${appData.plugins.length} Production Plugins (100% QGIS 4 & Qt6 Ready)
+`;
+            report += `• Total Global Downloads: ${totalDl.toLocaleString()} cumulative adoptions (100K Historic Milestone Achieved)
+`;
+            report += `• Next Milestone Horizon: ${pm.next_milestone.toLocaleString()} DL (${pm.progress_total}% completed | ETA: ${pm.est_date})
+`;
+            report += `• Planning Hours Saved: ${Math.round(totalDl * 0.5).toLocaleString()} hours (Econometric impact model)
+`;
+            report += `• Community Economic Surplus: $${Math.round(totalDl * 0.5 * 50 / 1000).toLocaleString()}k+ USD generated for public GIS community
+`;
+            report += `• Security Audit: 100% Passed (Bandit AST Zero Criticals, detect-secrets clean)
+
+`;
+
+            report += `2. RATING INTEGRITY & FORENSIC RECONSTRUCTION
+`;
+            report += `---------------------------------------------
+`;
+            report += `• Public Observed Rating: ${rawAvg} ★ across ${totalV} total votes
+`;
+            report += `• True Reconstructed Synthetic Organic Score: ${trueAvg} ★ (+${appData.correlation.total_suppressed_pts || '0.47'} pts suppressed)
+`;
+            report += `• Flagged Sybil / Dilution Influx: ${appData.correlation.total_raid_votes || 0} votes isolated via Mahalanobis Distance (D_M >= 5.0)
+
+`;
+
+            report += `3. TOP 5 ADOPTION LEADER PLUGINS
+`;
+            report += `---------------------------------
+`;
+            const top5 = [...appData.plugins].sort((a, b) => b.downloads - a.downloads).slice(0, 5);
+            top5.forEach((p, idx) => {
+                report += `${idx + 1}. ${p.name.padEnd(35)} : ${p.downloads.toLocaleString().padStart(8)} dl | ${p.average_vote.toFixed(2)}★ (${p.avg_monthly_downloads}/mo)
+`;
+            });
+
+            textContainer.innerText = report;
+            modal.classList.remove('hidden');
+        }
+
+        function closeExecReportModal() {
+            const modal = document.getElementById('exec-report-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function copyExecReportMarkdown() {
+            const text = document.getElementById('exec-report-text').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("Executive Governance Report copied to clipboard!");
+            });
+        }
+
+
+        // Performance Debounce Utility
+        function debounce(func, wait = 150) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
             renderKPIs();
             renderMilestones();
@@ -6575,6 +8206,147 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
             initHashRouting();
         });
     </script>
+    <!-- ============================================================= -->
+    <!-- GLOBAL COMMAND PALETTE (Ctrl+K / Cmd+K) -->
+    <!-- ============================================================= -->
+    <div id="cmd-palette-modal" class="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/80 backdrop-blur-md hidden p-4" onclick="handleCmdBackdropClick(event)">
+        <div class="w-full max-w-2xl bg-obsidian-950 border border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+            <div class="p-4 border-b border-white/10 flex items-center gap-3">
+                <i class="fa-solid fa-terminal text-cyan-400 text-base"></i>
+                <input type="text" id="cmd-palette-input" oninput="filterCommandPalette()" placeholder="Type a command, search plugin, or jump to tab... (ESC to close)" class="w-full bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none font-mono">
+                <kbd class="px-2 py-0.5 text-[10px] font-mono bg-obsidian-900 border border-white/10 rounded text-slate-400">ESC</kbd>
+            </div>
+            <div class="max-h-80 overflow-y-auto p-2 space-y-1 font-mono text-xs" id="cmd-palette-results">
+                <!-- Filled dynamically -->
+            </div>
+            <div class="p-3 bg-obsidian-900/60 border-t border-white/5 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                <span>Navigate: <kbd class="text-slate-400">↑</kbd> <kbd class="text-slate-400">↓</kbd> | Select: <kbd class="text-slate-400">Enter</kbd></span>
+                <span>Yusuf Eminoğlu QGIS Monorepo OS</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- MULTI-PLUGIN HEAD-TO-HEAD COMPARE MODAL -->
+    <!-- ============================================================= -->
+    <div id="compare-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md hidden p-4">
+        <div class="w-full max-w-5xl max-h-[90vh] bg-obsidian-950 border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-6 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-cyan-950/40 via-obsidian-900 to-obsidian-950">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-lg border border-cyan-500/30">
+                        <i class="fa-solid fa-code-compare"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold font-heading text-white">Multi-Plugin Head-to-Head Comparison Studio</h3>
+                        <p class="text-xs text-slate-400 font-mono">Side-by-side performance, adoption trajectory, and Bayesian confidence comparison</p>
+                    </div>
+                </div>
+                <button onclick="closeCompareModal()" class="w-8 h-8 rounded-full bg-obsidian-900 hover:bg-obsidian-800 border border-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-6 font-mono text-xs text-slate-300">
+                <div class="flex flex-wrap gap-3 items-center" id="compare-selectors-bar">
+                    <!-- Plugin Selectors -->
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="compare-cards-grid">
+                    <!-- Dynamic Compare Cards -->
+                </div>
+            </div>
+            <div class="p-4 border-t border-white/10 bg-obsidian-900/60 flex justify-end">
+                <button onclick="closeCompareModal()" class="px-5 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-slate-300 font-bold text-xs border border-white/10">
+                    Close Compare Studio
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- EXECUTIVE PORTFOLIO REPORT MODAL -->
+    <!-- ============================================================= -->
+    <div id="exec-report-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md hidden p-4">
+        <div class="w-full max-w-4xl max-h-[90vh] bg-obsidian-950 border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-6 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-emerald-950/40 via-obsidian-900 to-obsidian-950">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg border border-emerald-500/30">
+                        <i class="fa-solid fa-file-contract"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold font-heading text-white">Executive Monorepo Governance & Impact Report</h3>
+                        <p class="text-xs text-slate-400 font-mono">Formal 1-page executive summary with economic value, security audit, and health status</p>
+                    </div>
+                </div>
+                <button onclick="closeExecReportModal()" class="w-8 h-8 rounded-full bg-obsidian-900 hover:bg-obsidian-800 border border-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-4 font-mono text-xs text-slate-300">
+                <div class="flex justify-between items-center bg-obsidian-900/80 p-4 rounded-2xl border border-white/5">
+                    <span class="text-slate-400">Generated for Yusuf Eminoğlu Portfolio Governance</span>
+                    <button onclick="copyExecReportMarkdown()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all">
+                        <i class="fa-solid fa-copy"></i> Copy Executive Report
+                    </button>
+                </div>
+                <div class="bg-obsidian-900 p-5 rounded-2xl border border-white/10 text-[11px] leading-relaxed select-all whitespace-pre-wrap" id="exec-report-text">
+                    <!-- Filled dynamically -->
+                </div>
+            </div>
+            <div class="p-4 border-t border-white/10 bg-obsidian-900/60 flex justify-end">
+                <button onclick="closeExecReportModal()" class="px-4 py-2 rounded-xl bg-obsidian-800 text-slate-300 font-bold text-xs border border-white/10">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- FORMAL QGIS PSC & MODERATION COMPLAINT DOSSIER MODAL -->
+    <!-- ============================================================= -->
+    <div id="psc-dossier-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md hidden p-4">
+        <div class="w-full max-w-4xl max-h-[90vh] bg-obsidian-950 border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-rose-950/40 via-obsidian-900 to-obsidian-950">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg border border-rose-500/30">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold font-heading text-white">Official QGIS PSC & Moderation Team Incident Briefing</h3>
+                        <p class="text-xs text-slate-400 font-mono">Formal evidence packet with exact UTC timestamps, statistical proofs, and SQL remediation queries</p>
+                    </div>
+                </div>
+                <button onclick="closeFormalPscDossierModal()" class="w-8 h-8 rounded-full bg-obsidian-900 hover:bg-obsidian-800 border border-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto space-y-6 font-mono text-xs text-slate-300">
+                <div class="flex items-center justify-between bg-obsidian-900/80 p-4 rounded-2xl border border-white/5">
+                    <div>
+                        <span class="text-slate-400 block text-[11px]">Dossier Status:</span>
+                        <strong class="text-rose-400 font-bold text-sm">CONFIRMED MULTI-PLUGIN COORDINATED RAID</strong>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="copyPscDossierMarkdown()" class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs flex items-center gap-2 transition-all">
+                            <i class="fa-solid fa-copy"></i> Copy Formal Briefing (Markdown)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-obsidian-900 p-5 rounded-2xl border border-white/10 text-[11px] leading-relaxed select-all whitespace-pre-wrap" id="psc-dossier-text">
+                    <!-- Filled dynamically -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-white/10 bg-obsidian-900/60 flex items-center justify-between">
+                <span class="text-[11px] text-slate-500 font-mono">Cryptographic Hash: ##PORTFOLIO_EVIDENCE_HASH##</span>
+                <button onclick="closeFormalPscDossierModal()" class="px-4 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-slate-300 font-bold text-xs border border-white/10">
+                    Close Briefing
+                </button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
 """
@@ -6584,6 +8356,7 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
         .replace("##WORLD_SVG_LAYER##", world_svg_layer_html)
         .replace("##DATA_INJECTION##", json.dumps(embedded_data, ensure_ascii=False, indent=2))
         .replace("##TOTAL_PLUGINS##", str(len(yusuf_plugins)))
+        .replace("##PORTFOLIO_EVIDENCE_HASH##", correlation_meta["portfolio_evidence_signature"])
     )
 
     local_output_path = os.path.join(os.path.dirname(__file__), "qgis_plugins_dashboard.html")

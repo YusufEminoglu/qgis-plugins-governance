@@ -61,6 +61,15 @@ ICONS = {
     "02agent-smart-modeler": "zero2smartmodeler/icons/icon.png",
     "zero2agent-smartmodeler": "zero2smartmodeler/icons/icon.png",
     "zero2smartmodeler": "zero2smartmodeler/icons/icon.png",
+    "zero2cartolab": "zero2cartolab/icons/icon.png",
+    "02cartolab": "zero2cartolab/icons/icon.png",
+    "02-cartolab": "zero2cartolab/icons/icon.png",
+    "qgis_25d_styling": "qgis_25d_styling/icons/icon.png",
+    "qgis-25d-styling": "qgis_25d_styling/icons/icon.png",
+    "zero2route3d": "zero2route3d/icons/icon.png",
+    "02route3d": "zero2route3d/icons/icon.png",
+    "02route-3d": "zero2route3d/icons/icon.png",
+    "02-route-3d": "zero2route3d/icons/icon.png",
 }
 
 

@@ -2150,6 +2150,7 @@ try:
                         <span class="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">PORTFOLIO GOVERNANCE STUDIO</span>
                     </div>
                     <p class="text-xs text-slate-400 mt-0.5">QGIS Plugins Enterprise Analytics, Rating Forensic Surveillance & Strategic Growth Engine</p>
+                    <p id="header-last-updated" class="text-[10px] text-slate-500 mt-1 font-mono"></p>
                 </div>
             </div>
 
@@ -8191,6 +8192,7 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
         }
 
         document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById('header-last-updated').textContent = `Last updated: ${appData.summary.last_updated}`;
             renderKPIs();
             renderMilestones();
             renderAuditKPIsAndAlerts();

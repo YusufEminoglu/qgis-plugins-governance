@@ -16,6 +16,6 @@ update-dashboard:
     - git add plugins_history.json qgis_plugins_dashboard.html index.html
     - git diff --cached --quiet && echo "No changes to commit." && exit 0 || echo "Changes detected, committing."
     - 'git commit -m "chore(telemetry): scheduled sync of live QGIS metrics [skip ci]"'
-    - git remote set-url origin "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+    - git remote set-url origin "https://oauth2:${GITLAB_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
     - git push origin HEAD:${CI_COMMIT_REF_NAME}
     - if [ -n "$GITHUB_PUSH_TOKEN" ]; then git remote add github "https://${GITHUB_PUSH_TOKEN}@github.com/YusufEminoglu/qgis-plugins-governance.git" || true; git push github HEAD:main; else echo "GITHUB_PUSH_TOKEN not set; skipping GitHub mirror push."; fi

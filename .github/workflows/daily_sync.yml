@@ -1,9 +1,6 @@
 name: Daily Plugin Analytics & Security Audit
 
 on:
-  schedule:
-    # Runs once a day at 00:00 UTC
-    - cron: '0 0 * * *'
   push:
     branches:
       - main

@@ -8368,7 +8368,7 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
     with open(index_output_path, "w", encoding="utf-8") as f:
         f.write(html_output)
 
-    print(f"[5/5] Success: Clean, elite studio generated at: {local_output_path} and {index_output_path}")
+    print(f"[5/5] Success: dashboard generated at: {local_output_path} and {index_output_path}")
 
 except Exception as e:
     import traceback

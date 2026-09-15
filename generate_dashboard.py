@@ -200,7 +200,7 @@ try:
                 headers={"User-Agent": "Mozilla/5.0", "Content-Type": "application/json"},
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=40) as _resp:
+            with urllib.request.urlopen(req, timeout=8) as _resp:
                 rows = json.load(_resp)
         except Exception as _e:
             print(f"    [warn] country data fetch failed for {package_name}: {_e}")

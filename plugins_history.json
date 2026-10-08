@@ -32016,5 +32016,201 @@
         "version": "0.1.1"
       }
     }
+  },
+  {
+    "timestamp": "2026-10-08T00:09:47.110615+00:00",
+    "date_str": "Oct 08, 2026 00:09 UTC",
+    "total_downloads": 150490,
+    "plugins": {
+      "3D OSM Model": {
+        "downloads": 24353,
+        "average_vote": 4.312475497298311,
+        "votes_count": 176,
+        "total_score": 758.9957,
+        "version": "1.7.2"
+      },
+      "02CadGis Universal CAD/GIS Importer": {
+        "downloads": 16069,
+        "average_vote": 4.130404852138753,
+        "votes_count": 138,
+        "total_score": 569.9959,
+        "version": "4.1.2"
+      },
+      "OSM Quick 3D": {
+        "downloads": 15362,
+        "average_vote": 4.3016870544219445,
+        "votes_count": 116,
+        "total_score": 498.9957,
+        "version": "0.50.2"
+      },
+      "02Agent OSM Downloader": {
+        "downloads": 10101,
+        "average_vote": 3.9113428943937416,
+        "votes_count": 79,
+        "total_score": 308.9961,
+        "version": "1.3.6"
+      },
+      "02viz - Geospatial Visualization Studio": {
+        "downloads": 9017,
+        "average_vote": 4.267284482331858,
+        "votes_count": 101,
+        "total_score": 430.9957,
+        "version": "0.18.0"
+      },
+      "PlanX CAD Toolset": {
+        "downloads": 8639,
+        "average_vote": 4.15848587212351,
+        "votes_count": 82,
+        "total_score": 340.9958,
+        "version": "1.27.6"
+      },
+      "02-Multimap: Sync-up Multimaps": {
+        "downloads": 8344,
+        "average_vote": 4.266640808237526,
+        "votes_count": 165,
+        "total_score": 703.9957,
+        "version": "1.0.2"
+      },
+      "PlanX": {
+        "downloads": 8058,
+        "average_vote": 4.357848864748792,
+        "votes_count": 95,
+        "total_score": 413.9956,
+        "version": "4.18.1"
+      },
+      "PlanX 3D City Viewer": {
+        "downloads": 5564,
+        "average_vote": 4.3887669786950365,
+        "votes_count": 36,
+        "total_score": 157.9956,
+        "version": "1.0.3"
+      },
+      "PlanX GeoStats Lab": {
+        "downloads": 5251,
+        "average_vote": 3.6104883106493615,
+        "votes_count": 95,
+        "total_score": 342.9964,
+        "version": "3.10.1"
+      },
+      "EasyFillet": {
+        "downloads": 4500,
+        "average_vote": 4.083163201533269,
+        "votes_count": 24,
+        "total_score": 97.9959,
+        "version": "1.4.13"
+      },
+      "PlanX: Urban Resilience": {
+        "downloads": 4427,
+        "average_vote": 4.266571853958801,
+        "votes_count": 45,
+        "total_score": 191.9957,
+        "version": "2.1.4"
+      },
+      "02Urban Portrait - City as a Face": {
+        "downloads": 3240,
+        "average_vote": 3.9598416063357464,
+        "votes_count": 25,
+        "total_score": 98.996,
+        "version": "0.4.2"
+      },
+      "02GeoQuest - Playable Map Studio": {
+        "downloads": 2931,
+        "average_vote": 3.8259206121472977,
+        "votes_count": 23,
+        "total_score": 87.9962,
+        "version": "1.2.3"
+      },
+      "PlanX Suitability Lab": {
+        "downloads": 2760,
+        "average_vote": 4.17634775447781,
+        "votes_count": 34,
+        "total_score": 141.9958,
+        "version": "1.7.0"
+      },
+      "02truesize - Map Truth Lab": {
+        "downloads": 2661,
+        "average_vote": 4.051178174918592,
+        "votes_count": 39,
+        "total_score": 157.9959,
+        "version": "0.4.6"
+      },
+      "PlanX Settlement Planning Toolset": {
+        "downloads": 2601,
+        "average_vote": 3.9998095328793863,
+        "votes_count": 21,
+        "total_score": 83.996,
+        "version": "0.5.13"
+      },
+      "02CartoLab": {
+        "downloads": 2465,
+        "average_vote": 4.128899067772007,
+        "votes_count": 31,
+        "total_score": 127.9959,
+        "version": "1.4.0"
+      },
+      "PlanX Uygulama İmar Planı (Master Plan) Toolset": {
+        "downloads": 2409,
+        "average_vote": 4.110882728737292,
+        "votes_count": 18,
+        "total_score": 73.9959,
+        "version": "1.2.11"
+      },
+      "ParcelFlux": {
+        "downloads": 2380,
+        "average_vote": 4.260684318073127,
+        "votes_count": 23,
+        "total_score": 97.9957,
+        "version": "0.3.5"
+      },
+      "PlanX DataCube Lab": {
+        "downloads": 2243,
+        "average_vote": 3.9471606757539073,
+        "votes_count": 19,
+        "total_score": 74.9961,
+        "version": "1.3.10"
+      },
+      "PlanX Urban Procedural 3D": {
+        "downloads": 2185,
+        "average_vote": 3.99966669444213,
+        "votes_count": 12,
+        "total_score": 47.996,
+        "version": "0.5.8"
+      },
+      "02Agent Smart Modeler": {
+        "downloads": 1546,
+        "average_vote": 3.958168409649598,
+        "votes_count": 24,
+        "total_score": 94.996,
+        "version": "1.5.56"
+      },
+      "Parametric Process": {
+        "downloads": 1395,
+        "average_vote": 4.199580041995801,
+        "votes_count": 10,
+        "total_score": 41.9958,
+        "version": "3.2.0"
+      },
+      "02Route 3D - Multi-Criteria 3D Mobility Studio": {
+        "downloads": 969,
+        "average_vote": 4.999500049995,
+        "votes_count": 10,
+        "total_score": 49.995,
+        "version": "0.4.0"
+      },
+      "QGIS 2.5D Styling": {
+        "downloads": 666,
+        "average_vote": 4.4439506721475395,
+        "votes_count": 9,
+        "total_score": 39.9956,
+        "version": "1.0.2"
+      },
+      "Qgis Advanced Map Tips&Actions": {
+        "downloads": 354,
+        "average_vote": 4.998333888703765,
+        "votes_count": 3,
+        "total_score": 14.995,
+        "version": "0.1.1"
+      }
+    }
   }
 ]

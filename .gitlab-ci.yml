@@ -7,6 +7,9 @@ workflow:
 
 update-dashboard:
   stage: build
+  # Two runs regenerating and pushing the same three files at once is what a
+  # `! [rejected] HEAD -> main (fetch first)` push looks like. Serialise them.
+  resource_group: dashboard-sync
   before_script:
     - apt-get update -qq && apt-get install -y -qq git > /dev/null
   script:
@@ -17,6 +20,7 @@ update-dashboard:
     - git diff --cached --quiet && echo "No changes to commit." && exit 0 || echo "Changes detected, committing."
     - 'git commit -m "chore(telemetry): scheduled sync of live QGIS metrics [skip ci]"'
     - git remote set-url origin "https://oauth2:${GITLAB_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+    - git pull --rebase origin "${CI_COMMIT_REF_NAME}"
     - git push origin HEAD:${CI_COMMIT_REF_NAME}
     - if [ -n "$GITHUB_PUSH_TOKEN" ]; then git remote add github "https://${GITHUB_PUSH_TOKEN}@github.com/YusufEminoglu/qgis-plugins-governance.git" || true; git push github HEAD:main; else echo "GITHUB_PUSH_TOKEN not set; skipping GitHub mirror push."; fi
   artifacts:

@@ -1759,7 +1759,7 @@ try:
         except Exception as ge:
             print(f"Warning: Failed to load world_map.geojson: {ge}")
 
-    world_svg_layer_html = "\\n".join(world_svg_layer_elements)
+    world_svg_layer_html = "\n".join(world_svg_layer_elements)
 
     html_template = """<!DOCTYPE html>
 <html lang="en" data-theme="obsidian" class="dark">
@@ -2390,7 +2390,7 @@ try:
                         <h2 class="text-base font-bold tracking-tight"><i class="fa-solid fa-chart-bar text-cyan-400 mr-2"></i>Plugin Download Distribution</h2>
                         <span class="text-xs text-slate-400 font-mono">Lifetime Volume</span>
                     </div>
-                    <div id="overview-bar-chart" class="w-full h-[400px]"></div>
+                    <div id="overview-bar-chart" class="w-full min-h-[580px]"></div>
                 </div>
 
                 <div class="p-6 rounded-3xl glass-panel flex flex-col justify-between">
@@ -3900,6 +3900,17 @@ try:
 
             initializeCharts();
             if (typeof renderChoroplethMap === 'function') renderChoroplethMap();
+            const activeTabPane = document.querySelector('.tab-pane:not(.hidden)');
+            if (activeTabPane) {
+                const curTabId = activeTabPane.id.replace('tab-content-', '');
+                if (curTabId === 'audit') {
+                    if (typeof renderPortfolioWaveChart === 'function') renderPortfolioWaveChart();
+                    if (typeof renderKinematicPhaseChart === 'function') renderKinematicPhaseChart();
+                    if (typeof renderAuditHistoryChart === 'function') renderAuditHistoryChart();
+                } else if (curTabId === 'simulator') {
+                    if (typeof runSimulation === 'function') runSimulation();
+                }
+            }
             showToast(`Switched to ${newTheme === 'obsidian' ? 'Obsidian Titanium' : 'Alabaster Platinum (Swiss Mode)'}!`);
         }
 
@@ -4142,26 +4153,51 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
 
             if (updateHash && typeof updateHashUrl === 'function') updateHashUrl(tabId);
 
-            if (tabId === 'overview' || tabId === 'deepdive') {
-                setTimeout(initializeCharts, 100);
+            if (tabId === 'overview') {
+                setTimeout(() => {
+                    initializeCharts();
+                    window.dispatchEvent(new Event('resize'));
+                }, 50);
+            }
+            if (tabId === 'deepdive') {
+                setTimeout(() => {
+                    renderCards();
+                }, 50);
             }
             if (tabId === 'simulator') {
-                setTimeout(runSimulation, 100);
+                setTimeout(() => {
+                    runSimulation();
+                    window.dispatchEvent(new Event('resize'));
+                }, 50);
             }
             if (tabId === 'audit') {
-                setTimeout(renderAuditHistoryChart, 100);
+                setTimeout(() => {
+                    renderPortfolioWaveChart();
+                    renderKinematicPhaseChart();
+                    renderAuditHistoryChart();
+                    window.dispatchEvent(new Event('resize'));
+                }, 50);
             }
             if (tabId === 'stars') {
-                setTimeout(renderRatingStarsTab, 100);
+                setTimeout(renderRatingStarsTab, 50);
             }
             if (tabId === 'carto') {
-                setTimeout(initializeGeospatialStudio, 100);
+                setTimeout(() => {
+                    initializeGeospatialStudio();
+                    window.dispatchEvent(new Event('resize'));
+                }, 50);
             }
             if (tabId === 'pipelines') {
                 setTimeout(() => {
                     initializePipelines();
                     if (typeof renderSynergyMatrix === 'function') renderSynergyMatrix();
-                }, 100);
+                    window.dispatchEvent(new Event('resize'));
+                }, 50);
+            }
+            if (tabId === 'table') {
+                setTimeout(() => {
+                    renderTableData('all');
+                }, 50);
             }
         }
 
@@ -4897,7 +4933,11 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
                 }
             });
 
-            if (kinematicPhaseChartInstance) kinematicPhaseChartInstance.destroy();
+            if (kinematicPhaseChartInstance) {
+                try { kinematicPhaseChartInstance.destroy(); } catch (e) {}
+                kinematicPhaseChartInstance = null;
+            }
+            container.innerHTML = '';
 
             const chartOptions = {
                 series: [
@@ -5007,7 +5047,11 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             const totalWaves = appData.history_meta.portfolio_waves || [];
             const raidWaves = appData.history_meta.portfolio_raid_waves || [];
 
-            if (portfolioWaveChartInstance) portfolioWaveChartInstance.destroy();
+            if (portfolioWaveChartInstance) {
+                try { portfolioWaveChartInstance.destroy(); } catch (e) {}
+                portfolioWaveChartInstance = null;
+            }
+            container.innerHTML = '';
 
             const options = {
                 series: [
@@ -5099,7 +5143,12 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             const pluginHistory = appData.history_meta.by_plugin[targetPlugin] || { ratings: [], votes: [], delta_votes: [], purged_series: [], inflections: [] };
             const categories = appData.history_meta.timestamps;
 
-            if (auditChartInstance) auditChartInstance.destroy();
+            if (auditChartInstance) {
+                try { auditChartInstance.destroy(); } catch (e) {}
+                auditChartInstance = null;
+            }
+            const histContainer = document.querySelector("#audit-history-chart");
+            if (histContainer) histContainer.innerHTML = '';
 
             // Build annotations for detected inflections
             const xAnnotations = (pluginHistory.inflections || []).map(ip => ({
@@ -5215,13 +5264,19 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
                 mahalanobis_d: 1.0,
                 threat_level: 10,
                 delta_votes: 0,
-                p_abuse: 0
+                p_abuse: 0,
+                current_rating: 5.0,
+                purged_synthetic_rating: 5.0
             };
 
             const isAlabaster = document.documentElement.getAttribute('data-theme') === 'alabaster';
             const labelColor = isAlabaster ? '#334155' : '#94a3b8';
 
-            if (auditRadarChartInstance) auditRadarChartInstance.destroy();
+            if (auditRadarChartInstance) {
+                try { auditRadarChartInstance.destroy(); } catch (e) {}
+                auditRadarChartInstance = null;
+            }
+            container.innerHTML = '';
 
             // Normalized Radar Axes (0 - 100)
             const kNorm = Math.min(100, Math.round((anom.conversion_k / 8.0) * 100));
@@ -5273,10 +5328,12 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             // Populate Metric Details
             const detailsEl = document.getElementById('radar-metric-details');
             if (detailsEl) {
+                const curR = (anom.current_rating !== undefined && anom.current_rating !== null) ? anom.current_rating.toFixed(2) : '5.00';
+                const synR = (anom.purged_synthetic_rating !== undefined && anom.purged_synthetic_rating !== null) ? anom.purged_synthetic_rating.toFixed(2) : curR;
                 detailsEl.innerHTML = `
                     <div class="flex justify-between">
                         <span class="text-slate-400">Observed vs True Score:</span>
-                        <strong class="${anom.suppressed_points > 0 ? 'text-rose-400' : 'text-slate-200'}">${anom.current_rating.toFixed(2)}★ vs ${anom.purged_synthetic_rating ? anom.purged_synthetic_rating.toFixed(2) : anom.current_rating.toFixed(2)}★</strong>
+                        <strong class="${anom.suppressed_points > 0 ? 'text-rose-400' : 'text-slate-200'}">${curR}★ vs ${synR}★</strong>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-slate-400">Rating-to-Download (κ):</span>
@@ -7396,7 +7453,8 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
             };
 
             const container = document.querySelector("#sim-line-chart");
-            if (simLineChart) { try { simLineChart.destroy(); } catch (e) {} }
+            if (!container) return;
+            if (simLineChart) { try { simLineChart.destroy(); } catch (e) {} simLineChart = null; }
             container.innerHTML = '';
             simLineChart = new ApexCharts(container, chartOptions);
             simLineChart.render();
@@ -7515,23 +7573,44 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
                 const nodeOpacity = isMatch ? "1.0" : "0.12";
 
                 if (p.icon) {
-                    s += `<g transform="translate(${(px - 16).toFixed(1)} ${(py - 16).toFixed(1)})" style="cursor:pointer;opacity:${nodeOpacity}" onclick="switchTab('deepdive');document.getElementById('card-search-input').value='${esc(p.name)}';filterCards();"><title>${tip}</title><circle cx="16" cy="16" r="19" fill="${color}" opacity="0.22"/><image href="${p.icon}" xlink:href="${p.icon}" x="4" y="4" width="24" height="24" preserveAspectRatio="xMidYMid meet"/><circle cx="16" cy="16" r="19" fill="none" stroke="${color}" stroke-width="1.8" opacity="0.8"/></g>`;
+                    s += `<g transform="translate(${(px - 16).toFixed(1)} ${(py - 16).toFixed(1)})" style="cursor:pointer;opacity:${nodeOpacity}" data-plugin="${esc(p.name)}" onclick="handleBcgNodeClick(this)"><title>${tip}</title><circle cx="16" cy="16" r="19" fill="${color}" opacity="0.22"/><image href="${p.icon}" xlink:href="${p.icon}" x="4" y="4" width="24" height="24" preserveAspectRatio="xMidYMid meet"/><circle cx="16" cy="16" r="19" fill="none" stroke="${color}" stroke-width="1.8" opacity="0.8"/></g>`;
                 } else {
-                    s += `<g transform="translate(${px} ${py})" style="cursor:pointer;opacity:${nodeOpacity}" onclick="switchTab('deepdive');document.getElementById('card-search-input').value='${esc(p.name)}';filterCards();"><title>${tip}</title><circle r="8" fill="${color}" stroke="#fff" stroke-width="1.5"/></g>`;
+                    s += `<g transform="translate(${px} ${py})" style="cursor:pointer;opacity:${nodeOpacity}" data-plugin="${esc(p.name)}" onclick="handleBcgNodeClick(this)"><title>${tip}</title><circle r="8" fill="${color}" stroke="#fff" stroke-width="1.5"/></g>`;
                 }
             });
             s += '</svg>';
             el.innerHTML = s;
         }
 
+        function handleBcgNodeClick(nodeEl) {
+            const pluginName = nodeEl.getAttribute('data-plugin');
+            if (pluginName) {
+                switchTab('deepdive');
+                const input = document.getElementById('card-search-input');
+                if (input) {
+                    input.value = pluginName;
+                    filterCards();
+                }
+            }
+        }
+
         function initializeCharts() {
+            const barContainer = document.querySelector("#overview-bar-chart");
+            if (!barContainer) return;
+
             const isAlabaster = document.documentElement.getAttribute('data-theme') === 'alabaster';
             const labelColor = isAlabaster ? '#334155' : '#94a3b8';
             const gridColor = isAlabaster ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.05)';
 
-            if (overviewBarChart) overviewBarChart.destroy();
-            if (overviewDonutChart) overviewDonutChart.destroy();
-            if (suiteRadarChart) suiteRadarChart.destroy();
+            if (overviewBarChart) { try { overviewBarChart.destroy(); } catch (e) {} overviewBarChart = null; }
+            if (overviewDonutChart) { try { overviewDonutChart.destroy(); } catch (e) {} overviewDonutChart = null; }
+            if (suiteRadarChart) { try { suiteRadarChart.destroy(); } catch (e) {} suiteRadarChart = null; }
+
+            barContainer.innerHTML = '';
+            const donutContainer = document.querySelector("#overview-donut-chart");
+            if (donutContainer) donutContainer.innerHTML = '';
+            const radarContainer = document.querySelector("#suite-radar-chart");
+            if (radarContainer) radarContainer.innerHTML = '';
 
             // 1. Horizontal Bar Chart with Click-to-Filter
             const names = appData.plugins.map(p => p.name);
@@ -7544,7 +7623,7 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
                 }],
                 chart: {
                     type: 'bar',
-                    height: Math.max(480, names.length * 20),
+                    height: Math.max(540, names.length * 22),
                     toolbar: { show: false },
                     foreColor: labelColor,
                     events: {
@@ -8234,6 +8313,15 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
                 timeout = setTimeout(() => func.apply(this, args), wait);
             };
         }
+
+        window.addEventListener('resize', debounce(() => {
+            const activePane = document.querySelector('.tab-pane:not(.hidden)');
+            if (!activePane) return;
+            const curTab = activePane.id.replace('tab-content-', '');
+            if (curTab === 'overview') {
+                if (typeof renderBcgScatter === 'function') renderBcgScatter();
+            }
+        }, 150));
 
         document.addEventListener("DOMContentLoaded", function() {
             document.getElementById('header-last-updated').textContent = `Last updated: ${appData.summary.last_updated}`;

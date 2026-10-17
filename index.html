@@ -436,7 +436,7 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-3">
-                <button onclick="openCommandPalette()" class="px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-2 transition-all font-mono" title="Quick Command Palette (Ctrl+K)">
+                <button onclick="openCmdPalette()" class="px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-2 transition-all font-mono" title="Quick Command Palette (Ctrl+K)">
                     <i class="fa-solid fa-terminal text-cyan-400"></i> Command <kbd>Ctrl+K</kbd>
                 </button>
 
@@ -504,7 +504,7 @@
             <button onclick="switchTab('table')" id="tab-btn-table" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-table"></i> Master Performance Table <kbd>6</kbd></button>
             <button onclick="switchTab('audit')" id="tab-btn-audit" class="px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-300 flex items-center gap-1.5 whitespace-nowrap opacity-75">
                 <i class="fa-solid fa-box-archive text-slate-400"></i> Rating Forensics Archive
-                <span class="ml-1 px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-800 text-slate-400 border border-slate-700">Archived</span>
+                <span id="audit-alert-badge" class="ml-1 px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-800 text-slate-400 border border-slate-700">Archived</span>
             </button>
             <button onclick="switchTab('stars')" id="tab-btn-stars" class="px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-300 flex items-center gap-1.5 whitespace-nowrap opacity-75">
                 <i class="fa-solid fa-clock-rotate-left text-slate-400"></i> Historic Votes Matrix
@@ -2031,22 +2031,7 @@
         </div>
     </div>
 
-    <!-- ============================================================= -->
-    <!-- COMMAND PALETTE MODAL (Ctrl+K) -->
-    <!-- ============================================================= -->
-    <div id="command-palette-modal" class="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/80 backdrop-blur-md hidden p-4">
-        <div class="bg-obsidian-900 border border-white/10 rounded-3xl max-w-xl w-full p-4 shadow-2xl overflow-hidden animate-in fade-in duration-200">
-            <div class="relative mb-3">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500"><i class="fa-solid fa-terminal text-sm"></i></span>
-                <input type="text" id="palette-search-input" onkeyup="filterCommandPalette()" onkeydown="handlePaletteKeydown(event)" placeholder="Type a command, tab, or plugin name..." class="w-full pl-10 pr-4 py-3 bg-obsidian-950 border border-white/10 rounded-2xl text-xs focus:outline-none focus:border-cyan-400 font-mono">
-            </div>
-            <div class="max-h-72 overflow-y-auto space-y-1 pr-1 font-mono text-xs" id="palette-results-list"></div>
-            <div class="pt-3 border-t border-white/10 flex justify-between items-center text-[10px] text-slate-500">
-                <span>Navigate with <kbd>↑</kbd> <kbd>↓</kbd> <kbd>Enter</kbd></span>
-                <span>Press <kbd>Esc</kbd> to close</span>
-            </div>
-        </div>
-    </div>
+
 
     <!-- ============================================================= -->
     <!-- REPORTS & SOCIAL MEDIA ANNOUNCEMENT KIT MODAL -->
@@ -2089,47 +2074,7 @@
         </div>
     </div>
 
-    <!-- ============================================================= -->
-    <!-- 3-WAY HEAD-TO-HEAD COMPARISON MODAL -->
-    <!-- ============================================================= -->
-    <div id="compare-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden p-4">
-        <div class="bg-obsidian-900 border border-white/10 rounded-3xl max-w-5xl w-full p-6 max-h-[92vh] flex flex-col justify-between shadow-2xl overflow-hidden">
-            <div class="flex items-center justify-between pb-4 border-b border-white/10">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg border border-indigo-500/30">
-                        <i class="fa-solid fa-code-compare"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-base font-bold tracking-tight">3-Way Side-by-Side Plugin Benchmark</h3>
-                        <p class="text-xs text-slate-400">Head-to-head adoption, Bayesian ratings, and velocity comparator</p>
-                    </div>
-                </div>
-                <button onclick="closeCompareModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-obsidian-800 transition-colors">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 font-heading">Primary Plugin (A)</label>
-                    <select id="compare-select-a" onchange="renderComparisonView()" class="w-full px-3 py-2 bg-obsidian-950 border border-white/10 rounded-xl text-xs focus:outline-none focus:border-cyan-400 font-mono"></select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 font-heading">Comparison Plugin (B)</label>
-                    <select id="compare-select-b" onchange="renderComparisonView()" class="w-full px-3 py-2 bg-obsidian-950 border border-white/10 rounded-xl text-xs focus:outline-none focus:border-indigo-400 font-mono"></select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 font-heading">Comparison Plugin (C)</label>
-                    <select id="compare-select-c" onchange="renderComparisonView()" class="w-full px-3 py-2 bg-obsidian-950 border border-white/10 rounded-xl text-xs focus:outline-none focus:border-emerald-400 font-mono"></select>
-                </div>
-            </div>
-
-            <div class="overflow-y-auto max-h-[55vh] pr-1" id="compare-content-grid"></div>
-            <div class="pt-4 border-t border-white/10 flex justify-end">
-                <button onclick="closeCompareModal()" class="px-5 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-white text-xs font-bold transition-all">Done</button>
-            </div>
-        </div>
-    </div>
 
     <!-- ============================================================= -->
     <!-- MULTI-CHANNEL EVIDENCE & COMPLAINT MODAL (v2.0) -->
@@ -2259,13 +2204,13 @@
     {
       "name": "3D OSM Model",
       "version": "1.7.2",
-      "downloads": 25629,
+      "downloads": 25630,
       "create_date": "2026-06-01",
       "update_date": "2026-09-16",
       "days_active": 137,
       "months_active": 4.5,
-      "avg_monthly_downloads": 5694.0,
-      "projected_total_downloads": 39659,
+      "avg_monthly_downloads": 5694.3,
+      "projected_total_downloads": 39661,
       "category": "Standalone Plugins",
       "tags": [
         "urban planning",
@@ -2280,7 +2225,7 @@
       ],
       "next_milestone": 30000,
       "prev_milestone": 25000,
-      "remaining_to_milestone": 4371,
+      "remaining_to_milestone": 4370,
       "milestone_progress": 85.4,
       "milestone_est_date": "Nov 09, 2026",
       "is_imminent": true,
@@ -3922,7 +3867,7 @@
       "bayesian_rating": 4.293,
       "rating_credibility_floor_95": 4.203,
       "kinetic_ratio": 0.81,
-      "adoption_acceleration": -327.15,
+      "adoption_acceleration": -327.1,
       "kinetic_regime": "Steady-State Cruising",
       "kinetic_badge": "cyan",
       "health_score": 93.3,
@@ -4108,7 +4053,11 @@
         25629,
         25629,
         25629,
-        25629
+        25629,
+        25630,
+        25630,
+        25630,
+        25630
       ],
       "honors": [
         {
@@ -4127,7 +4076,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "DB435B50822D82FC",
+      "evidence_hash": "77D1E9DF2B48E99A",
       "purged_synthetic_rating": 4.64,
       "suppressed_points": 0.34,
       "taxonomy": "Type II: Soft Rating Dilution",
@@ -4137,13 +4086,13 @@
     {
       "name": "02CadGis Universal CAD/GIS Importer",
       "version": "4.1.2",
-      "downloads": 17674,
+      "downloads": 17676,
       "create_date": "2026-07-04",
       "update_date": "2026-09-29",
       "days_active": 104,
       "months_active": 3.42,
-      "avg_monthly_downloads": 5172.6,
-      "projected_total_downloads": 30420,
+      "avg_monthly_downloads": 5173.2,
+      "projected_total_downloads": 30423,
       "category": "02 Suite",
       "tags": [
         "kml",
@@ -4171,7 +4120,7 @@
       ],
       "next_milestone": 20000,
       "prev_milestone": 10000,
-      "remaining_to_milestone": 2326,
+      "remaining_to_milestone": 2324,
       "milestone_progress": 88.4,
       "milestone_est_date": "Oct 30, 2026",
       "is_imminent": true,
@@ -5687,7 +5636,7 @@
       "bayesian_rating": 4.08,
       "rating_credibility_floor_95": 3.971,
       "kinetic_ratio": 1.04,
-      "adoption_acceleration": 69.24,
+      "adoption_acceleration": 69.38,
       "kinetic_regime": "Steady-State Cruising",
       "kinetic_badge": "cyan",
       "health_score": 92.2,
@@ -5873,7 +5822,11 @@
         17673,
         17674,
         17674,
-        17674
+        17674,
+        17676,
+        17676,
+        17676,
+        17676
       ],
       "honors": [
         {
@@ -5892,7 +5845,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "6B32542470E6DB06",
+      "evidence_hash": "160FAC317E56090A",
       "purged_synthetic_rating": 4.71,
       "suppressed_points": 0.64,
       "taxonomy": "Type II: Soft Rating Dilution",
@@ -5902,13 +5855,13 @@
     {
       "name": "OSM Quick 3D",
       "version": "0.50.2",
-      "downloads": 16762,
+      "downloads": 16763,
       "create_date": "2026-06-04",
       "update_date": "2026-09-16",
       "days_active": 134,
       "months_active": 4.4,
-      "avg_monthly_downloads": 3807.4,
-      "projected_total_downloads": 26144,
+      "avg_monthly_downloads": 3807.6,
+      "projected_total_downloads": 26145,
       "category": "Standalone Plugins",
       "tags": [
         "urban planning",
@@ -5923,7 +5876,7 @@
       ],
       "next_milestone": 20000,
       "prev_milestone": 10000,
-      "remaining_to_milestone": 3238,
+      "remaining_to_milestone": 3237,
       "milestone_progress": 83.8,
       "milestone_est_date": "Nov 12, 2026",
       "is_imminent": false,
@@ -7511,7 +7464,7 @@
       "bayesian_rating": 4.307,
       "rating_credibility_floor_95": 4.196,
       "kinetic_ratio": 1.15,
-      "adoption_acceleration": 181.67,
+      "adoption_acceleration": 181.76,
       "kinetic_regime": "Steady-State Cruising",
       "kinetic_badge": "cyan",
       "health_score": 93.0,
@@ -7697,7 +7650,11 @@
         16761,
         16761,
         16762,
-        16762
+        16762,
+        16763,
+        16763,
+        16763,
+        16763
       ],
       "honors": [
         {
@@ -7716,7 +7673,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "67DACFB2CDFB6197",
+      "evidence_hash": "0057FD81691F03B8",
       "purged_synthetic_rating": 4.67,
       "suppressed_points": 0.34,
       "taxonomy": "Type II: Soft Rating Dilution",
@@ -7726,13 +7683,13 @@
     {
       "name": "02Agent OSM Downloader",
       "version": "1.3.6",
-      "downloads": 11694,
+      "downloads": 11695,
       "create_date": "2026-08-10",
       "update_date": "2026-09-16",
       "days_active": 67,
       "months_active": 2.2,
-      "avg_monthly_downloads": 5312.5,
-      "projected_total_downloads": 24784,
+      "avg_monthly_downloads": 5312.9,
+      "projected_total_downloads": 24786,
       "category": "02 Suite",
       "tags": [
         "ai",
@@ -7760,7 +7717,7 @@
       ],
       "next_milestone": 15000,
       "prev_milestone": 10000,
-      "remaining_to_milestone": 3306,
+      "remaining_to_milestone": 3305,
       "milestone_progress": 78.0,
       "milestone_est_date": "Nov 05, 2026",
       "is_imminent": false,
@@ -7802,7 +7759,7 @@
           "region": "Latin America",
           "iso": "BR",
           "iso3": "BRA",
-          "downloads": 952,
+          "downloads": 953,
           "percentage": 8.1
         },
         {
@@ -8970,7 +8927,7 @@
       "bayesian_rating": 3.945,
       "rating_credibility_floor_95": 3.807,
       "kinetic_ratio": 1.0,
-      "adoption_acceleration": -6.57,
+      "adoption_acceleration": -6.53,
       "kinetic_regime": "Steady-State Cruising",
       "kinetic_badge": "cyan",
       "health_score": 91.2,
@@ -9156,7 +9113,11 @@
         11693,
         11694,
         11694,
-        11694
+        11694,
+        11694,
+        11694,
+        11694,
+        11695
       ],
       "honors": [
         {
@@ -9170,7 +9131,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "65DD04E417D3C111",
+      "evidence_hash": "5A5BF88D2A34B4CD",
       "purged_synthetic_rating": 5.0,
       "suppressed_points": 1.08,
       "taxonomy": "Type II: Soft Rating Dilution",
@@ -10940,6 +10901,10 @@
         9663,
         9664,
         9665,
+        9665,
+        9665,
+        9665,
+        9665,
         9665
       ],
       "honors": [
@@ -10954,7 +10919,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "3AB3BB07AB0386A2",
+      "evidence_hash": "AABA92E09473F17E",
       "purged_synthetic_rating": 4.56,
       "suppressed_points": 0.29,
       "taxonomy": "Type II: Soft Rating Dilution",
@@ -12476,6 +12441,10 @@
         9203,
         9203,
         9203,
+        9203,
+        9203,
+        9203,
+        9203,
         9203
       ],
       "honors": [
@@ -12490,7 +12459,7 @@
           "color": "cyan"
         }
       ],
-      "evidence_hash": "313EEAD8F97A845D",
+      "evidence_hash": "AA2E598A88F63A25",
       "purged_synthetic_rating": 4.74,
       "suppressed_points": 0.63,
       "taxonomy": "Type II: Soft Rating Dilution",
@@ -14177,6 +14146,10 @@
         9165,
         9165,
         9165,
+        9165,
+        9165,
+        9165,
+        9165,
         9165
       ],
       "honors": [
@@ -14191,7 +14164,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "ECD5151DFC11A7A0",
+      "evidence_hash": "6F5954A17A8B674B",
       "purged_synthetic_rating": 4.4,
       "suppressed_points": 0.15,
       "taxonomy": "Type III: Coordinated Portfolio Sweep",
@@ -15666,6 +15639,10 @@
         9140,
         9141,
         9141,
+        9141,
+        9141,
+        9141,
+        9141,
         9141
       ],
       "honors": [
@@ -15675,7 +15652,7 @@
           "color": "cyan"
         }
       ],
-      "evidence_hash": "818EB5736DA9E9C4",
+      "evidence_hash": "91B416600A37B5EB",
       "purged_synthetic_rating": 4.31,
       "suppressed_points": 0.0,
       "taxonomy": "Organic General Activity",
@@ -15685,13 +15662,13 @@
     {
       "name": "PlanX 3D City Viewer",
       "version": "2.0.1",
-      "downloads": 6032,
+      "downloads": 6033,
       "create_date": "2026-05-15",
       "update_date": "2026-10-09",
       "days_active": 154,
       "months_active": 5.06,
-      "avg_monthly_downloads": 1192.2,
-      "projected_total_downloads": 8970,
+      "avg_monthly_downloads": 1192.4,
+      "projected_total_downloads": 8971,
       "category": "PlanX Suite",
       "tags": [
         "urban planning",
@@ -15716,7 +15693,7 @@
       ],
       "next_milestone": 10000,
       "prev_milestone": 5000,
-      "remaining_to_milestone": 3968,
+      "remaining_to_milestone": 3967,
       "milestone_progress": 60.3,
       "milestone_est_date": "Jan 26, 2027",
       "is_imminent": false,
@@ -15740,7 +15717,7 @@
           "region": "North America",
           "iso": "US",
           "iso3": "USA",
-          "downloads": 1856,
+          "downloads": 1857,
           "percentage": 30.8
         },
         {
@@ -16845,7 +16822,7 @@
       "bayesian_rating": 4.29,
       "rating_credibility_floor_95": 4.111,
       "kinetic_ratio": 0.82,
-      "adoption_acceleration": -59.7,
+      "adoption_acceleration": -59.61,
       "kinetic_regime": "Steady-State Cruising",
       "kinetic_badge": "cyan",
       "health_score": 86.0,
@@ -17031,7 +17008,11 @@
         6032,
         6032,
         6032,
-        6032
+        6032,
+        6032,
+        6032,
+        6032,
+        6033
       ],
       "honors": [
         {
@@ -17045,7 +17026,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "9A56AF1283A7DAFF",
+      "evidence_hash": "48960318B7245B5D",
       "purged_synthetic_rating": 4.85,
       "suppressed_points": 0.52,
       "taxonomy": "Type II: Soft Rating Dilution",
@@ -18352,6 +18333,10 @@
         5800,
         5800,
         5800,
+        5800,
+        5800,
+        5800,
+        5800,
         5800
       ],
       "honors": [
@@ -18366,7 +18351,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "22E97044C35953B5",
+      "evidence_hash": "E1A5D0D17AEB626C",
       "purged_synthetic_rating": 4.85,
       "suppressed_points": 1.37,
       "taxonomy": "Type II: Soft Rating Dilution",
@@ -19602,10 +19587,14 @@
         4848,
         4848,
         4848,
+        4848,
+        4848,
+        4848,
+        4848,
         4848
       ],
       "honors": [],
-      "evidence_hash": "B811D0F0E0CA111C",
+      "evidence_hash": "219DC012A6D7300E",
       "purged_synthetic_rating": 5.0,
       "suppressed_points": 0.92,
       "taxonomy": "Type I: Direct 1-Star Bombing",
@@ -20884,6 +20873,10 @@
         4791,
         4791,
         4791,
+        4791,
+        4791,
+        4791,
+        4791,
         4791
       ],
       "honors": [
@@ -20893,7 +20886,7 @@
           "color": "cyan"
         }
       ],
-      "evidence_hash": "B965A72959B25814",
+      "evidence_hash": "515B31D84C178689",
       "purged_synthetic_rating": 4.28,
       "suppressed_points": 0.1,
       "taxonomy": "Type III: Coordinated Portfolio Sweep",
@@ -22367,6 +22360,10 @@
         3687,
         3688,
         3688,
+        3688,
+        3688,
+        3688,
+        3688,
         3688
       ],
       "honors": [
@@ -22381,7 +22378,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "8B5A59DA0A7D2EAA",
+      "evidence_hash": "C03AC7B03BCF8116",
       "purged_synthetic_rating": 4.77,
       "suppressed_points": 0.89,
       "taxonomy": "Type I: Direct 1-Star Bombing",
@@ -23727,6 +23724,10 @@
         3338,
         3338,
         3338,
+        3338,
+        3338,
+        3338,
+        3338,
         3338
       ],
       "honors": [
@@ -23741,7 +23742,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "0A14C8C303A9C925",
+      "evidence_hash": "574C38116A721937",
       "purged_synthetic_rating": 5.0,
       "suppressed_points": 1.19,
       "taxonomy": "Type II: Soft Rating Dilution",
@@ -24754,6 +24755,10 @@
         3187,
         3187,
         3187,
+        3187,
+        3187,
+        3187,
+        3187,
         3187
       ],
       "honors": [
@@ -24768,7 +24773,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "9D0C3C121E164BCC",
+      "evidence_hash": "84600E7087F87AC8",
       "purged_synthetic_rating": 3.95,
       "suppressed_points": 0.0,
       "taxonomy": "Stable Baseline (No Influx)",
@@ -25802,6 +25807,10 @@
         3154,
         3154,
         3154,
+        3154,
+        3154,
+        3154,
+        3154,
         3154
       ],
       "honors": [
@@ -25816,7 +25825,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "7B8118579E4F7260",
+      "evidence_hash": "0511AE77405138C1",
       "purged_synthetic_rating": 4.8,
       "suppressed_points": 0.65,
       "taxonomy": "Type II: Soft Rating Dilution",
@@ -25826,13 +25835,13 @@
     {
       "name": "02truesize - Map Truth Lab",
       "version": "0.4.6",
-      "downloads": 3038,
+      "downloads": 3039,
       "create_date": "2026-07-19",
       "update_date": "2026-09-16",
       "days_active": 89,
       "months_active": 2.92,
-      "avg_monthly_downloads": 1039.0,
-      "projected_total_downloads": 5598,
+      "avg_monthly_downloads": 1039.3,
+      "projected_total_downloads": 5600,
       "category": "02 Suite",
       "tags": [
         "area",
@@ -25858,8 +25867,8 @@
       ],
       "next_milestone": 4000,
       "prev_milestone": 3000,
-      "remaining_to_milestone": 962,
-      "milestone_progress": 75.9,
+      "remaining_to_milestone": 961,
+      "milestone_progress": 76.0,
       "milestone_est_date": "Nov 14, 2026",
       "is_imminent": false,
       "club": "1k_club",
@@ -26107,7 +26116,7 @@
           "region": "North America",
           "iso": "CA",
           "iso3": "CAN",
-          "downloads": 17,
+          "downloads": 18,
           "percentage": 0.6
         },
         {
@@ -26942,7 +26951,7 @@
       "bayesian_rating": 4.143,
       "rating_credibility_floor_95": 3.966,
       "kinetic_ratio": 0.92,
-      "adoption_acceleration": -35.31,
+      "adoption_acceleration": -35.23,
       "kinetic_regime": "Steady-State Cruising",
       "kinetic_badge": "cyan",
       "health_score": 82.4,
@@ -27128,7 +27137,11 @@
         3038,
         3038,
         3038,
-        3038
+        3038,
+        3038,
+        3038,
+        3038,
+        3039
       ],
       "honors": [
         {
@@ -27142,7 +27155,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "CA8DE32D438284B6",
+      "evidence_hash": "DAF567F2DD03FF2A",
       "purged_synthetic_rating": 4.53,
       "suppressed_points": 0.38,
       "taxonomy": "Type II: Soft Rating Dilution",
@@ -28236,10 +28249,14 @@
         2856,
         2856,
         2856,
+        2856,
+        2856,
+        2856,
+        2856,
         2856
       ],
       "honors": [],
-      "evidence_hash": "CC5186147A62097C",
+      "evidence_hash": "8AD275CB93996DC3",
       "purged_synthetic_rating": 5.0,
       "suppressed_points": 1.0,
       "taxonomy": "Type I: Direct 1-Star Bombing",
@@ -29132,10 +29149,14 @@
         2683,
         2683,
         2683,
+        2683,
+        2683,
+        2683,
+        2683,
         2683
       ],
       "honors": [],
-      "evidence_hash": "F9F70284ECB22D6C",
+      "evidence_hash": "C57D5F2E28055D0F",
       "purged_synthetic_rating": 5.0,
       "suppressed_points": 0.89,
       "taxonomy": "Type I: Direct 1-Star Bombing",
@@ -30200,6 +30221,10 @@
         2679,
         2679,
         2679,
+        2679,
+        2679,
+        2679,
+        2679,
         2679
       ],
       "honors": [
@@ -30209,7 +30234,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "99B7AC1B379AC4E2",
+      "evidence_hash": "5D4931532F21D809",
       "purged_synthetic_rating": 4.64,
       "suppressed_points": 0.45,
       "taxonomy": "Type II: Soft Rating Dilution",
@@ -31204,6 +31229,10 @@
         2517,
         2517,
         2517,
+        2517,
+        2517,
+        2517,
+        2517,
         2517
       ],
       "honors": [
@@ -31213,7 +31242,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "1F19A4CBFA6CAEE7",
+      "evidence_hash": "9899A60CCE414935",
       "purged_synthetic_rating": 4.71,
       "suppressed_points": 0.83,
       "taxonomy": "Type I: Direct 1-Star Bombing",
@@ -32254,6 +32283,10 @@
         2447,
         2447,
         2447,
+        2447,
+        2447,
+        2447,
+        2447,
         2447
       ],
       "honors": [
@@ -32263,7 +32296,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "4F301BDD66F9929E",
+      "evidence_hash": "42A5E2D0825B6CFE",
       "purged_synthetic_rating": 4.56,
       "suppressed_points": 0.56,
       "taxonomy": "Type II: Soft Rating Dilution",
@@ -33259,6 +33292,10 @@
         1958,
         1958,
         1958,
+        1958,
+        1958,
+        1958,
+        1958,
         1958
       ],
       "honors": [
@@ -33273,7 +33310,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "6B1A5B4FD2CD7CAC",
+      "evidence_hash": "7C144E2170DFAD88",
       "purged_synthetic_rating": 3.83,
       "suppressed_points": 0.0,
       "taxonomy": "Stable Baseline (No Influx)",
@@ -34183,6 +34220,10 @@
         1644,
         1644,
         1644,
+        1644,
+        1644,
+        1644,
+        1644,
         1644
       ],
       "honors": [
@@ -34192,7 +34233,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "842624D12A750614",
+      "evidence_hash": "DFC8ADBFD531E98C",
       "purged_synthetic_rating": 5.0,
       "suppressed_points": 1.0,
       "taxonomy": "Type II: Soft Rating Dilution",
@@ -34202,13 +34243,13 @@
     {
       "name": "02Route 3D - Multi-Criteria 3D Mobility Studio",
       "version": "1.1.0",
-      "downloads": 1524,
+      "downloads": 1525,
       "create_date": "2026-08-25",
       "update_date": "2026-10-14",
       "days_active": 52,
       "months_active": 1.71,
-      "avg_monthly_downloads": 892.1,
-      "projected_total_downloads": 3722,
+      "avg_monthly_downloads": 892.6,
+      "projected_total_downloads": 3725,
       "category": "02 Suite",
       "tags": [
         "routing",
@@ -34260,7 +34301,7 @@
       ],
       "next_milestone": 2000,
       "prev_milestone": 1000,
-      "remaining_to_milestone": 476,
+      "remaining_to_milestone": 475,
       "milestone_progress": 76.2,
       "milestone_est_date": "Nov 02, 2026",
       "is_imminent": false,
@@ -34338,8 +34379,8 @@
           "region": "Western Europe",
           "iso": "DE",
           "iso3": "DEU",
-          "downloads": 69,
-          "percentage": 4.5
+          "downloads": 70,
+          "percentage": 4.6
         },
         {
           "country": "Italy",
@@ -35043,7 +35084,11 @@
         1524,
         1524,
         1524,
-        1524
+        1524,
+        1524,
+        1524,
+        1524,
+        1525
       ],
       "honors": [
         {
@@ -35057,7 +35102,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "0955688C4643C324",
+      "evidence_hash": "2969F203C16A2D21",
       "purged_synthetic_rating": 5.0,
       "suppressed_points": 0.0,
       "taxonomy": "Stable Baseline (No Influx)",
@@ -35770,6 +35815,10 @@
         932,
         932,
         932,
+        932,
+        932,
+        932,
+        932,
         932
       ],
       "honors": [
@@ -35779,7 +35828,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "834CA6CE76361CB5",
+      "evidence_hash": "26969245F52394D7",
       "purged_synthetic_rating": 4.2,
       "suppressed_points": 0.0,
       "taxonomy": "Stable Baseline (No Influx)",
@@ -36267,6 +36316,10 @@
         599,
         599,
         600,
+        600,
+        600,
+        600,
+        600,
         600
       ],
       "honors": [
@@ -36276,7 +36329,7 @@
           "color": "rose"
         }
       ],
-      "evidence_hash": "97B21350D9948D79",
+      "evidence_hash": "6F653CA165D573F0",
       "purged_synthetic_rating": 0.0,
       "suppressed_points": 0.0,
       "taxonomy": "Stable Baseline (No Influx)",
@@ -36354,10 +36407,14 @@
         0,
         0,
         0,
+        0,
+        0,
+        0,
+        0,
         0
       ],
       "honors": [],
-      "evidence_hash": "7D10CE9897E47425",
+      "evidence_hash": "BDBE81FAF5EF7520",
       "purged_synthetic_rating": 0.0,
       "suppressed_points": 0.0,
       "taxonomy": "Stable Baseline (No Influx)",
@@ -36425,10 +36482,14 @@
         0,
         0,
         0,
+        0,
+        0,
+        0,
+        0,
         0
       ],
       "honors": [],
-      "evidence_hash": "1904BACB0765456D",
+      "evidence_hash": "E7FEEFF0AD0C524A",
       "purged_synthetic_rating": 0.0,
       "suppressed_points": 0.0,
       "taxonomy": "Stable Baseline (No Influx)",
@@ -36496,10 +36557,14 @@
         0,
         0,
         0,
+        0,
+        0,
+        0,
+        0,
         0
       ],
       "honors": [],
-      "evidence_hash": "570FB35330A00C7F",
+      "evidence_hash": "C2EB426124E02D09",
       "purged_synthetic_rating": 0.0,
       "suppressed_points": 0.0,
       "taxonomy": "Stable Baseline (No Influx)",
@@ -36509,11 +36574,11 @@
   ],
   "summary": {
     "total_plugins": 30,
-    "total_downloads": 166649,
+    "total_downloads": 166657,
     "portfolio_milestones": {
       "prev_milestone": 150000,
       "next_milestone": 200000,
-      "remaining": 33351,
+      "remaining": 33343,
       "progress_total": 83.3,
       "progress_tier": 33.3,
       "est_date": "Nov 25, 2026",
@@ -36527,33 +36592,33 @@
         150000
       ]
     },
-    "last_updated": "Oct 17, 2026 03:28 UTC",
-    "community_hours_saved": 124987,
-    "economic_value_usd": 6249338,
+    "last_updated": "Oct 17, 2026 03:42 UTC",
+    "community_hours_saved": 124993,
+    "economic_value_usd": 6249638,
     "overall_raw_rating": 4.13,
     "portfolio_bayesian_rating": 4.1,
     "total_votes": 1227,
     "active_plugins": 30,
-    "portfolio_monthly_velocity": 26012,
-    "active_period_monthly_avg": 26012,
+    "portfolio_monthly_velocity": 26013,
+    "active_period_monthly_avg": 26013,
     "portfolio_overall_monthly_avg": 9607,
-    "sum_individual_monthly_avgs": 42968,
+    "sum_individual_monthly_avgs": 42970,
     "categories": {
       "Standalone Plugins": {
         "count": 8,
-        "downloads": 53094,
+        "downloads": 53096,
         "total_rating_sum": 1350.9749028515232,
         "total_votes": 316
       },
       "02 Suite": {
         "count": 11,
-        "downloads": 64931,
+        "downloads": 64936,
         "total_rating_sum": 2031.9588576341544,
         "total_votes": 494
       },
       "PlanX Suite": {
         "count": 11,
-        "downloads": 48624,
+        "downloads": 48625,
         "total_rating_sum": 1681.9594419055454,
         "total_votes": 417
       }
@@ -36643,11 +36708,11 @@
         "iso3": "USA",
         "cx": 214.1,
         "cy": 152.8,
-        "downloads": 37453,
+        "downloads": 37454,
         "suite_downloads": {
           "Standalone Plugins": 9777,
           "02 Suite": 12409,
-          "PlanX Suite": 15267
+          "PlanX Suite": 15268
         },
         "top_plugins": [
           {
@@ -36694,7 +36759,7 @@
           },
           {
             "name": "PlanX 3D City Viewer",
-            "downloads": 1856,
+            "downloads": 1857,
             "category": "PlanX Suite",
             "percentage": 30.8
           },
@@ -37180,10 +37245,10 @@
         "iso3": "BRA",
         "cx": 347.4,
         "cy": 284.4,
-        "downloads": 9242,
+        "downloads": 9243,
         "suite_downloads": {
           "Standalone Plugins": 2622,
-          "02 Suite": 4757,
+          "02 Suite": 4758,
           "PlanX Suite": 1863
         },
         "top_plugins": [
@@ -37207,7 +37272,7 @@
           },
           {
             "name": "02Agent OSM Downloader",
-            "downloads": 952,
+            "downloads": 953,
             "category": "02 Suite",
             "percentage": 8.1
           },
@@ -37361,10 +37426,10 @@
         "iso3": "DEU",
         "cx": 508.1,
         "cy": 117.4,
-        "downloads": 8689,
+        "downloads": 8690,
         "suite_downloads": {
           "Standalone Plugins": 2714,
-          "02 Suite": 3063,
+          "02 Suite": 3064,
           "PlanX Suite": 2912
         },
         "top_plugins": [
@@ -37513,16 +37578,16 @@
             "percentage": 6.1
           },
           {
+            "name": "02Route 3D - Multi-Criteria 3D Mobility Studio",
+            "downloads": 70,
+            "category": "02 Suite",
+            "percentage": 4.6
+          },
+          {
             "name": "QGIS 2.5D Styling",
             "downloads": 70,
             "category": "Standalone Plugins",
             "percentage": 7.5
-          },
-          {
-            "name": "02Route 3D - Multi-Criteria 3D Mobility Studio",
-            "downloads": 69,
-            "category": "02 Suite",
-            "percentage": 4.5
           },
           {
             "name": "Qgis Advanced Map Tips&Actions",
@@ -39865,10 +39930,10 @@
         "iso3": "CAN",
         "cx": 185.5,
         "cy": 102.7,
-        "downloads": 1863,
+        "downloads": 1864,
         "suite_downloads": {
           "Standalone Plugins": 524,
-          "02 Suite": 676,
+          "02 Suite": 677,
           "PlanX Suite": 663
         },
         "top_plugins": [
@@ -40000,7 +40065,7 @@
           },
           {
             "name": "02truesize - Map Truth Lab",
-            "downloads": 17,
+            "downloads": 18,
             "category": "02 Suite",
             "percentage": 0.6
           },
@@ -58456,7 +58521,7 @@
         "icon": "fa-landmark",
         "rank_title": "Primary Anchor Market",
         "color": "#0ea5e9",
-        "downloads": 41999,
+        "downloads": 42000,
         "percentage": 25.2,
         "dominant_suite": "02 Suite",
         "dominant_suite_share": 44.5,
@@ -58486,7 +58551,7 @@
         "icon": "fa-city",
         "rank_title": "High-Volume Engine",
         "color": "#38bdf8",
-        "downloads": 39319,
+        "downloads": 39321,
         "percentage": 23.6,
         "dominant_suite": "PlanX Suite",
         "dominant_suite_share": 40.5,
@@ -58576,7 +58641,7 @@
         "icon": "fa-mountain-sun",
         "rank_title": "Rapid Growth Frontier",
         "color": "#10b981",
-        "downloads": 16902,
+        "downloads": 16903,
         "percentage": 10.1,
         "dominant_suite": "02 Suite",
         "dominant_suite_share": 47.0,
@@ -58633,13 +58698,13 @@
     "suite_affinity_matrix": [
       {
         "suite": "Standalone Plugins",
-        "global_downloads": 53094,
+        "global_downloads": 53096,
         "global_share": 31.9,
         "cells": [
           {
             "region": "Western Europe",
             "downloads": 12999,
-            "regional_share": 31.0,
+            "regional_share": 30.9,
             "suite_share": 24.5,
             "location_quotient": 0.97,
             "affinity_status": "Balanced",
@@ -58694,12 +58759,12 @@
       },
       {
         "suite": "02 Suite",
-        "global_downloads": 64931,
+        "global_downloads": 64936,
         "global_share": 39.0,
         "cells": [
           {
             "region": "Western Europe",
-            "downloads": 18707,
+            "downloads": 18708,
             "regional_share": 44.5,
             "suite_share": 28.8,
             "location_quotient": 1.14,
@@ -58708,7 +58773,7 @@
           },
           {
             "region": "North America",
-            "downloads": 13085,
+            "downloads": 13086,
             "regional_share": 33.3,
             "suite_share": 20.2,
             "location_quotient": 0.85,
@@ -58735,7 +58800,7 @@
           },
           {
             "region": "Latin America",
-            "downloads": 7942,
+            "downloads": 7943,
             "regional_share": 47.0,
             "suite_share": 12.2,
             "location_quotient": 1.21,
@@ -58755,7 +58820,7 @@
       },
       {
         "suite": "PlanX Suite",
-        "global_downloads": 48624,
+        "global_downloads": 48625,
         "global_share": 29.2,
         "cells": [
           {
@@ -58769,7 +58834,7 @@
           },
           {
             "region": "North America",
-            "downloads": 15930,
+            "downloads": 15931,
             "regional_share": 40.5,
             "suite_share": 32.8,
             "location_quotient": 1.39,
@@ -59086,19 +59151,19 @@
       "suite_decomposition": {
         "Standalone Plugins": {
           "count": 8,
-          "downloads": 53094,
+          "downloads": 53096,
           "share_pct": 31.9,
           "sub_gini": 0.7345
         },
         "02 Suite": {
           "count": 11,
-          "downloads": 64931,
+          "downloads": 64936,
           "share_pct": 39.0,
           "sub_gini": 0.508
         },
         "PlanX Suite": {
           "count": 11,
-          "downloads": 48624,
+          "downloads": 48625,
           "share_pct": 29.2,
           "sub_gini": 0.3764
         }
@@ -59107,7 +59172,7 @@
     },
     "critical_anomalies": 5,
     "warning_anomalies": 16,
-    "total_snapshots": 182
+    "total_snapshots": 186
   },
   "anomalies": [
     {
@@ -59138,7 +59203,7 @@
       "purged_synthetic_rating": 5.0,
       "suppressed_points": 0.92,
       "needed_5_stars_to_recover": 87,
-      "evidence_hash": "B811D0F0E0CA111C",
+      "evidence_hash": "219DC012A6D7300E",
       "status": "CRITICAL 1-STAR ATTACK",
       "taxonomy": "Type I: Direct 1-Star Bombing",
       "taxonomy_code": "TYPE_1_BOMBING",
@@ -59183,7 +59248,7 @@
       "purged_synthetic_rating": 5.0,
       "suppressed_points": 1.0,
       "needed_5_stars_to_recover": 81,
-      "evidence_hash": "CC5186147A62097C",
+      "evidence_hash": "8AD275CB93996DC3",
       "status": "CRITICAL 1-STAR ATTACK",
       "taxonomy": "Type I: Direct 1-Star Bombing",
       "taxonomy_code": "TYPE_1_BOMBING",
@@ -59228,7 +59293,7 @@
       "purged_synthetic_rating": 4.77,
       "suppressed_points": 0.89,
       "needed_5_stars_to_recover": 79,
-      "evidence_hash": "8B5A59DA0A7D2EAA",
+      "evidence_hash": "C03AC7B03BCF8116",
       "status": "CRITICAL 1-STAR ATTACK",
       "taxonomy": "Type I: Direct 1-Star Bombing",
       "taxonomy_code": "TYPE_1_BOMBING",
@@ -59273,7 +59338,7 @@
       "purged_synthetic_rating": 5.0,
       "suppressed_points": 0.89,
       "needed_5_stars_to_recover": 63,
-      "evidence_hash": "F9F70284ECB22D6C",
+      "evidence_hash": "C57D5F2E28055D0F",
       "status": "CRITICAL 1-STAR ATTACK",
       "taxonomy": "Type I: Direct 1-Star Bombing",
       "taxonomy_code": "TYPE_1_BOMBING",
@@ -59318,7 +59383,7 @@
       "purged_synthetic_rating": 4.71,
       "suppressed_points": 0.83,
       "needed_5_stars_to_recover": 83,
-      "evidence_hash": "1F19A4CBFA6CAEE7",
+      "evidence_hash": "9899A60CCE414935",
       "status": "CRITICAL 1-STAR ATTACK",
       "taxonomy": "Type I: Direct 1-Star Bombing",
       "taxonomy_code": "TYPE_1_BOMBING",
@@ -59350,7 +59415,7 @@
       "current_rating": 4.076,
       "current_score": 428.0,
       "delta_votes": 53,
-      "delta_dl": 10921,
+      "delta_dl": 10923,
       "delta_rating": -0.635,
       "delta_score": 183.0,
       "damage_index": 66.7,
@@ -59363,7 +59428,7 @@
       "purged_synthetic_rating": 4.71,
       "suppressed_points": 0.64,
       "needed_5_stars_to_recover": 381,
-      "evidence_hash": "6B32542470E6DB06",
+      "evidence_hash": "160FAC317E56090A",
       "status": "SOFT DILUTION DRAG-DOWN",
       "taxonomy": "Type II: Soft Rating Dilution",
       "taxonomy_code": "TYPE_2_SOFT_DILUTION",
@@ -59371,7 +59436,7 @@
       "badge_color": "amber",
       "threat_level": 85,
       "f_vec": [
-        0.6066294295394195,
+        0.6065183557630688,
         2.5172113627439305,
         10.0,
         3.6666666666666665,
@@ -59395,7 +59460,7 @@
       "current_rating": 3.919,
       "current_score": 243.0,
       "delta_votes": 52,
-      "delta_dl": 10793,
+      "delta_dl": 10794,
       "delta_rating": -1.08,
       "delta_score": 193.0,
       "damage_index": 67.0,
@@ -59408,7 +59473,7 @@
       "purged_synthetic_rating": 5.0,
       "suppressed_points": 1.08,
       "needed_5_stars_to_recover": 274,
-      "evidence_hash": "65DD04E417D3C111",
+      "evidence_hash": "5A5BF88D2A34B4CD",
       "status": "SOFT DILUTION DRAG-DOWN",
       "taxonomy": "Type II: Soft Rating Dilution",
       "taxonomy_code": "TYPE_2_SOFT_DILUTION",
@@ -59416,7 +59481,7 @@
       "badge_color": "amber",
       "threat_level": 85,
       "f_vec": [
-        0.6022421940146391,
+        0.6021863998517695,
         2.575881630435166,
         10.0,
         3.6666666666666665,
@@ -59453,7 +59518,7 @@
       "purged_synthetic_rating": 4.4,
       "suppressed_points": 0.15,
       "needed_5_stars_to_recover": 327,
-      "evidence_hash": "ECD5151DFC11A7A0",
+      "evidence_hash": "6F5954A17A8B674B",
       "status": "COORDINATED SWEEP",
       "taxonomy": "Type III: Coordinated Portfolio Sweep",
       "taxonomy_code": "TYPE_3_PORTFOLIO_SWEEP",
@@ -59498,7 +59563,7 @@
       "purged_synthetic_rating": 4.85,
       "suppressed_points": 1.37,
       "needed_5_stars_to_recover": 557,
-      "evidence_hash": "22E97044C35953B5",
+      "evidence_hash": "E1A5D0D17AEB626C",
       "status": "SOFT DILUTION DRAG-DOWN",
       "taxonomy": "Type II: Soft Rating Dilution",
       "taxonomy_code": "TYPE_2_SOFT_DILUTION",
@@ -59530,7 +59595,7 @@
       "current_rating": 4.302,
       "current_score": 684.0,
       "delta_votes": 37,
-      "delta_dl": 9420,
+      "delta_dl": 9421,
       "delta_rating": -0.337,
       "delta_score": 118.0,
       "damage_index": 53.7,
@@ -59543,7 +59608,7 @@
       "purged_synthetic_rating": 4.64,
       "suppressed_points": 0.34,
       "needed_5_stars_to_recover": 397,
-      "evidence_hash": "DB435B50822D82FC",
+      "evidence_hash": "77D1E9DF2B48E99A",
       "status": "SOFT DILUTION DRAG-DOWN",
       "taxonomy": "Type II: Soft Rating Dilution",
       "taxonomy_code": "TYPE_2_SOFT_DILUTION",
@@ -59551,7 +59616,7 @@
       "badge_color": "amber",
       "threat_level": 85,
       "f_vec": [
-        0.49097664543524416,
+        0.4909245303046385,
         2.9216033812703506,
         10.0,
         3.6666666666666665,
@@ -59575,7 +59640,7 @@
       "current_rating": 4.323,
       "current_score": 428.0,
       "delta_votes": 33,
-      "delta_dl": 8947,
+      "delta_dl": 8948,
       "delta_rating": -0.343,
       "delta_score": 120.0,
       "damage_index": 34.0,
@@ -59588,7 +59653,7 @@
       "purged_synthetic_rating": 4.67,
       "suppressed_points": 0.34,
       "needed_5_stars_to_recover": 237,
-      "evidence_hash": "67DACFB2CDFB6197",
+      "evidence_hash": "0057FD81691F03B8",
       "status": "SOFT DILUTION DRAG-DOWN",
       "taxonomy": "Type II: Soft Rating Dilution",
       "taxonomy_code": "TYPE_2_SOFT_DILUTION",
@@ -59596,7 +59661,7 @@
       "badge_color": "amber",
       "threat_level": 85,
       "f_vec": [
-        0.4610483961104281,
+        0.46099687080911933,
         2.0604438360432527,
         10.0,
         3.6666666666666665,
@@ -59633,7 +59698,7 @@
       "purged_synthetic_rating": 4.56,
       "suppressed_points": 0.29,
       "needed_5_stars_to_recover": 251,
-      "evidence_hash": "3AB3BB07AB0386A2",
+      "evidence_hash": "AABA92E09473F17E",
       "status": "SOFT DILUTION DRAG-DOWN",
       "taxonomy": "Type II: Soft Rating Dilution",
       "taxonomy_code": "TYPE_2_SOFT_DILUTION",
@@ -59678,7 +59743,7 @@
       "purged_synthetic_rating": 4.74,
       "suppressed_points": 0.63,
       "needed_5_stars_to_recover": 253,
-      "evidence_hash": "313EEAD8F97A845D",
+      "evidence_hash": "AA2E598A88F63A25",
       "status": "SOFT DILUTION DRAG-DOWN",
       "taxonomy": "Type II: Soft Rating Dilution",
       "taxonomy_code": "TYPE_2_SOFT_DILUTION",
@@ -59710,7 +59775,7 @@
       "current_rating": 4.147,
       "current_score": 141.0,
       "delta_votes": 15,
-      "delta_dl": 1938,
+      "delta_dl": 1939,
       "delta_rating": -0.379,
       "delta_score": 55.0,
       "damage_index": 12.9,
@@ -59723,7 +59788,7 @@
       "purged_synthetic_rating": 4.53,
       "suppressed_points": 0.38,
       "needed_5_stars_to_recover": 112,
-      "evidence_hash": "CA8DE32D438284B6",
+      "evidence_hash": "DAF567F2DD03FF2A",
       "status": "SOFT DILUTION DRAG-DOWN",
       "taxonomy": "Type II: Soft Rating Dilution",
       "taxonomy_code": "TYPE_2_SOFT_DILUTION",
@@ -59731,7 +59796,7 @@
       "badge_color": "amber",
       "threat_level": 85,
       "f_vec": [
-        0.9674922600619196,
+        0.9669932955131512,
         1.966616114570658,
         10.0,
         3.6666666666666665,
@@ -59768,7 +59833,7 @@
       "purged_synthetic_rating": 4.8,
       "suppressed_points": 0.65,
       "needed_5_stars_to_recover": 108,
-      "evidence_hash": "7B8118579E4F7260",
+      "evidence_hash": "0511AE77405138C1",
       "status": "SOFT DILUTION DRAG-DOWN",
       "taxonomy": "Type II: Soft Rating Dilution",
       "taxonomy_code": "TYPE_2_SOFT_DILUTION",
@@ -59813,7 +59878,7 @@
       "purged_synthetic_rating": 4.28,
       "suppressed_points": 0.1,
       "needed_5_stars_to_recover": 126,
-      "evidence_hash": "B965A72959B25814",
+      "evidence_hash": "515B31D84C178689",
       "status": "COORDINATED SWEEP",
       "taxonomy": "Type III: Coordinated Portfolio Sweep",
       "taxonomy_code": "TYPE_3_PORTFOLIO_SWEEP",
@@ -59858,7 +59923,7 @@
       "purged_synthetic_rating": 5.0,
       "suppressed_points": 1.19,
       "needed_5_stars_to_recover": 105,
-      "evidence_hash": "0A14C8C303A9C925",
+      "evidence_hash": "574C38116A721937",
       "status": "SOFT DILUTION DRAG-DOWN",
       "taxonomy": "Type II: Soft Rating Dilution",
       "taxonomy_code": "TYPE_2_SOFT_DILUTION",
@@ -59903,7 +59968,7 @@
       "purged_synthetic_rating": 4.64,
       "suppressed_points": 0.45,
       "needed_5_stars_to_recover": 65,
-      "evidence_hash": "99B7AC1B379AC4E2",
+      "evidence_hash": "5D4931532F21D809",
       "status": "SOFT DILUTION DRAG-DOWN",
       "taxonomy": "Type II: Soft Rating Dilution",
       "taxonomy_code": "TYPE_2_SOFT_DILUTION",
@@ -59935,7 +60000,7 @@
       "current_rating": 4.333,
       "current_score": 143.0,
       "delta_votes": 6,
-      "delta_dl": 1997,
+      "delta_dl": 1998,
       "delta_rating": -0.518,
       "delta_score": 12.0,
       "damage_index": 17.1,
@@ -59948,7 +60013,7 @@
       "purged_synthetic_rating": 4.85,
       "suppressed_points": 0.52,
       "needed_5_stars_to_recover": 78,
-      "evidence_hash": "9A56AF1283A7DAFF",
+      "evidence_hash": "48960318B7245B5D",
       "status": "SOFT DILUTION DRAG-DOWN",
       "taxonomy": "Type II: Soft Rating Dilution",
       "taxonomy_code": "TYPE_2_SOFT_DILUTION",
@@ -59956,7 +60021,7 @@
       "badge_color": "amber",
       "threat_level": 85,
       "f_vec": [
-        0.37556334501752625,
+        0.37537537537537535,
         5.703171497202014,
         6,
         3.6666666666666665,
@@ -59993,7 +60058,7 @@
       "purged_synthetic_rating": 4.56,
       "suppressed_points": 0.56,
       "needed_5_stars_to_recover": 49,
-      "evidence_hash": "4F301BDD66F9929E",
+      "evidence_hash": "42A5E2D0825B6CFE",
       "status": "SOFT DILUTION DRAG-DOWN",
       "taxonomy": "Type II: Soft Rating Dilution",
       "taxonomy_code": "TYPE_2_SOFT_DILUTION",
@@ -60038,7 +60103,7 @@
       "purged_synthetic_rating": 5.0,
       "suppressed_points": 1.0,
       "needed_5_stars_to_recover": 33,
-      "evidence_hash": "842624D12A750614",
+      "evidence_hash": "DFC8ADBFD531E98C",
       "status": "SOFT DILUTION DRAG-DOWN",
       "taxonomy": "Type II: Soft Rating Dilution",
       "taxonomy_code": "TYPE_2_SOFT_DILUTION",
@@ -60083,7 +60148,7 @@
       "purged_synthetic_rating": 4.31,
       "suppressed_points": 0.0,
       "needed_5_stars_to_recover": 210,
-      "evidence_hash": "818EB5736DA9E9C4",
+      "evidence_hash": "91B416600A37B5EB",
       "status": "ORGANIC ACTIVITY",
       "taxonomy": "Organic General Activity",
       "taxonomy_code": "ORGANIC_NORMAL",
@@ -60128,7 +60193,7 @@
       "purged_synthetic_rating": 3.95,
       "suppressed_points": 0.0,
       "needed_5_stars_to_recover": 90,
-      "evidence_hash": "9D0C3C121E164BCC",
+      "evidence_hash": "84600E7087F87AC8",
       "status": "STABLE BASELINE",
       "taxonomy": "Stable Baseline (No Influx)",
       "taxonomy_code": "STABLE_BASELINE",
@@ -60173,7 +60238,7 @@
       "purged_synthetic_rating": 3.83,
       "suppressed_points": 0.0,
       "needed_5_stars_to_recover": 88,
-      "evidence_hash": "6B1A5B4FD2CD7CAC",
+      "evidence_hash": "7C144E2170DFAD88",
       "status": "STABLE BASELINE",
       "taxonomy": "Stable Baseline (No Influx)",
       "taxonomy_code": "STABLE_BASELINE",
@@ -60218,7 +60283,7 @@
       "purged_synthetic_rating": 5.0,
       "suppressed_points": 0.0,
       "needed_5_stars_to_recover": 0,
-      "evidence_hash": "0955688C4643C324",
+      "evidence_hash": "2969F203C16A2D21",
       "status": "STABLE BASELINE",
       "taxonomy": "Stable Baseline (No Influx)",
       "taxonomy_code": "STABLE_BASELINE",
@@ -60263,7 +60328,7 @@
       "purged_synthetic_rating": 4.2,
       "suppressed_points": 0.0,
       "needed_5_stars_to_recover": 16,
-      "evidence_hash": "834CA6CE76361CB5",
+      "evidence_hash": "26969245F52394D7",
       "status": "STABLE BASELINE",
       "taxonomy": "Stable Baseline (No Influx)",
       "taxonomy_code": "STABLE_BASELINE",
@@ -60308,7 +60373,7 @@
       "purged_synthetic_rating": 0.0,
       "suppressed_points": 0.0,
       "needed_5_stars_to_recover": 0,
-      "evidence_hash": "97B21350D9948D79",
+      "evidence_hash": "6F653CA165D573F0",
       "status": "STABLE BASELINE",
       "taxonomy": "Stable Baseline (No Influx)",
       "taxonomy_code": "STABLE_BASELINE",
@@ -60353,7 +60418,7 @@
       "purged_synthetic_rating": 0.0,
       "suppressed_points": 0.0,
       "needed_5_stars_to_recover": 0,
-      "evidence_hash": "7D10CE9897E47425",
+      "evidence_hash": "BDBE81FAF5EF7520",
       "status": "STABLE BASELINE",
       "taxonomy": "Stable Baseline (No Influx)",
       "taxonomy_code": "STABLE_BASELINE",
@@ -60398,7 +60463,7 @@
       "purged_synthetic_rating": 0.0,
       "suppressed_points": 0.0,
       "needed_5_stars_to_recover": 0,
-      "evidence_hash": "1904BACB0765456D",
+      "evidence_hash": "E7FEEFF0AD0C524A",
       "status": "STABLE BASELINE",
       "taxonomy": "Stable Baseline (No Influx)",
       "taxonomy_code": "STABLE_BASELINE",
@@ -60443,7 +60508,7 @@
       "purged_synthetic_rating": 0.0,
       "suppressed_points": 0.0,
       "needed_5_stars_to_recover": 0,
-      "evidence_hash": "570FB35330A00C7F",
+      "evidence_hash": "C2EB426124E02D09",
       "status": "STABLE BASELINE",
       "taxonomy": "Stable Baseline (No Influx)",
       "taxonomy_code": "STABLE_BASELINE",
@@ -60492,8 +60557,8 @@
     "total_raid_votes": 410,
     "total_suppressed_pts": 14.22,
     "portfolio_purged_average": 4.59,
-    "audit_timestamp": "2026-10-17 03:28:25 UTC",
-    "portfolio_evidence_signature": "110D6D21BC3861ED20F23DE8"
+    "audit_timestamp": "2026-10-17 03:42:27 UTC",
+    "portfolio_evidence_signature": "9773FB1E71AED9CD99BA4D23"
   },
   "rating_streams": {
     "3D OSM Model": {
@@ -114659,6 +114724,874 @@
             "version": "1.0.0"
           }
         }
+      },
+      {
+        "timestamp": "2026-10-17T03:35:51.461017+00:00",
+        "date_str": "Oct 17, 2026 03:35 UTC",
+        "total_downloads": 166653,
+        "plugins": {
+          "3D OSM Model": {
+            "downloads": 25630,
+            "average_vote": 4.301859736731215,
+            "votes_count": 159,
+            "total_score": 683.9957,
+            "version": "1.7.2"
+          },
+          "02CadGis Universal CAD/GIS Importer": {
+            "downloads": 17676,
+            "average_vote": 4.076151655698517,
+            "votes_count": 105,
+            "total_score": 427.9959,
+            "version": "4.1.2"
+          },
+          "OSM Quick 3D": {
+            "downloads": 16763,
+            "average_vote": 4.323188654660053,
+            "votes_count": 99,
+            "total_score": 427.9957,
+            "version": "0.50.2"
+          },
+          "02Agent OSM Downloader": {
+            "downloads": 11694,
+            "average_vote": 3.91929162432864,
+            "votes_count": 62,
+            "total_score": 242.9961,
+            "version": "1.3.6"
+          },
+          "02viz - Geospatial Visualization Studio": {
+            "downloads": 9665,
+            "average_vote": 4.273639224850265,
+            "votes_count": 95,
+            "total_score": 405.9957,
+            "version": "0.18.0"
+          },
+          "PlanX CAD Toolset": {
+            "downloads": 9203,
+            "average_vote": 4.1095327461267654,
+            "votes_count": 73,
+            "total_score": 299.9959,
+            "version": "1.27.6"
+          },
+          "02-Multimap: Sync-up Multimaps": {
+            "downloads": 9165,
+            "average_vote": 4.2520651086965655,
+            "votes_count": 119,
+            "total_score": 505.9957,
+            "version": "1.0.2"
+          },
+          "PlanX": {
+            "downloads": 9141,
+            "average_vote": 4.313903326705503,
+            "votes_count": 86,
+            "total_score": 370.9957,
+            "version": "4.19.0"
+          },
+          "PlanX 3D City Viewer": {
+            "downloads": 6032,
+            "average_vote": 4.333202024181086,
+            "votes_count": 33,
+            "total_score": 142.9957,
+            "version": "2.0.1"
+          },
+          "PlanX GeoStats Lab": {
+            "downloads": 5800,
+            "average_vote": 3.4761490934631727,
+            "votes_count": 84,
+            "total_score": 291.9965,
+            "version": "3.10.1"
+          },
+          "EasyFillet": {
+            "downloads": 4848,
+            "average_vote": 4.083163201533269,
+            "votes_count": 24,
+            "total_score": 97.9959,
+            "version": "1.4.13"
+          },
+          "PlanX: Urban Resilience": {
+            "downloads": 4791,
+            "average_vote": 4.17489562760931,
+            "votes_count": 40,
+            "total_score": 166.9958,
+            "version": "2.1.4"
+          },
+          "02Urban Portrait - City as a Face": {
+            "downloads": 3688,
+            "average_vote": 3.8821245809070053,
+            "votes_count": 17,
+            "total_score": 65.9961,
+            "version": "0.4.2"
+          },
+          "02GeoQuest - Playable Map Studio": {
+            "downloads": 3338,
+            "average_vote": 3.809342412266082,
+            "votes_count": 21,
+            "total_score": 79.9962,
+            "version": "1.2.3"
+          },
+          "02CartoLab": {
+            "downloads": 3187,
+            "average_vote": 3.9521927527260603,
+            "votes_count": 21,
+            "total_score": 82.996,
+            "version": "1.5.0"
+          },
+          "PlanX Suitability Lab": {
+            "downloads": 3154,
+            "average_vote": 4.151389351837824,
+            "votes_count": 33,
+            "total_score": 136.9958,
+            "version": "1.7.6"
+          },
+          "02truesize - Map Truth Lab": {
+            "downloads": 3038,
+            "average_vote": 4.146936854798389,
+            "votes_count": 34,
+            "total_score": 140.9959,
+            "version": "0.4.6"
+          },
+          "PlanX Settlement Planning Toolset": {
+            "downloads": 2856,
+            "average_vote": 3.9998000099995,
+            "votes_count": 20,
+            "total_score": 79.996,
+            "version": "0.5.13"
+          },
+          "PlanX Uygulama İmar Planı (Master Plan) Toolset": {
+            "downloads": 2683,
+            "average_vote": 4.110882728737292,
+            "votes_count": 18,
+            "total_score": 73.9959,
+            "version": "1.2.11"
+          },
+          "ParcelFlux": {
+            "downloads": 2679,
+            "average_vote": 4.190276653492691,
+            "votes_count": 21,
+            "total_score": 87.9958,
+            "version": "0.3.5"
+          },
+          "PlanX DataCube Lab": {
+            "downloads": 2517,
+            "average_vote": 3.8886728515082494,
+            "votes_count": 18,
+            "total_score": 69.9961,
+            "version": "1.3.10"
+          },
+          "PlanX Urban Procedural 3D": {
+            "downloads": 2447,
+            "average_vote": 3.99966669444213,
+            "votes_count": 12,
+            "total_score": 47.996,
+            "version": "0.5.8"
+          },
+          "02Agent Smart Modeler": {
+            "downloads": 1958,
+            "average_vote": 3.8331203822009887,
+            "votes_count": 18,
+            "total_score": 68.9962,
+            "version": "1.5.56"
+          },
+          "Parametric Process": {
+            "downloads": 1644,
+            "average_vote": 3.9995000624921886,
+            "votes_count": 8,
+            "total_score": 31.996,
+            "version": "3.2.0"
+          },
+          "02Route 3D - Multi-Criteria 3D Mobility Studio": {
+            "downloads": 1524,
+            "average_vote": 4.997501249375313,
+            "votes_count": 2,
+            "total_score": 9.995,
+            "version": "1.1.0"
+          },
+          "QGIS 2.5D Styling": {
+            "downloads": 932,
+            "average_vote": 4.199160167966406,
+            "votes_count": 5,
+            "total_score": 20.9958,
+            "version": "1.0.2"
+          },
+          "Qgis Advanced Map Tips&Actions": {
+            "downloads": 600,
+            "average_vote": 0.0,
+            "votes_count": 0,
+            "total_score": 0.0,
+            "version": "0.1.1"
+          },
+          "PlanX MPYY Studio": {
+            "downloads": 0,
+            "average_vote": 0.0,
+            "votes_count": 0,
+            "total_score": 0.0,
+            "version": "1.0.0"
+          },
+          "PLN3113 NİP ve Kentsel Analiz Stüdyosu": {
+            "downloads": 0,
+            "average_vote": 0.0,
+            "votes_count": 0,
+            "total_score": 0.0,
+            "version": "1.1.0"
+          },
+          "02 Geo3D Analyzer": {
+            "downloads": 0,
+            "average_vote": 0.0,
+            "votes_count": 0,
+            "total_score": 0.0,
+            "version": "1.0.0"
+          }
+        }
+      },
+      {
+        "timestamp": "2026-10-17T03:36:43.481212+00:00",
+        "date_str": "Oct 17, 2026 03:36 UTC",
+        "total_downloads": 166653,
+        "plugins": {
+          "3D OSM Model": {
+            "downloads": 25630,
+            "average_vote": 4.301859736731215,
+            "votes_count": 159,
+            "total_score": 683.9957,
+            "version": "1.7.2"
+          },
+          "02CadGis Universal CAD/GIS Importer": {
+            "downloads": 17676,
+            "average_vote": 4.076151655698517,
+            "votes_count": 105,
+            "total_score": 427.9959,
+            "version": "4.1.2"
+          },
+          "OSM Quick 3D": {
+            "downloads": 16763,
+            "average_vote": 4.323188654660053,
+            "votes_count": 99,
+            "total_score": 427.9957,
+            "version": "0.50.2"
+          },
+          "02Agent OSM Downloader": {
+            "downloads": 11694,
+            "average_vote": 3.91929162432864,
+            "votes_count": 62,
+            "total_score": 242.9961,
+            "version": "1.3.6"
+          },
+          "02viz - Geospatial Visualization Studio": {
+            "downloads": 9665,
+            "average_vote": 4.273639224850265,
+            "votes_count": 95,
+            "total_score": 405.9957,
+            "version": "0.18.0"
+          },
+          "PlanX CAD Toolset": {
+            "downloads": 9203,
+            "average_vote": 4.1095327461267654,
+            "votes_count": 73,
+            "total_score": 299.9959,
+            "version": "1.27.6"
+          },
+          "02-Multimap: Sync-up Multimaps": {
+            "downloads": 9165,
+            "average_vote": 4.2520651086965655,
+            "votes_count": 119,
+            "total_score": 505.9957,
+            "version": "1.0.2"
+          },
+          "PlanX": {
+            "downloads": 9141,
+            "average_vote": 4.313903326705503,
+            "votes_count": 86,
+            "total_score": 370.9957,
+            "version": "4.19.0"
+          },
+          "PlanX 3D City Viewer": {
+            "downloads": 6032,
+            "average_vote": 4.333202024181086,
+            "votes_count": 33,
+            "total_score": 142.9957,
+            "version": "2.0.1"
+          },
+          "PlanX GeoStats Lab": {
+            "downloads": 5800,
+            "average_vote": 3.4761490934631727,
+            "votes_count": 84,
+            "total_score": 291.9965,
+            "version": "3.10.1"
+          },
+          "EasyFillet": {
+            "downloads": 4848,
+            "average_vote": 4.083163201533269,
+            "votes_count": 24,
+            "total_score": 97.9959,
+            "version": "1.4.13"
+          },
+          "PlanX: Urban Resilience": {
+            "downloads": 4791,
+            "average_vote": 4.17489562760931,
+            "votes_count": 40,
+            "total_score": 166.9958,
+            "version": "2.1.4"
+          },
+          "02Urban Portrait - City as a Face": {
+            "downloads": 3688,
+            "average_vote": 3.8821245809070053,
+            "votes_count": 17,
+            "total_score": 65.9961,
+            "version": "0.4.2"
+          },
+          "02GeoQuest - Playable Map Studio": {
+            "downloads": 3338,
+            "average_vote": 3.809342412266082,
+            "votes_count": 21,
+            "total_score": 79.9962,
+            "version": "1.2.3"
+          },
+          "02CartoLab": {
+            "downloads": 3187,
+            "average_vote": 3.9521927527260603,
+            "votes_count": 21,
+            "total_score": 82.996,
+            "version": "1.5.0"
+          },
+          "PlanX Suitability Lab": {
+            "downloads": 3154,
+            "average_vote": 4.151389351837824,
+            "votes_count": 33,
+            "total_score": 136.9958,
+            "version": "1.7.6"
+          },
+          "02truesize - Map Truth Lab": {
+            "downloads": 3038,
+            "average_vote": 4.146936854798389,
+            "votes_count": 34,
+            "total_score": 140.9959,
+            "version": "0.4.6"
+          },
+          "PlanX Settlement Planning Toolset": {
+            "downloads": 2856,
+            "average_vote": 3.9998000099995,
+            "votes_count": 20,
+            "total_score": 79.996,
+            "version": "0.5.13"
+          },
+          "PlanX Uygulama İmar Planı (Master Plan) Toolset": {
+            "downloads": 2683,
+            "average_vote": 4.110882728737292,
+            "votes_count": 18,
+            "total_score": 73.9959,
+            "version": "1.2.11"
+          },
+          "ParcelFlux": {
+            "downloads": 2679,
+            "average_vote": 4.190276653492691,
+            "votes_count": 21,
+            "total_score": 87.9958,
+            "version": "0.3.5"
+          },
+          "PlanX DataCube Lab": {
+            "downloads": 2517,
+            "average_vote": 3.8886728515082494,
+            "votes_count": 18,
+            "total_score": 69.9961,
+            "version": "1.3.10"
+          },
+          "PlanX Urban Procedural 3D": {
+            "downloads": 2447,
+            "average_vote": 3.99966669444213,
+            "votes_count": 12,
+            "total_score": 47.996,
+            "version": "0.5.8"
+          },
+          "02Agent Smart Modeler": {
+            "downloads": 1958,
+            "average_vote": 3.8331203822009887,
+            "votes_count": 18,
+            "total_score": 68.9962,
+            "version": "1.5.56"
+          },
+          "Parametric Process": {
+            "downloads": 1644,
+            "average_vote": 3.9995000624921886,
+            "votes_count": 8,
+            "total_score": 31.996,
+            "version": "3.2.0"
+          },
+          "02Route 3D - Multi-Criteria 3D Mobility Studio": {
+            "downloads": 1524,
+            "average_vote": 4.997501249375313,
+            "votes_count": 2,
+            "total_score": 9.995,
+            "version": "1.1.0"
+          },
+          "QGIS 2.5D Styling": {
+            "downloads": 932,
+            "average_vote": 4.199160167966406,
+            "votes_count": 5,
+            "total_score": 20.9958,
+            "version": "1.0.2"
+          },
+          "Qgis Advanced Map Tips&Actions": {
+            "downloads": 600,
+            "average_vote": 0.0,
+            "votes_count": 0,
+            "total_score": 0.0,
+            "version": "0.1.1"
+          },
+          "PlanX MPYY Studio": {
+            "downloads": 0,
+            "average_vote": 0.0,
+            "votes_count": 0,
+            "total_score": 0.0,
+            "version": "1.0.0"
+          },
+          "PLN3113 NİP ve Kentsel Analiz Stüdyosu": {
+            "downloads": 0,
+            "average_vote": 0.0,
+            "votes_count": 0,
+            "total_score": 0.0,
+            "version": "1.1.0"
+          },
+          "02 Geo3D Analyzer": {
+            "downloads": 0,
+            "average_vote": 0.0,
+            "votes_count": 0,
+            "total_score": 0.0,
+            "version": "1.0.0"
+          }
+        }
+      },
+      {
+        "timestamp": "2026-10-17T03:40:35.556870+00:00",
+        "date_str": "Oct 17, 2026 03:40 UTC",
+        "total_downloads": 166653,
+        "plugins": {
+          "3D OSM Model": {
+            "downloads": 25630,
+            "average_vote": 4.301859736731215,
+            "votes_count": 159,
+            "total_score": 683.9957,
+            "version": "1.7.2"
+          },
+          "02CadGis Universal CAD/GIS Importer": {
+            "downloads": 17676,
+            "average_vote": 4.076151655698517,
+            "votes_count": 105,
+            "total_score": 427.9959,
+            "version": "4.1.2"
+          },
+          "OSM Quick 3D": {
+            "downloads": 16763,
+            "average_vote": 4.323188654660053,
+            "votes_count": 99,
+            "total_score": 427.9957,
+            "version": "0.50.2"
+          },
+          "02Agent OSM Downloader": {
+            "downloads": 11694,
+            "average_vote": 3.91929162432864,
+            "votes_count": 62,
+            "total_score": 242.9961,
+            "version": "1.3.6"
+          },
+          "02viz - Geospatial Visualization Studio": {
+            "downloads": 9665,
+            "average_vote": 4.273639224850265,
+            "votes_count": 95,
+            "total_score": 405.9957,
+            "version": "0.18.0"
+          },
+          "PlanX CAD Toolset": {
+            "downloads": 9203,
+            "average_vote": 4.1095327461267654,
+            "votes_count": 73,
+            "total_score": 299.9959,
+            "version": "1.27.6"
+          },
+          "02-Multimap: Sync-up Multimaps": {
+            "downloads": 9165,
+            "average_vote": 4.2520651086965655,
+            "votes_count": 119,
+            "total_score": 505.9957,
+            "version": "1.0.2"
+          },
+          "PlanX": {
+            "downloads": 9141,
+            "average_vote": 4.313903326705503,
+            "votes_count": 86,
+            "total_score": 370.9957,
+            "version": "4.19.0"
+          },
+          "PlanX 3D City Viewer": {
+            "downloads": 6032,
+            "average_vote": 4.333202024181086,
+            "votes_count": 33,
+            "total_score": 142.9957,
+            "version": "2.0.1"
+          },
+          "PlanX GeoStats Lab": {
+            "downloads": 5800,
+            "average_vote": 3.4761490934631727,
+            "votes_count": 84,
+            "total_score": 291.9965,
+            "version": "3.10.1"
+          },
+          "EasyFillet": {
+            "downloads": 4848,
+            "average_vote": 4.083163201533269,
+            "votes_count": 24,
+            "total_score": 97.9959,
+            "version": "1.4.13"
+          },
+          "PlanX: Urban Resilience": {
+            "downloads": 4791,
+            "average_vote": 4.17489562760931,
+            "votes_count": 40,
+            "total_score": 166.9958,
+            "version": "2.1.4"
+          },
+          "02Urban Portrait - City as a Face": {
+            "downloads": 3688,
+            "average_vote": 3.8821245809070053,
+            "votes_count": 17,
+            "total_score": 65.9961,
+            "version": "0.4.2"
+          },
+          "02GeoQuest - Playable Map Studio": {
+            "downloads": 3338,
+            "average_vote": 3.809342412266082,
+            "votes_count": 21,
+            "total_score": 79.9962,
+            "version": "1.2.3"
+          },
+          "02CartoLab": {
+            "downloads": 3187,
+            "average_vote": 3.9521927527260603,
+            "votes_count": 21,
+            "total_score": 82.996,
+            "version": "1.5.0"
+          },
+          "PlanX Suitability Lab": {
+            "downloads": 3154,
+            "average_vote": 4.151389351837824,
+            "votes_count": 33,
+            "total_score": 136.9958,
+            "version": "1.7.6"
+          },
+          "02truesize - Map Truth Lab": {
+            "downloads": 3038,
+            "average_vote": 4.146936854798389,
+            "votes_count": 34,
+            "total_score": 140.9959,
+            "version": "0.4.6"
+          },
+          "PlanX Settlement Planning Toolset": {
+            "downloads": 2856,
+            "average_vote": 3.9998000099995,
+            "votes_count": 20,
+            "total_score": 79.996,
+            "version": "0.5.13"
+          },
+          "PlanX Uygulama İmar Planı (Master Plan) Toolset": {
+            "downloads": 2683,
+            "average_vote": 4.110882728737292,
+            "votes_count": 18,
+            "total_score": 73.9959,
+            "version": "1.2.11"
+          },
+          "ParcelFlux": {
+            "downloads": 2679,
+            "average_vote": 4.190276653492691,
+            "votes_count": 21,
+            "total_score": 87.9958,
+            "version": "0.3.5"
+          },
+          "PlanX DataCube Lab": {
+            "downloads": 2517,
+            "average_vote": 3.8886728515082494,
+            "votes_count": 18,
+            "total_score": 69.9961,
+            "version": "1.3.10"
+          },
+          "PlanX Urban Procedural 3D": {
+            "downloads": 2447,
+            "average_vote": 3.99966669444213,
+            "votes_count": 12,
+            "total_score": 47.996,
+            "version": "0.5.8"
+          },
+          "02Agent Smart Modeler": {
+            "downloads": 1958,
+            "average_vote": 3.8331203822009887,
+            "votes_count": 18,
+            "total_score": 68.9962,
+            "version": "1.5.56"
+          },
+          "Parametric Process": {
+            "downloads": 1644,
+            "average_vote": 3.9995000624921886,
+            "votes_count": 8,
+            "total_score": 31.996,
+            "version": "3.2.0"
+          },
+          "02Route 3D - Multi-Criteria 3D Mobility Studio": {
+            "downloads": 1524,
+            "average_vote": 4.997501249375313,
+            "votes_count": 2,
+            "total_score": 9.995,
+            "version": "1.1.0"
+          },
+          "QGIS 2.5D Styling": {
+            "downloads": 932,
+            "average_vote": 4.199160167966406,
+            "votes_count": 5,
+            "total_score": 20.9958,
+            "version": "1.0.2"
+          },
+          "Qgis Advanced Map Tips&Actions": {
+            "downloads": 600,
+            "average_vote": 0.0,
+            "votes_count": 0,
+            "total_score": 0.0,
+            "version": "0.1.1"
+          },
+          "PlanX MPYY Studio": {
+            "downloads": 0,
+            "average_vote": 0.0,
+            "votes_count": 0,
+            "total_score": 0.0,
+            "version": "1.0.0"
+          },
+          "PLN3113 NİP ve Kentsel Analiz Stüdyosu": {
+            "downloads": 0,
+            "average_vote": 0.0,
+            "votes_count": 0,
+            "total_score": 0.0,
+            "version": "1.1.0"
+          },
+          "02 Geo3D Analyzer": {
+            "downloads": 0,
+            "average_vote": 0.0,
+            "votes_count": 0,
+            "total_score": 0.0,
+            "version": "1.0.0"
+          }
+        }
+      },
+      {
+        "timestamp": "2026-10-17T03:42:27.685173+00:00",
+        "date_str": "Oct 17, 2026 03:42 UTC",
+        "total_downloads": 166657,
+        "plugins": {
+          "3D OSM Model": {
+            "downloads": 25630,
+            "average_vote": 4.301859736731215,
+            "votes_count": 159,
+            "total_score": 683.9957,
+            "version": "1.7.2"
+          },
+          "02CadGis Universal CAD/GIS Importer": {
+            "downloads": 17676,
+            "average_vote": 4.076151655698517,
+            "votes_count": 105,
+            "total_score": 427.9959,
+            "version": "4.1.2"
+          },
+          "OSM Quick 3D": {
+            "downloads": 16763,
+            "average_vote": 4.323188654660053,
+            "votes_count": 99,
+            "total_score": 427.9957,
+            "version": "0.50.2"
+          },
+          "02Agent OSM Downloader": {
+            "downloads": 11695,
+            "average_vote": 3.91929162432864,
+            "votes_count": 62,
+            "total_score": 242.9961,
+            "version": "1.3.6"
+          },
+          "02viz - Geospatial Visualization Studio": {
+            "downloads": 9665,
+            "average_vote": 4.273639224850265,
+            "votes_count": 95,
+            "total_score": 405.9957,
+            "version": "0.18.0"
+          },
+          "PlanX CAD Toolset": {
+            "downloads": 9203,
+            "average_vote": 4.1095327461267654,
+            "votes_count": 73,
+            "total_score": 299.9959,
+            "version": "1.27.6"
+          },
+          "02-Multimap: Sync-up Multimaps": {
+            "downloads": 9165,
+            "average_vote": 4.2520651086965655,
+            "votes_count": 119,
+            "total_score": 505.9957,
+            "version": "1.0.2"
+          },
+          "PlanX": {
+            "downloads": 9141,
+            "average_vote": 4.313903326705503,
+            "votes_count": 86,
+            "total_score": 370.9957,
+            "version": "4.19.0"
+          },
+          "PlanX 3D City Viewer": {
+            "downloads": 6033,
+            "average_vote": 4.333202024181086,
+            "votes_count": 33,
+            "total_score": 142.9957,
+            "version": "2.0.1"
+          },
+          "PlanX GeoStats Lab": {
+            "downloads": 5800,
+            "average_vote": 3.4761490934631727,
+            "votes_count": 84,
+            "total_score": 291.9965,
+            "version": "3.10.1"
+          },
+          "EasyFillet": {
+            "downloads": 4848,
+            "average_vote": 4.083163201533269,
+            "votes_count": 24,
+            "total_score": 97.9959,
+            "version": "1.4.13"
+          },
+          "PlanX: Urban Resilience": {
+            "downloads": 4791,
+            "average_vote": 4.17489562760931,
+            "votes_count": 40,
+            "total_score": 166.9958,
+            "version": "2.1.4"
+          },
+          "02Urban Portrait - City as a Face": {
+            "downloads": 3688,
+            "average_vote": 3.8821245809070053,
+            "votes_count": 17,
+            "total_score": 65.9961,
+            "version": "0.4.2"
+          },
+          "02GeoQuest - Playable Map Studio": {
+            "downloads": 3338,
+            "average_vote": 3.809342412266082,
+            "votes_count": 21,
+            "total_score": 79.9962,
+            "version": "1.2.3"
+          },
+          "02CartoLab": {
+            "downloads": 3187,
+            "average_vote": 3.9521927527260603,
+            "votes_count": 21,
+            "total_score": 82.996,
+            "version": "1.5.0"
+          },
+          "PlanX Suitability Lab": {
+            "downloads": 3154,
+            "average_vote": 4.151389351837824,
+            "votes_count": 33,
+            "total_score": 136.9958,
+            "version": "1.7.6"
+          },
+          "02truesize - Map Truth Lab": {
+            "downloads": 3039,
+            "average_vote": 4.146936854798389,
+            "votes_count": 34,
+            "total_score": 140.9959,
+            "version": "0.4.6"
+          },
+          "PlanX Settlement Planning Toolset": {
+            "downloads": 2856,
+            "average_vote": 3.9998000099995,
+            "votes_count": 20,
+            "total_score": 79.996,
+            "version": "0.5.13"
+          },
+          "PlanX Uygulama İmar Planı (Master Plan) Toolset": {
+            "downloads": 2683,
+            "average_vote": 4.110882728737292,
+            "votes_count": 18,
+            "total_score": 73.9959,
+            "version": "1.2.11"
+          },
+          "ParcelFlux": {
+            "downloads": 2679,
+            "average_vote": 4.190276653492691,
+            "votes_count": 21,
+            "total_score": 87.9958,
+            "version": "0.3.5"
+          },
+          "PlanX DataCube Lab": {
+            "downloads": 2517,
+            "average_vote": 3.8886728515082494,
+            "votes_count": 18,
+            "total_score": 69.9961,
+            "version": "1.3.10"
+          },
+          "PlanX Urban Procedural 3D": {
+            "downloads": 2447,
+            "average_vote": 3.99966669444213,
+            "votes_count": 12,
+            "total_score": 47.996,
+            "version": "0.5.8"
+          },
+          "02Agent Smart Modeler": {
+            "downloads": 1958,
+            "average_vote": 3.8331203822009887,
+            "votes_count": 18,
+            "total_score": 68.9962,
+            "version": "1.5.56"
+          },
+          "Parametric Process": {
+            "downloads": 1644,
+            "average_vote": 3.9995000624921886,
+            "votes_count": 8,
+            "total_score": 31.996,
+            "version": "3.2.0"
+          },
+          "02Route 3D - Multi-Criteria 3D Mobility Studio": {
+            "downloads": 1525,
+            "average_vote": 4.997501249375313,
+            "votes_count": 2,
+            "total_score": 9.995,
+            "version": "1.1.0"
+          },
+          "QGIS 2.5D Styling": {
+            "downloads": 932,
+            "average_vote": 4.199160167966406,
+            "votes_count": 5,
+            "total_score": 20.9958,
+            "version": "1.0.2"
+          },
+          "Qgis Advanced Map Tips&Actions": {
+            "downloads": 600,
+            "average_vote": 0.0,
+            "votes_count": 0,
+            "total_score": 0.0,
+            "version": "0.1.1"
+          },
+          "PlanX MPYY Studio": {
+            "downloads": 0,
+            "average_vote": 0.0,
+            "votes_count": 0,
+            "total_score": 0.0,
+            "version": "1.0.0"
+          },
+          "PLN3113 NİP ve Kentsel Analiz Stüdyosu": {
+            "downloads": 0,
+            "average_vote": 0.0,
+            "votes_count": 0,
+            "total_score": 0.0,
+            "version": "1.1.0"
+          },
+          "02 Geo3D Analyzer": {
+            "downloads": 0,
+            "average_vote": 0.0,
+            "votes_count": 0,
+            "total_score": 0.0,
+            "version": "1.0.0"
+          }
+        }
       }
     ],
     "timestamps": [
@@ -114843,7 +115776,11 @@
       "Oct 17, 2026 03:10 UTC",
       "Oct 17, 2026 03:17 UTC",
       "Oct 17, 2026 03:27 UTC",
-      "Oct 17, 2026 03:28 UTC"
+      "Oct 17, 2026 03:28 UTC",
+      "Oct 17, 2026 03:35 UTC",
+      "Oct 17, 2026 03:36 UTC",
+      "Oct 17, 2026 03:40 UTC",
+      "Oct 17, 2026 03:42 UTC"
     ],
     "by_plugin": {
       "3D OSM Model": {
@@ -115023,6 +115960,10 @@
           4.3,
           4.3,
           0.0,
+          4.3,
+          4.3,
+          4.3,
+          4.3,
           4.3,
           4.3,
           4.3,
@@ -115213,6 +116154,10 @@
           159,
           159,
           159,
+          159,
+          159,
+          159,
+          159,
           159
         ],
         "delta_votes": [
@@ -115392,6 +116337,10 @@
           0,
           0,
           159,
+          0,
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -115581,9 +116530,17 @@
           4.3,
           4.3,
           4.3,
+          4.3,
+          4.3,
+          4.3,
+          4.3,
           4.3
         ],
         "purged_series": [
+          4.64,
+          4.64,
+          4.64,
+          4.64,
           4.64,
           4.64,
           4.64,
@@ -116003,6 +116960,10 @@
           4.08,
           4.08,
           4.08,
+          4.08,
+          4.08,
+          4.08,
+          4.08,
           4.08
         ],
         "votes": [
@@ -116181,6 +117142,10 @@
           105,
           105,
           0,
+          105,
+          105,
+          105,
+          105,
           105,
           105,
           105,
@@ -116371,6 +117336,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -116555,9 +117524,17 @@
           4.08,
           4.08,
           4.08,
+          4.08,
+          4.08,
+          4.08,
+          4.08,
           4.08
         ],
         "purged_series": [
+          4.71,
+          4.71,
+          4.71,
+          4.71,
           4.71,
           4.71,
           4.71,
@@ -116957,6 +117934,10 @@
           4.32,
           4.32,
           4.32,
+          4.32,
+          4.32,
+          4.32,
+          4.32,
           4.32
         ],
         "votes": [
@@ -117135,6 +118116,10 @@
           99,
           99,
           0,
+          99,
+          99,
+          99,
+          99,
           99,
           99,
           99,
@@ -117325,6 +118310,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -117509,9 +118498,17 @@
           4.32,
           4.32,
           4.32,
+          4.32,
+          4.32,
+          4.32,
+          4.32,
           4.32
         ],
         "purged_series": [
+          4.67,
+          4.67,
+          4.67,
+          4.67,
           4.67,
           4.67,
           4.67,
@@ -117911,6 +118908,10 @@
           3.92,
           3.92,
           3.92,
+          3.92,
+          3.92,
+          3.92,
+          3.92,
           3.92
         ],
         "votes": [
@@ -118089,6 +119090,10 @@
           62,
           62,
           0,
+          62,
+          62,
+          62,
+          62,
           62,
           62,
           62,
@@ -118279,6 +119284,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -118463,9 +119472,17 @@
           3.92,
           3.92,
           3.92,
+          3.92,
+          3.92,
+          3.92,
+          3.92,
           3.92
         ],
         "purged_series": [
+          5.0,
+          5.0,
+          5.0,
+          5.0,
           5.0,
           5.0,
           5.0,
@@ -118885,6 +119902,10 @@
           4.27,
           4.27,
           4.27,
+          4.27,
+          4.27,
+          4.27,
+          4.27,
           4.27
         ],
         "votes": [
@@ -119063,6 +120084,10 @@
           95,
           95,
           0,
+          95,
+          95,
+          95,
+          95,
           95,
           95,
           95,
@@ -119253,6 +120278,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -119437,9 +120466,17 @@
           4.27,
           4.27,
           4.27,
+          4.27,
+          4.27,
+          4.27,
+          4.27,
           4.27
         ],
         "purged_series": [
+          4.56,
+          4.56,
+          4.56,
+          4.56,
           4.56,
           4.56,
           4.56,
@@ -119839,6 +120876,10 @@
           4.11,
           4.11,
           4.11,
+          4.11,
+          4.11,
+          4.11,
+          4.11,
           4.11
         ],
         "votes": [
@@ -120017,6 +121058,10 @@
           73,
           73,
           0,
+          73,
+          73,
+          73,
+          73,
           73,
           73,
           73,
@@ -120207,6 +121252,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -120391,9 +121440,17 @@
           4.11,
           4.11,
           4.11,
+          4.11,
+          4.11,
+          4.11,
+          4.11,
           4.11
         ],
         "purged_series": [
+          4.74,
+          4.74,
+          4.74,
+          4.74,
           4.74,
           4.74,
           4.74,
@@ -120793,6 +121850,10 @@
           4.25,
           4.25,
           4.25,
+          4.25,
+          4.25,
+          4.25,
+          4.25,
           4.25
         ],
         "votes": [
@@ -120971,6 +122032,10 @@
           119,
           119,
           0,
+          119,
+          119,
+          119,
+          119,
           119,
           119,
           119,
@@ -121161,6 +122226,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -121345,9 +122414,17 @@
           4.25,
           4.25,
           4.25,
+          4.25,
+          4.25,
+          4.25,
+          4.25,
           4.25
         ],
         "purged_series": [
+          4.4,
+          4.4,
+          4.4,
+          4.4,
           4.4,
           4.4,
           4.4,
@@ -121747,6 +122824,10 @@
           4.31,
           4.31,
           4.31,
+          4.31,
+          4.31,
+          4.31,
+          4.31,
           4.31
         ],
         "votes": [
@@ -121925,6 +123006,10 @@
           86,
           86,
           0,
+          86,
+          86,
+          86,
+          86,
           86,
           86,
           86,
@@ -122115,6 +123200,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -122299,9 +123388,17 @@
           4.31,
           4.31,
           4.31,
+          4.31,
+          4.31,
+          4.31,
+          4.31,
           4.31
         ],
         "purged_series": [
+          4.31,
+          4.31,
+          4.31,
+          4.31,
           4.31,
           4.31,
           4.31,
@@ -122701,6 +123798,10 @@
           4.33,
           4.33,
           4.33,
+          4.33,
+          4.33,
+          4.33,
+          4.33,
           4.33
         ],
         "votes": [
@@ -122879,6 +123980,10 @@
           33,
           33,
           0,
+          33,
+          33,
+          33,
+          33,
           33,
           33,
           33,
@@ -123069,6 +124174,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -123253,9 +124362,17 @@
           4.33,
           4.33,
           4.33,
+          4.33,
+          4.33,
+          4.33,
+          4.33,
           4.33
         ],
         "purged_series": [
+          4.85,
+          4.85,
+          4.85,
+          4.85,
           4.85,
           4.85,
           4.85,
@@ -123655,6 +124772,10 @@
           3.48,
           3.48,
           3.48,
+          3.48,
+          3.48,
+          3.48,
+          3.48,
           3.48
         ],
         "votes": [
@@ -123833,6 +124954,10 @@
           84,
           84,
           0,
+          84,
+          84,
+          84,
+          84,
           84,
           84,
           84,
@@ -124023,6 +125148,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -124207,9 +125336,17 @@
           3.48,
           3.48,
           3.48,
+          3.48,
+          3.48,
+          3.48,
+          3.48,
           3.48
         ],
         "purged_series": [
+          4.85,
+          4.85,
+          4.85,
+          4.85,
           4.85,
           4.85,
           4.85,
@@ -124609,6 +125746,10 @@
           4.08,
           4.08,
           4.08,
+          4.08,
+          4.08,
+          4.08,
+          4.08,
           4.08
         ],
         "votes": [
@@ -124787,6 +125928,10 @@
           24,
           24,
           0,
+          24,
+          24,
+          24,
+          24,
           24,
           24,
           24,
@@ -124977,6 +126122,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -125161,9 +126310,17 @@
           4.08,
           4.08,
           4.08,
+          4.08,
+          4.08,
+          4.08,
+          4.08,
           4.08
         ],
         "purged_series": [
+          5.0,
+          5.0,
+          5.0,
+          5.0,
           5.0,
           5.0,
           5.0,
@@ -125573,6 +126730,10 @@
           4.17,
           4.17,
           4.17,
+          4.17,
+          4.17,
+          4.17,
+          4.17,
           4.17
         ],
         "votes": [
@@ -125751,6 +126912,10 @@
           40,
           40,
           0,
+          40,
+          40,
+          40,
+          40,
           40,
           40,
           40,
@@ -125941,6 +127106,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -126125,9 +127294,17 @@
           4.17,
           4.17,
           4.17,
+          4.17,
+          4.17,
+          4.17,
+          4.17,
           4.17
         ],
         "purged_series": [
+          4.28,
+          4.28,
+          4.28,
+          4.28,
           4.28,
           4.28,
           4.28,
@@ -126527,6 +127704,10 @@
           3.88,
           3.88,
           3.88,
+          3.88,
+          3.88,
+          3.88,
+          3.88,
           3.88
         ],
         "votes": [
@@ -126705,6 +127886,10 @@
           17,
           17,
           0,
+          17,
+          17,
+          17,
+          17,
           17,
           17,
           17,
@@ -126895,6 +128080,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -127079,9 +128268,17 @@
           3.88,
           3.88,
           3.88,
+          3.88,
+          3.88,
+          3.88,
+          3.88,
           3.88
         ],
         "purged_series": [
+          4.77,
+          4.77,
+          4.77,
+          4.77,
           4.77,
           4.77,
           4.77,
@@ -127491,6 +128688,10 @@
           3.81,
           3.81,
           3.81,
+          3.81,
+          3.81,
+          3.81,
+          3.81,
           3.81
         ],
         "votes": [
@@ -127669,6 +128870,10 @@
           21,
           21,
           0,
+          21,
+          21,
+          21,
+          21,
           21,
           21,
           21,
@@ -127859,6 +129064,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -128043,9 +129252,17 @@
           3.81,
           3.81,
           3.81,
+          3.81,
+          3.81,
+          3.81,
+          3.81,
           3.81
         ],
         "purged_series": [
+          5.0,
+          5.0,
+          5.0,
+          5.0,
           5.0,
           5.0,
           5.0,
@@ -128445,6 +129662,10 @@
           3.95,
           3.95,
           3.95,
+          3.95,
+          3.95,
+          3.95,
+          3.95,
           3.95
         ],
         "votes": [
@@ -128623,6 +129844,10 @@
           21,
           21,
           0,
+          21,
+          21,
+          21,
+          21,
           21,
           21,
           21,
@@ -128813,6 +130038,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -128997,6 +130226,10 @@
           3.95,
           3.95,
           3.95,
+          3.95,
+          3.95,
+          3.95,
+          3.95,
           3.95
         ],
         "purged_series": [
@@ -129041,6 +130274,10 @@
           0.0,
           0.0,
           0.0,
+          3.95,
+          3.95,
+          3.95,
+          3.95,
           3.95,
           3.95,
           3.95,
@@ -129409,6 +130646,10 @@
           4.15,
           4.15,
           4.15,
+          4.15,
+          4.15,
+          4.15,
+          4.15,
           4.15
         ],
         "votes": [
@@ -129587,6 +130828,10 @@
           33,
           33,
           0,
+          33,
+          33,
+          33,
+          33,
           33,
           33,
           33,
@@ -129777,6 +131022,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -129961,9 +131210,17 @@
           4.15,
           4.15,
           4.15,
+          4.15,
+          4.15,
+          4.15,
+          4.15,
           4.15
         ],
         "purged_series": [
+          4.8,
+          4.8,
+          4.8,
+          4.8,
           4.8,
           4.8,
           4.8,
@@ -130363,6 +131620,10 @@
           4.15,
           4.15,
           4.15,
+          4.15,
+          4.15,
+          4.15,
+          4.15,
           4.15
         ],
         "votes": [
@@ -130541,6 +131802,10 @@
           34,
           34,
           0,
+          34,
+          34,
+          34,
+          34,
           34,
           34,
           34,
@@ -130731,6 +131996,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -130915,9 +132184,17 @@
           4.15,
           4.15,
           4.15,
+          4.15,
+          4.15,
+          4.15,
+          4.15,
           4.15
         ],
         "purged_series": [
+          4.53,
+          4.53,
+          4.53,
+          4.53,
           4.53,
           4.53,
           4.53,
@@ -131337,6 +132614,10 @@
           4.0,
           4.0,
           4.0,
+          4.0,
+          4.0,
+          4.0,
+          4.0,
           4.0
         ],
         "votes": [
@@ -131515,6 +132796,10 @@
           20,
           20,
           0,
+          20,
+          20,
+          20,
+          20,
           20,
           20,
           20,
@@ -131705,6 +132990,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -131889,9 +133178,17 @@
           4.0,
           4.0,
           4.0,
+          4.0,
+          4.0,
+          4.0,
+          4.0,
           4.0
         ],
         "purged_series": [
+          5.0,
+          5.0,
+          5.0,
+          5.0,
           5.0,
           5.0,
           5.0,
@@ -132291,6 +133588,10 @@
           4.11,
           4.11,
           4.11,
+          4.11,
+          4.11,
+          4.11,
+          4.11,
           4.11
         ],
         "votes": [
@@ -132469,6 +133770,10 @@
           18,
           18,
           0,
+          18,
+          18,
+          18,
+          18,
           18,
           18,
           18,
@@ -132659,6 +133964,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -132843,9 +134152,17 @@
           4.11,
           4.11,
           4.11,
+          4.11,
+          4.11,
+          4.11,
+          4.11,
           4.11
         ],
         "purged_series": [
+          5.0,
+          5.0,
+          5.0,
+          5.0,
           5.0,
           5.0,
           5.0,
@@ -133245,6 +134562,10 @@
           4.19,
           4.19,
           4.19,
+          4.19,
+          4.19,
+          4.19,
+          4.19,
           4.19
         ],
         "votes": [
@@ -133423,6 +134744,10 @@
           21,
           21,
           0,
+          21,
+          21,
+          21,
+          21,
           21,
           21,
           21,
@@ -133613,6 +134938,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -133797,9 +135126,17 @@
           4.19,
           4.19,
           4.19,
+          4.19,
+          4.19,
+          4.19,
+          4.19,
           4.19
         ],
         "purged_series": [
+          4.64,
+          4.64,
+          4.64,
+          4.64,
           4.64,
           4.64,
           4.64,
@@ -134199,6 +135536,10 @@
           3.89,
           3.89,
           3.89,
+          3.89,
+          3.89,
+          3.89,
+          3.89,
           3.89
         ],
         "votes": [
@@ -134377,6 +135718,10 @@
           18,
           18,
           0,
+          18,
+          18,
+          18,
+          18,
           18,
           18,
           18,
@@ -134567,6 +135912,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -134751,9 +136100,17 @@
           3.89,
           3.89,
           3.89,
+          3.89,
+          3.89,
+          3.89,
+          3.89,
           3.89
         ],
         "purged_series": [
+          4.71,
+          4.71,
+          4.71,
+          4.71,
           4.71,
           4.71,
           4.71,
@@ -135153,6 +136510,10 @@
           4.0,
           4.0,
           4.0,
+          4.0,
+          4.0,
+          4.0,
+          4.0,
           4.0
         ],
         "votes": [
@@ -135331,6 +136692,10 @@
           12,
           12,
           0,
+          12,
+          12,
+          12,
+          12,
           12,
           12,
           12,
@@ -135521,6 +136886,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -135705,9 +137074,17 @@
           4.0,
           4.0,
           4.0,
+          4.0,
+          4.0,
+          4.0,
+          4.0,
           4.0
         ],
         "purged_series": [
+          4.56,
+          4.56,
+          4.56,
+          4.56,
           4.56,
           4.56,
           4.56,
@@ -136107,6 +137484,10 @@
           3.83,
           3.83,
           3.83,
+          3.83,
+          3.83,
+          3.83,
+          3.83,
           3.83
         ],
         "votes": [
@@ -136285,6 +137666,10 @@
           18,
           18,
           0,
+          18,
+          18,
+          18,
+          18,
           18,
           18,
           18,
@@ -136475,6 +137860,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -136659,6 +138048,10 @@
           3.83,
           3.83,
           3.83,
+          3.83,
+          3.83,
+          3.83,
+          3.83,
           3.83
         ],
         "purged_series": [
@@ -136688,6 +138081,10 @@
           0.0,
           0.0,
           0.0,
+          3.83,
+          3.83,
+          3.83,
+          3.83,
           3.83,
           3.83,
           3.83,
@@ -137061,6 +138458,10 @@
           4.0,
           4.0,
           4.0,
+          4.0,
+          4.0,
+          4.0,
+          4.0,
           4.0
         ],
         "votes": [
@@ -137239,6 +138640,10 @@
           8,
           8,
           0,
+          8,
+          8,
+          8,
+          8,
           8,
           8,
           8,
@@ -137429,6 +138834,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -137613,9 +139022,17 @@
           4.0,
           4.0,
           4.0,
+          4.0,
+          4.0,
+          4.0,
+          4.0,
           4.0
         ],
         "purged_series": [
+          5.0,
+          5.0,
+          5.0,
+          5.0,
           5.0,
           5.0,
           5.0,
@@ -138015,6 +139432,10 @@
           5.0,
           5.0,
           5.0,
+          5.0,
+          5.0,
+          5.0,
+          5.0,
           5.0
         ],
         "votes": [
@@ -138193,6 +139614,10 @@
           2,
           2,
           0,
+          2,
+          2,
+          2,
+          2,
           2,
           2,
           2,
@@ -138383,6 +139808,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -138567,6 +139996,10 @@
           5.0,
           5.0,
           5.0,
+          5.0,
+          5.0,
+          5.0,
+          5.0,
           5.0
         ],
         "purged_series": [
@@ -138661,6 +140094,10 @@
           0.0,
           0.0,
           0.0,
+          5.0,
+          5.0,
+          5.0,
+          5.0,
           5.0,
           5.0,
           5.0,
@@ -138959,6 +140396,10 @@
           4.2,
           4.2,
           4.2,
+          4.2,
+          4.2,
+          4.2,
+          4.2,
           4.2
         ],
         "votes": [
@@ -139137,6 +140578,10 @@
           5,
           5,
           0,
+          5,
+          5,
+          5,
+          5,
           5,
           5,
           5,
@@ -139327,6 +140772,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -139511,6 +140960,10 @@
           4.2,
           4.2,
           4.2,
+          4.2,
+          4.2,
+          4.2,
+          4.2,
           4.2
         ],
         "purged_series": [
@@ -139555,6 +141008,10 @@
           0.0,
           0.0,
           0.0,
+          4.2,
+          4.2,
+          4.2,
+          4.2,
           4.2,
           4.2,
           4.2,
@@ -139913,6 +141370,10 @@
           0.0,
           0.0,
           0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.0
         ],
         "votes": [
@@ -140097,6 +141558,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "delta_votes": [
@@ -140264,6 +141729,10 @@
           0,
           0,
           1,
+          0,
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -140465,9 +141934,17 @@
           0.0,
           0.0,
           0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.0
         ],
         "purged_series": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.0,
           0.0,
           0.0,
@@ -140847,9 +142324,17 @@
           0.0,
           0.0,
           0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.0
         ],
         "votes": [
+          0,
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -141215,6 +142700,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -141399,9 +142888,17 @@
           0.0,
           0.0,
           0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.0
         ],
         "purged_series": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.0,
           0.0,
           0.0,
@@ -141770,9 +143267,17 @@
           0.0,
           0.0,
           0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.0
         ],
         "votes": [
+          0,
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -142138,6 +143643,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -142322,9 +143831,17 @@
           0.0,
           0.0,
           0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.0
         ],
         "purged_series": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.0,
           0.0,
           0.0,
@@ -142693,9 +144210,17 @@
           0.0,
           0.0,
           0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.0
         ],
         "votes": [
+          0,
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -143061,6 +144586,10 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         "implied_ratings": [
@@ -143245,9 +144774,17 @@
           0.0,
           0.0,
           0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.0
         ],
         "purged_series": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.0,
           0.0,
           0.0,
@@ -143616,6 +145153,10 @@
       0,
       0,
       0,
+      0,
+      0,
+      0,
+      0,
       0
     ],
     "portfolio_raid_waves": [
@@ -143781,6 +145322,10 @@
       0,
       0,
       1,
+      0,
+      0,
+      0,
+      0,
       0,
       0,
       0,
@@ -143986,41 +145531,14 @@
             }
         });
 
-        // Command Palette Logic
-        let paletteSelectedIndex = 0;
-        let currentPaletteItems = [];
-
+        // Unified Command Palette Forwarders
         function openCommandPalette() {
-            document.getElementById('command-palette-modal').classList.remove('hidden');
-            const input = document.getElementById('palette-search-input');
-            input.value = '';
-            paletteSelectedIndex = 0;
-            filterCommandPalette();
-            setTimeout(() => input.focus(), 100);
+            openCmdPalette();
         }
 
         function closeCommandPalette() {
-            document.getElementById('command-palette-modal').classList.add('hidden');
+            closeCmdPalette();
         }
-
-        function handlePaletteKeydown(e) {
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                paletteSelectedIndex = Math.min(paletteSelectedIndex + 1, currentPaletteItems.length - 1);
-                updatePaletteSelection();
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                paletteSelectedIndex = Math.max(paletteSelectedIndex - 1, 0);
-                updatePaletteSelection();
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                if (currentPaletteItems[paletteSelectedIndex]) {
-                    currentPaletteItems[paletteSelectedIndex].action();
-                }
-            } else if (e.key === 'Escape') {
-                closeCommandPalette();
-            }
-        }        // (Legacy palette functions cleaned in favor of unified global Command Palette)
 
         // =============================================================
         // EXECUTIVE STORYTELLING & ANNOUNCEMENT KIT
@@ -144175,6 +145693,7 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             if (tabId === 'deepdive') {
                 setTimeout(() => {
                     renderCards();
+                    applyCombinedFilters();
                 }, 50);
             }
             if (tabId === 'simulator') {
@@ -144532,13 +146051,14 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
         function renderAuditKPIsAndAlerts() {
             const flagged = appData.anomalies.filter(a => a.severity === 'critical' || a.severity === 'high' || a.severity === 'amber').length;
             const badge = document.getElementById('audit-alert-badge');
-
-            if (flagged > 0) {
-                badge.innerText = `${flagged} ANOMALIES`;
-                badge.className = "ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500 text-white pulse-live font-mono";
-            } else {
-                badge.innerText = "CLEAN";
-                badge.className = "ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono";
+            if (badge) {
+                if (flagged > 0) {
+                    badge.innerText = `${flagged} ANOMALIES`;
+                    badge.className = "ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500 text-white pulse-live font-mono";
+                } else {
+                    badge.innerText = "CLEAN";
+                    badge.className = "ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono";
+                }
             }
 
             const totalVotes = appData.plugins.reduce((acc, p) => acc + p.votes_count, 0);
@@ -146588,11 +148108,10 @@ pyplugin_installer.instance().installPlugin("${pkgName}")`;
         }
 
         function openCompareWithPlugin(name) {
-            populateCompareDropdowns();
-            const selA = document.getElementById('compare-select-a');
-            if (selA) selA.value = name;
-            renderComparisonView();
-            document.getElementById('compare-modal').classList.remove('hidden');
+            if (name) {
+                selectedComparePlugins[0] = name;
+            }
+            openCompareModal();
         }
 
         function renderSparklineSVG(points) {
@@ -147150,23 +148669,23 @@ echo "[✓] All plugins staged."
         function filterCards() { applyCombinedFilters(); }
 
         function applyCombinedFilters() {
-            const searchVal = (document.getElementById('card-search-input')?.value || '').toUpperCase();
+            const searchVal = (document.getElementById('card-search-input')?.value || '').trim().toUpperCase();
             const cards = document.getElementById('plugin-cards-container')?.getElementsByClassName('glass-panel') || [];
             let matching = 0;
 
             for (let i = 0; i < cards.length; i++) {
                 const card = cards[i];
-                const cardCat = card.getAttribute('data-category');
-                const cardName = card.getAttribute('data-name');
-                const cardQuadrant = card.getAttribute('data-quadrant');
-                const cardTags = card.getAttribute('data-tags');
+                const cardCat = card.getAttribute('data-category') || '';
+                const cardName = card.getAttribute('data-name') || '';
+                const cardQuadrant = card.getAttribute('data-quadrant') || '';
+                const cardTags = card.getAttribute('data-tags') || '';
 
                 const matchesCat = (selectedCategory === 'All' || cardCat === selectedCategory);
-                const matchesSearch = (cardName.toUpperCase().indexOf(searchVal) > -1 || cardTags.toUpperCase().indexOf(searchVal) > -1 || cardQuadrant.toUpperCase().indexOf(searchVal) > -1);
+                const matchesSearch = (!searchVal || cardName.toUpperCase().includes(searchVal) || cardTags.toUpperCase().includes(searchVal) || cardQuadrant.toUpperCase().includes(searchVal));
 
                 let matchesActiveTags = true;
                 if (activeTags.length > 0) {
-                    matchesActiveTags = activeTags.every(t => cardTags.indexOf(t) > -1);
+                    matchesActiveTags = activeTags.every(t => cardTags.includes(t));
                 }
 
                 if (matchesCat && matchesSearch && matchesActiveTags) {
@@ -148081,10 +149600,10 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
                         icon: 'fa-cube',
                         run: () => {
                             switchTab('deepdive');
-                            const search = document.getElementById('deepdive-search-input');
+                            const search = document.getElementById('card-search-input');
                             if (search) {
                                 search.value = p.name;
-                                renderCards();
+                                filterCards();
                             }
                         }
                     });
@@ -148218,7 +149737,7 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
                                 </div>
                             </div>
                         </div>
-                        <button onclick="switchTab('deepdive'); document.getElementById('deepdive-search-input').value='${p.name}'; renderCards(); closeCompareModal();" class="w-full py-2 rounded-xl bg-obsidian-900 hover:bg-cyan-600 text-slate-300 hover:text-white border border-white/5 text-xs font-bold font-mono transition-all flex items-center justify-center gap-1.5">
+                        <button onclick="switchTab('deepdive'); const s = document.getElementById('card-search-input'); if (s) { s.value='${p.name}'; filterCards(); } closeCompareModal();" class="w-full py-2 rounded-xl bg-obsidian-900 hover:bg-cyan-600 text-slate-300 hover:text-white border border-white/5 text-xs font-bold font-mono transition-all flex items-center justify-center gap-1.5">
                             <i class="fa-solid fa-magnifying-glass"></i> Deep Inspect
                         </button>
                     </div>
@@ -148488,7 +150007,7 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
 
             <!-- Modal Footer -->
             <div class="p-4 border-t border-white/10 bg-obsidian-900/60 flex items-center justify-between">
-                <span class="text-[11px] text-slate-500 font-mono">Cryptographic Hash: 110D6D21BC3861ED20F23DE8</span>
+                <span class="text-[11px] text-slate-500 font-mono">Cryptographic Hash: 9773FB1E71AED9CD99BA4D23</span>
                 <button onclick="closeFormalPscDossierModal()" class="px-4 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-slate-300 font-bold text-xs border border-white/10">
                     Close Briefing
                 </button>

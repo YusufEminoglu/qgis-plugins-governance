@@ -2199,7 +2199,7 @@ try:
             </div>
 
             <div class="flex flex-wrap items-center gap-3">
-                <button onclick="openCommandPalette()" class="px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-2 transition-all font-mono" title="Quick Command Palette (Ctrl+K)">
+                <button onclick="openCmdPalette()" class="px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 rounded-xl flex items-center gap-2 transition-all font-mono" title="Quick Command Palette (Ctrl+K)">
                     <i class="fa-solid fa-terminal text-cyan-400"></i> Command <kbd>Ctrl+K</kbd>
                 </button>
 
@@ -2267,7 +2267,7 @@ try:
             <button onclick="switchTab('table')" id="tab-btn-table" class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-table"></i> Master Performance Table <kbd>6</kbd></button>
             <button onclick="switchTab('audit')" id="tab-btn-audit" class="px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-300 flex items-center gap-1.5 whitespace-nowrap opacity-75">
                 <i class="fa-solid fa-box-archive text-slate-400"></i> Rating Forensics Archive
-                <span class="ml-1 px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-800 text-slate-400 border border-slate-700">Archived</span>
+                <span id="audit-alert-badge" class="ml-1 px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-800 text-slate-400 border border-slate-700">Archived</span>
             </button>
             <button onclick="switchTab('stars')" id="tab-btn-stars" class="px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-300 flex items-center gap-1.5 whitespace-nowrap opacity-75">
                 <i class="fa-solid fa-clock-rotate-left text-slate-400"></i> Historic Votes Matrix
@@ -3567,22 +3567,7 @@ try:
         </div>
     </div>
 
-    <!-- ============================================================= -->
-    <!-- COMMAND PALETTE MODAL (Ctrl+K) -->
-    <!-- ============================================================= -->
-    <div id="command-palette-modal" class="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/80 backdrop-blur-md hidden p-4">
-        <div class="bg-obsidian-900 border border-white/10 rounded-3xl max-w-xl w-full p-4 shadow-2xl overflow-hidden animate-in fade-in duration-200">
-            <div class="relative mb-3">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500"><i class="fa-solid fa-terminal text-sm"></i></span>
-                <input type="text" id="palette-search-input" onkeyup="filterCommandPalette()" onkeydown="handlePaletteKeydown(event)" placeholder="Type a command, tab, or plugin name..." class="w-full pl-10 pr-4 py-3 bg-obsidian-950 border border-white/10 rounded-2xl text-xs focus:outline-none focus:border-cyan-400 font-mono">
-            </div>
-            <div class="max-h-72 overflow-y-auto space-y-1 pr-1 font-mono text-xs" id="palette-results-list"></div>
-            <div class="pt-3 border-t border-white/10 flex justify-between items-center text-[10px] text-slate-500">
-                <span>Navigate with <kbd>↑</kbd> <kbd>↓</kbd> <kbd>Enter</kbd></span>
-                <span>Press <kbd>Esc</kbd> to close</span>
-            </div>
-        </div>
-    </div>
+
 
     <!-- ============================================================= -->
     <!-- REPORTS & SOCIAL MEDIA ANNOUNCEMENT KIT MODAL -->
@@ -3625,47 +3610,7 @@ try:
         </div>
     </div>
 
-    <!-- ============================================================= -->
-    <!-- 3-WAY HEAD-TO-HEAD COMPARISON MODAL -->
-    <!-- ============================================================= -->
-    <div id="compare-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden p-4">
-        <div class="bg-obsidian-900 border border-white/10 rounded-3xl max-w-5xl w-full p-6 max-h-[92vh] flex flex-col justify-between shadow-2xl overflow-hidden">
-            <div class="flex items-center justify-between pb-4 border-b border-white/10">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg border border-indigo-500/30">
-                        <i class="fa-solid fa-code-compare"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-base font-bold tracking-tight">3-Way Side-by-Side Plugin Benchmark</h3>
-                        <p class="text-xs text-slate-400">Head-to-head adoption, Bayesian ratings, and velocity comparator</p>
-                    </div>
-                </div>
-                <button onclick="closeCompareModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-obsidian-800 transition-colors">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 font-heading">Primary Plugin (A)</label>
-                    <select id="compare-select-a" onchange="renderComparisonView()" class="w-full px-3 py-2 bg-obsidian-950 border border-white/10 rounded-xl text-xs focus:outline-none focus:border-cyan-400 font-mono"></select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 font-heading">Comparison Plugin (B)</label>
-                    <select id="compare-select-b" onchange="renderComparisonView()" class="w-full px-3 py-2 bg-obsidian-950 border border-white/10 rounded-xl text-xs focus:outline-none focus:border-indigo-400 font-mono"></select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 font-heading">Comparison Plugin (C)</label>
-                    <select id="compare-select-c" onchange="renderComparisonView()" class="w-full px-3 py-2 bg-obsidian-950 border border-white/10 rounded-xl text-xs focus:outline-none focus:border-emerald-400 font-mono"></select>
-                </div>
-            </div>
-
-            <div class="overflow-y-auto max-h-[55vh] pr-1" id="compare-content-grid"></div>
-            <div class="pt-4 border-t border-white/10 flex justify-end">
-                <button onclick="closeCompareModal()" class="px-5 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-white text-xs font-bold transition-all">Done</button>
-            </div>
-        </div>
-    </div>
 
     <!-- ============================================================= -->
     <!-- MULTI-CHANNEL EVIDENCE & COMPLAINT MODAL (v2.0) -->
@@ -3973,41 +3918,14 @@ try:
             }
         });
 
-        // Command Palette Logic
-        let paletteSelectedIndex = 0;
-        let currentPaletteItems = [];
-
+        // Unified Command Palette Forwarders
         function openCommandPalette() {
-            document.getElementById('command-palette-modal').classList.remove('hidden');
-            const input = document.getElementById('palette-search-input');
-            input.value = '';
-            paletteSelectedIndex = 0;
-            filterCommandPalette();
-            setTimeout(() => input.focus(), 100);
+            openCmdPalette();
         }
 
         function closeCommandPalette() {
-            document.getElementById('command-palette-modal').classList.add('hidden');
+            closeCmdPalette();
         }
-
-        function handlePaletteKeydown(e) {
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                paletteSelectedIndex = Math.min(paletteSelectedIndex + 1, currentPaletteItems.length - 1);
-                updatePaletteSelection();
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                paletteSelectedIndex = Math.max(paletteSelectedIndex - 1, 0);
-                updatePaletteSelection();
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                if (currentPaletteItems[paletteSelectedIndex]) {
-                    currentPaletteItems[paletteSelectedIndex].action();
-                }
-            } else if (e.key === 'Escape') {
-                closeCommandPalette();
-            }
-        }        // (Legacy palette functions cleaned in favor of unified global Command Palette)
 
         // =============================================================
         // EXECUTIVE STORYTELLING & ANNOUNCEMENT KIT
@@ -4162,6 +4080,7 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
             if (tabId === 'deepdive') {
                 setTimeout(() => {
                     renderCards();
+                    applyCombinedFilters();
                 }, 50);
             }
             if (tabId === 'simulator') {
@@ -4519,13 +4438,14 @@ Hub Profile: https://plugins.qgis.org/plugins/author/Yusuf%20Eminoglu/`;
         function renderAuditKPIsAndAlerts() {
             const flagged = appData.anomalies.filter(a => a.severity === 'critical' || a.severity === 'high' || a.severity === 'amber').length;
             const badge = document.getElementById('audit-alert-badge');
-
-            if (flagged > 0) {
-                badge.innerText = `${flagged} ANOMALIES`;
-                badge.className = "ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500 text-white pulse-live font-mono";
-            } else {
-                badge.innerText = "CLEAN";
-                badge.className = "ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono";
+            if (badge) {
+                if (flagged > 0) {
+                    badge.innerText = `${flagged} ANOMALIES`;
+                    badge.className = "ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500 text-white pulse-live font-mono";
+                } else {
+                    badge.innerText = "CLEAN";
+                    badge.className = "ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono";
+                }
             }
 
             const totalVotes = appData.plugins.reduce((acc, p) => acc + p.votes_count, 0);
@@ -6573,11 +6493,10 @@ COMMIT;
         }
 
         function openCompareWithPlugin(name) {
-            populateCompareDropdowns();
-            const selA = document.getElementById('compare-select-a');
-            if (selA) selA.value = name;
-            renderComparisonView();
-            document.getElementById('compare-modal').classList.remove('hidden');
+            if (name) {
+                selectedComparePlugins[0] = name;
+            }
+            openCompareModal();
         }
 
         function renderSparklineSVG(points) {
@@ -7135,23 +7054,23 @@ echo "[✓] All plugins staged."
         function filterCards() { applyCombinedFilters(); }
 
         function applyCombinedFilters() {
-            const searchVal = (document.getElementById('card-search-input')?.value || '').toUpperCase();
+            const searchVal = (document.getElementById('card-search-input')?.value || '').trim().toUpperCase();
             const cards = document.getElementById('plugin-cards-container')?.getElementsByClassName('glass-panel') || [];
             let matching = 0;
 
             for (let i = 0; i < cards.length; i++) {
                 const card = cards[i];
-                const cardCat = card.getAttribute('data-category');
-                const cardName = card.getAttribute('data-name');
-                const cardQuadrant = card.getAttribute('data-quadrant');
-                const cardTags = card.getAttribute('data-tags');
+                const cardCat = card.getAttribute('data-category') || '';
+                const cardName = card.getAttribute('data-name') || '';
+                const cardQuadrant = card.getAttribute('data-quadrant') || '';
+                const cardTags = card.getAttribute('data-tags') || '';
 
                 const matchesCat = (selectedCategory === 'All' || cardCat === selectedCategory);
-                const matchesSearch = (cardName.toUpperCase().indexOf(searchVal) > -1 || cardTags.toUpperCase().indexOf(searchVal) > -1 || cardQuadrant.toUpperCase().indexOf(searchVal) > -1);
+                const matchesSearch = (!searchVal || cardName.toUpperCase().includes(searchVal) || cardTags.toUpperCase().includes(searchVal) || cardQuadrant.toUpperCase().includes(searchVal));
 
                 let matchesActiveTags = true;
                 if (activeTags.length > 0) {
-                    matchesActiveTags = activeTags.every(t => cardTags.indexOf(t) > -1);
+                    matchesActiveTags = activeTags.every(t => cardTags.includes(t));
                 }
 
                 if (matchesCat && matchesSearch && matchesActiveTags) {
@@ -8066,10 +7985,10 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
                         icon: 'fa-cube',
                         run: () => {
                             switchTab('deepdive');
-                            const search = document.getElementById('deepdive-search-input');
+                            const search = document.getElementById('card-search-input');
                             if (search) {
                                 search.value = p.name;
-                                renderCards();
+                                filterCards();
                             }
                         }
                     });
@@ -8203,7 +8122,7 @@ ${pipe.steps.map(s => `    <step id="${s.step}" plugin="${s.plugin}" action="${s
                                 </div>
                             </div>
                         </div>
-                        <button onclick="switchTab('deepdive'); document.getElementById('deepdive-search-input').value='${p.name}'; renderCards(); closeCompareModal();" class="w-full py-2 rounded-xl bg-obsidian-900 hover:bg-cyan-600 text-slate-300 hover:text-white border border-white/5 text-xs font-bold font-mono transition-all flex items-center justify-center gap-1.5">
+                        <button onclick="switchTab('deepdive'); const s = document.getElementById('card-search-input'); if (s) { s.value='${p.name}'; filterCards(); } closeCompareModal();" class="w-full py-2 rounded-xl bg-obsidian-900 hover:bg-cyan-600 text-slate-300 hover:text-white border border-white/5 text-xs font-bold font-mono transition-all flex items-center justify-center gap-1.5">
                             <i class="fa-solid fa-magnifying-glass"></i> Deep Inspect
                         </button>
                     </div>

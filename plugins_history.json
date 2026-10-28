@@ -38409,9 +38409,9 @@
   }
  },
  {
-  "timestamp": "2026-10-28T05:07:32.485261+00:00",
-  "date_str": "Oct 28, 2026 05:07 UTC",
-  "total_downloads": 183422,
+  "timestamp": "2026-10-28T05:11:23.512145+00:00",
+  "date_str": "Oct 28, 2026 05:11 UTC",
+  "total_downloads": 183438,
   "plugins": {
    "osm_3d_model": {
     "downloads": 27274,
@@ -38419,17 +38419,17 @@
     "name": "3D OSM Model"
    },
    "zero2cadgis": {
-    "downloads": 19693,
+    "downloads": 19695,
     "version": "4.2.0",
     "name": "02CadGis - CAD/GIS Importer"
    },
    "osm_quick_3d": {
-    "downloads": 18475,
+    "downloads": 18476,
     "version": "0.51.0",
     "name": "OSM Quick 3D"
    },
    "zero2agent_osm_downloader": {
-    "downloads": 14237,
+    "downloads": 14240,
     "version": "1.4.0",
     "name": "02AgentOSM - OpenStreetMap Downloader"
    },
@@ -38439,7 +38439,7 @@
     "name": "02Viz - Geospatial Visualization Studio"
    },
    "zero2multimap": {
-    "downloads": 10087,
+    "downloads": 10088,
     "version": "1.2.1",
     "name": "02Multimap - Synchronized Map Views"
    },
@@ -38459,7 +38459,7 @@
     "name": "3D City Studio"
    },
    "planx_geostats": {
-    "downloads": 6248,
+    "downloads": 6249,
     "version": "3.12.0",
     "name": "GeoStats Lab"
    },
@@ -38479,12 +38479,12 @@
     "name": "02UrbanPortrait - City as a Face"
    },
    "zero2cartolab": {
-    "downloads": 3865,
+    "downloads": 3866,
     "version": "1.5.1",
     "name": "02CartoLab - Thematic Map and Layout Studio"
    },
    "zero2geoquest": {
-    "downloads": 3589,
+    "downloads": 3590,
     "version": "1.2.3",
     "name": "02GeoQuest - Playable Map Studio"
    },
@@ -38504,12 +38504,12 @@
     "name": "Settlement Planning Toolset"
    },
    "parcelflux": {
-    "downloads": 2842,
+    "downloads": 2845,
     "version": "0.3.5",
     "name": "ParcelFlux"
    },
    "planx_uip_arac_seti": {
-    "downloads": 2806,
+    "downloads": 2807,
     "version": "1.2.11",
     "name": "UIP Zoning Plan Toolset"
    },
@@ -38519,7 +38519,7 @@
     "name": "DataCube Lab"
    },
    "planx_urban_procedural_3d": {
-    "downloads": 2641,
+    "downloads": 2642,
     "version": "0.7.0",
     "name": "Urban Procedural 3D Studio"
    },
@@ -38529,7 +38529,7 @@
     "name": "02SmartModeler - Visual Workflow Builder"
    },
    "zero2route3d": {
-    "downloads": 2010,
+    "downloads": 2011,
     "version": "1.2.0",
     "name": "02Route3D - 3D Mobility Studio"
    },

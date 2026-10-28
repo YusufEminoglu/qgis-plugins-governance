@@ -1,0 +1,15 @@
+.git
+.gitignore
+.gitlab-ci.yml
+.assetsignore
+archive
+__pycache__
+*.py
+*.ps1
+*.bat
+README.md
+LICENSE
+dashboard_template.html
+plugins_history.json
+world_map.geojson
+assets/plugin_icons

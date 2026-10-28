@@ -38409,9 +38409,212 @@
   }
  },
  {
-  "timestamp": "2026-10-28T05:07:32.485261+00:00",
-  "date_str": "Oct 28, 2026 05:07 UTC",
-  "total_downloads": 183422,
+  "timestamp": "2026-10-27T00:08:07.898562+00:00",
+  "date_str": "Oct 27, 2026 00:08 UTC",
+  "total_downloads": 181067,
+  "plugins": {
+   "osm_3d_model": {
+    "downloads": 27045,
+    "average_vote": 4.301859736731215,
+    "votes_count": 159,
+    "total_score": 683.9957,
+    "version": "1.8.1"
+   },
+   "zero2cadgis": {
+    "downloads": 19388,
+    "average_vote": 4.076151655698517,
+    "votes_count": 105,
+    "total_score": 427.9959,
+    "version": "4.2.0"
+   },
+   "osm_quick_3d": {
+    "downloads": 18242,
+    "average_vote": 4.323188654660053,
+    "votes_count": 99,
+    "total_score": 427.9957,
+    "version": "0.51.0"
+   },
+   "zero2agent_osm_downloader": {
+    "downloads": 13708,
+    "average_vote": 3.91929162432864,
+    "votes_count": 62,
+    "total_score": 242.9961,
+    "version": "1.4.0"
+   },
+   "zero2viz": {
+    "downloads": 10120,
+    "average_vote": 4.273639224850265,
+    "votes_count": 95,
+    "total_score": 405.9957,
+    "version": "0.18.0"
+   },
+   "zero2multimap": {
+    "downloads": 9968,
+    "average_vote": 4.2520651086965655,
+    "votes_count": 119,
+    "total_score": 505.9957,
+    "version": "1.2.1"
+   },
+   "planx": {
+    "downloads": 9714,
+    "average_vote": 4.313903326705503,
+    "votes_count": 86,
+    "total_score": 370.9957,
+    "version": "4.19.0"
+   },
+   "planX_CAD_arac_Seti": {
+    "downloads": 9527,
+    "average_vote": 4.1095327461267654,
+    "votes_count": 73,
+    "total_score": 299.9959,
+    "version": "1.27.6"
+   },
+   "planx_3d_city": {
+    "downloads": 6330,
+    "average_vote": 4.333202024181086,
+    "votes_count": 33,
+    "total_score": 142.9957,
+    "version": "2.1.3"
+   },
+   "planx_geostats": {
+    "downloads": 6195,
+    "average_vote": 3.4761490934631727,
+    "votes_count": 84,
+    "total_score": 291.9965,
+    "version": "3.12.0"
+   },
+   "planx_urban_resilience": {
+    "downloads": 5043,
+    "average_vote": 4.17489562760931,
+    "votes_count": 40,
+    "total_score": 166.9958,
+    "version": "2.2.0"
+   },
+   "EasyFillet": {
+    "downloads": 5026,
+    "average_vote": 4.083163201533269,
+    "votes_count": 24,
+    "total_score": 97.9959,
+    "version": "1.4.13"
+   },
+   "zero2urbanportrait": {
+    "downloads": 3939,
+    "average_vote": 3.8821245809070053,
+    "votes_count": 17,
+    "total_score": 65.9961,
+    "version": "0.4.2"
+   },
+   "zero2cartolab": {
+    "downloads": 3769,
+    "average_vote": 3.9521927527260603,
+    "votes_count": 21,
+    "total_score": 82.996,
+    "version": "1.5.1"
+   },
+   "zero2geoquest": {
+    "downloads": 3566,
+    "average_vote": 3.809342412266082,
+    "votes_count": 21,
+    "total_score": 79.9962,
+    "version": "1.2.3"
+   },
+   "planx_suitability_lab": {
+    "downloads": 3388,
+    "average_vote": 4.151389351837824,
+    "votes_count": 33,
+    "total_score": 136.9958,
+    "version": "1.7.8"
+   },
+   "zero2truesize": {
+    "downloads": 3328,
+    "average_vote": 4.146936854798389,
+    "votes_count": 34,
+    "total_score": 140.9959,
+    "version": "0.5.0"
+   },
+   "planx_yerlesim_plani_arac_seti": {
+    "downloads": 2980,
+    "average_vote": 3.9998000099995,
+    "votes_count": 20,
+    "total_score": 79.996,
+    "version": "0.5.13"
+   },
+   "parcelflux": {
+    "downloads": 2831,
+    "average_vote": 4.190276653492691,
+    "votes_count": 21,
+    "total_score": 87.9958,
+    "version": "0.3.5"
+   },
+   "planx_uip_arac_seti": {
+    "downloads": 2790,
+    "average_vote": 4.110882728737292,
+    "votes_count": 18,
+    "total_score": 73.9959,
+    "version": "1.2.11"
+   },
+   "planx_datacube": {
+    "downloads": 2653,
+    "average_vote": 3.8886728515082494,
+    "votes_count": 18,
+    "total_score": 69.9961,
+    "version": "1.4.0"
+   },
+   "planx_urban_procedural_3d": {
+    "downloads": 2628,
+    "average_vote": 3.99966669444213,
+    "votes_count": 12,
+    "total_score": 47.996,
+    "version": "0.7.0"
+   },
+   "zero2smartmodeler": {
+    "downloads": 2362,
+    "average_vote": 3.8331203822009887,
+    "votes_count": 18,
+    "total_score": 68.9962,
+    "version": "1.6.0"
+   },
+   "zero2route3d": {
+    "downloads": 1961,
+    "average_vote": 4.997501249375313,
+    "votes_count": 2,
+    "total_score": 9.995,
+    "version": "1.2.0"
+   },
+   "parametric_process": {
+    "downloads": 1758,
+    "average_vote": 3.9995000624921886,
+    "votes_count": 8,
+    "total_score": 31.996,
+    "version": "3.2.0"
+   },
+   "qgis_25d_styling": {
+    "downloads": 1035,
+    "average_vote": 4.199160167966406,
+    "votes_count": 5,
+    "total_score": 20.9958,
+    "version": "1.0.2"
+   },
+   "zero2geospatial3d": {
+    "downloads": 1014,
+    "average_vote": 0.0,
+    "votes_count": 0,
+    "total_score": 0.0,
+    "version": "1.0.3"
+   },
+   "qgis_maptips": {
+    "downloads": 759,
+    "average_vote": 0.0,
+    "votes_count": 0,
+    "total_score": 0.0,
+    "version": "0.2.0"
+   }
+  }
+ },
+ {
+  "timestamp": "2026-10-28T05:17:16.399021+00:00",
+  "date_str": "Oct 28, 2026 05:17 UTC",
+  "total_downloads": 183438,
   "plugins": {
    "osm_3d_model": {
     "downloads": 27274,
@@ -38419,17 +38622,17 @@
     "name": "3D OSM Model"
    },
    "zero2cadgis": {
-    "downloads": 19693,
+    "downloads": 19695,
     "version": "4.2.0",
     "name": "02CadGis - CAD/GIS Importer"
    },
    "osm_quick_3d": {
-    "downloads": 18475,
+    "downloads": 18476,
     "version": "0.51.0",
     "name": "OSM Quick 3D"
    },
    "zero2agent_osm_downloader": {
-    "downloads": 14237,
+    "downloads": 14240,
     "version": "1.4.0",
     "name": "02AgentOSM - OpenStreetMap Downloader"
    },
@@ -38439,7 +38642,7 @@
     "name": "02Viz - Geospatial Visualization Studio"
    },
    "zero2multimap": {
-    "downloads": 10087,
+    "downloads": 10088,
     "version": "1.2.1",
     "name": "02Multimap - Synchronized Map Views"
    },
@@ -38459,7 +38662,7 @@
     "name": "3D City Studio"
    },
    "planx_geostats": {
-    "downloads": 6248,
+    "downloads": 6249,
     "version": "3.12.0",
     "name": "GeoStats Lab"
    },
@@ -38479,12 +38682,12 @@
     "name": "02UrbanPortrait - City as a Face"
    },
    "zero2cartolab": {
-    "downloads": 3865,
+    "downloads": 3866,
     "version": "1.5.1",
     "name": "02CartoLab - Thematic Map and Layout Studio"
    },
    "zero2geoquest": {
-    "downloads": 3589,
+    "downloads": 3590,
     "version": "1.2.3",
     "name": "02GeoQuest - Playable Map Studio"
    },
@@ -38504,12 +38707,12 @@
     "name": "Settlement Planning Toolset"
    },
    "parcelflux": {
-    "downloads": 2842,
+    "downloads": 2845,
     "version": "0.3.5",
     "name": "ParcelFlux"
    },
    "planx_uip_arac_seti": {
-    "downloads": 2806,
+    "downloads": 2807,
     "version": "1.2.11",
     "name": "UIP Zoning Plan Toolset"
    },
@@ -38519,7 +38722,7 @@
     "name": "DataCube Lab"
    },
    "planx_urban_procedural_3d": {
-    "downloads": 2641,
+    "downloads": 2642,
     "version": "0.7.0",
     "name": "Urban Procedural 3D Studio"
    },
@@ -38529,7 +38732,7 @@
     "name": "02SmartModeler - Visual Workflow Builder"
    },
    "zero2route3d": {
-    "downloads": 2010,
+    "downloads": 2011,
     "version": "1.2.0",
     "name": "02Route3D - 3D Mobility Studio"
    },

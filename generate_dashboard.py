@@ -121,13 +121,15 @@ def fetch_plugins():
 
 
 # ----------------------------------------------------------------------- history
-def load_history():
+def load_history(current_names):
+    """Snapshots keyed by package name; older ones were keyed by display name."""
     if not os.path.exists(HISTORY):
         return []
     with open(HISTORY, encoding="utf-8") as fh:
         history = json.load(fh)
-    for snap in history:  # re-key snapshots taken under old display names
-        snap["plugins"] = {LEGACY_NAMES.get(k, k): v for k, v in snap.get("plugins", {}).items()}
+    aliases = {**LEGACY_NAMES, **current_names}
+    for snap in history:
+        snap["plugins"] = {aliases.get(k, k): v for k, v in snap.get("plugins", {}).items()}
     return history
 
 
@@ -314,7 +316,7 @@ def build():
     packages = [p["package"] for p in plugins]
 
     print("[2/5] history")
-    history = add_snapshot(load_history(), plugins)
+    history = add_snapshot(load_history({p["name"]: p["package"] for p in plugins}), plugins)
     days, series = daily_series(history, packages, 120)
     for p in plugins:
         s = series[p["package"]]

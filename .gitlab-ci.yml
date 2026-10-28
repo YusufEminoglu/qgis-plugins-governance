@@ -40,5 +40,10 @@ deploy-geophilo:
         echo "CLOUDFLARE_API_TOKEN not set; skipping Cloudflare Pages deploy."
         exit 0
       fi
-      npx --yes wrangler pages deploy . --project-name geophilo-governance --branch main --commit-dirty=true
+      # Pages ignores .assetsignore: upload a folder holding only the page and its images,
+      # never the repository (scripts, history, archive/).
+      mkdir -p public
+      cp index.html qgis_plugins_dashboard.html favicon.ico public/
+      cp -r assets public/ && rm -rf public/assets/plugin_icons
+      npx --yes wrangler pages deploy public --project-name geophilo-governance --branch main --commit-dirty=true
 

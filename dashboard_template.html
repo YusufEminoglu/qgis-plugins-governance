@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Geophilo QGIS Plugins</title>
+<meta name="description" content="Downloads, releases and reach of the Geophilo plugins on the QGIS Plugin Hub, updated daily.">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="assets/geophilo_mark_64.png">
+<style>
+/* Layout: one reading column of cards; summary first, the plugin table is the centre of the page. */
+:root {
+  color-scheme: light;
+  --bg: #f4f7f6; --surface: #ffffff; --ink: #12343b; --ink-2: #4a5f66; --muted: #74878d;
+  --line: #dde5e8; --line-soft: #edf2f3; --accent: #0f766e; --accent-soft: #e3f2ef;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+  --q0: #e9eeef; --q1: #d5efe9; --q2: #9fd8cb; --q3: #5fb8a6; --q4: #2b8f7d; --q5: #0f5f52;
+  --up: #15803d; --down: #b91c1c;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  color-scheme: dark;
+  --bg: #0f1719; --surface: #172326; --ink: #e2ecea; --ink-2: #a9bbb8; --muted: #7d918e;
+  --line: #2b3b3f; --line-soft: #213034; --accent: #3cc4b2; --accent-soft: #163a37;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+  --q0: #22302f; --q1: #18403a; --q2: #1f6457; --q3: #2b8f7d; --q4: #4fb5a0; --q5: #8fdcc9;
+  --up: #4ade80; --down: #f87171;
+}}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1719; --surface: #172326; --ink: #e2ecea; --ink-2: #a9bbb8; --muted: #7d918e;
+  --line: #2b3b3f; --line-soft: #213034; --accent: #3cc4b2; --accent-soft: #163a37;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+  --q0: #22302f; --q1: #18403a; --q2: #1f6457; --q3: #2b8f7d; --q4: #4fb5a0; --q5: #8fdcc9;
+  --up: #4ade80; --down: #f87171;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font); }
+a { color: var(--accent); text-decoration: none; }
+a:hover, a:focus-visible { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 18px; }
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+header.top h1 { margin: 0; font-size: 1.7rem; letter-spacing: -0.01em; }
+header.top p { margin: 4px 0 0; color: var(--ink-2); }
+.meta { color: var(--muted); font-size: .85rem; text-align: right; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
+.card h2 { margin: 0 0 2px; font-size: 1rem; }
+.card .sub { margin: 0 0 14px; color: var(--muted); font-size: .85rem; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.kpi .label { color: var(--ink-2); font-size: .82rem; }
+.kpi .value { font-size: 1.65rem; font-weight: 650; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.kpi .note { color: var(--muted); font-size: .8rem; }
+.up { color: var(--up); } .down { color: var(--down); }
+.grid2 { display: grid; grid-template-columns: 3fr 2fr; gap: 18px; }
+@media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+svg text { fill: var(--muted); font: 11px var(--font); }
+.chart { width: 100%; height: auto; display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: .85rem; color: var(--ink-2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.toolbar input, .toolbar select { font: inherit; font-size: .9rem; padding: 6px 10px; border: 1px solid var(--line);
+  border-radius: 6px; background: var(--surface); color: var(--ink); }
+.toolbar input { flex: 1 1 220px; }
+.tablebox { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 760px; }
+th { text-align: left; font-weight: 600; font-size: .78rem; color: var(--ink-2); padding: 8px 10px; border-bottom: 1px solid var(--line);
+  white-space: nowrap; cursor: pointer; user-select: none; }
+th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+th[aria-sort="ascending"]::after { content: " ▲"; } th[aria-sort="descending"]::after { content: " ▼"; }
+td { padding: 8px 10px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+tr:hover td { background: var(--accent-soft); }
+.pl { display: flex; align-items: center; gap: 10px; min-width: 230px; }
+.pl img, .pl .ph { width: 30px; height: 30px; border-radius: 7px; flex: none; object-fit: contain; }
+.pl .ph { background: var(--line-soft); }
+.pl b { display: block; font-weight: 600; }
+.pl code { font: 11px var(--mono); color: var(--muted); }
+.suite { display: inline-flex; align-items: center; gap: 5px; font-size: .78rem; color: var(--ink-2); }
+.suite i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.links a { margin-right: 10px; font-size: .85rem; }
+.small { color: var(--muted); font-size: .8rem; }
+.bars .row { display: grid; grid-template-columns: minmax(120px, 210px) 1fr 70px; gap: 10px; align-items: center; padding: 4px 0; font-size: .88rem; }
+.bars .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bars .track { height: 14px; }
+.bars .fill { height: 100%; background: var(--accent); border-radius: 0 4px 4px 0; min-width: 2px; }
+.bars .v { text-align: right; font-variant-numeric: tabular-nums; }
+.rel { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rel li { display: grid; grid-template-columns: 86px 1fr auto; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line-soft); font-size: .88rem; }
+.rel li:last-child { border-bottom: 0; }
+.rel .d { color: var(--muted); font-variant-numeric: tabular-nums; }
+.rel .ver { font: 12px var(--mono); color: var(--ink-2); white-space: nowrap; }
+.mapgrid { display: grid; grid-template-columns: 3fr 1fr; gap: 18px; align-items: start; }
+@media (max-width: 860px) { .mapgrid { grid-template-columns: 1fr; } }
+#map path { stroke: var(--surface); stroke-width: .5; fill: var(--q0); }
+#map path:hover { stroke: var(--ink); stroke-width: 1; }
+.scale { display: flex; gap: 2px; align-items: center; font-size: .78rem; color: var(--muted); margin-top: 8px; flex-wrap: wrap; }
+.scale i { width: 26px; height: 10px; display: inline-block; }
+.toplist { list-style: none; margin: 0; padding: 0; font-size: .88rem; }
+.toplist li { display: flex; justify-content: space-between; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--line-soft); }
+.toplist li span:last-child { font-variant-numeric: tabular-nums; color: var(--ink-2); }
+#tip { position: fixed; pointer-events: none; z-index: 10; background: var(--ink); color: var(--surface); font-size: .8rem;
+  padding: 5px 8px; border-radius: 5px; white-space: nowrap; display: none; }
+footer { color: var(--muted); font-size: .8rem; line-height: 1.6; }
+.empty { color: var(--muted); font-size: .9rem; padding: 10px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Geophilo QGIS Plugins</h1>
+      <p>Downloads, releases and reach on the QGIS Plugin Hub.</p>
+    </div>
+    <div class="meta">Updated <span id="generated"></span><br>
+      <a href="https://geophilo.com/software/">All software</a> · <a href="https://plugins.qgis.org/plugins/author/Geophilo/">QGIS Hub</a></div>
+  </header>
+
+  <section class="kpis" id="kpis" aria-label="Summary"></section>
+
+  <div class="grid2">
+    <section class="card">
+      <h2>Downloads per week</h2>
+      <p class="sub">New downloads across all plugins, from the daily Hub snapshots.</p>
+      <div id="weekly"></div>
+    </section>
+    <section class="card">
+      <h2>Downloads by suite</h2>
+      <p class="sub">Share of all-time downloads.</p>
+      <div id="suites"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Plugins</h2>
+    <p class="sub">Click a column to sort. The trend line shows downloads per day over the last 30 days.</p>
+    <div class="toolbar">
+      <input id="q" type="search" placeholder="Search plugins" aria-label="Search plugins">
+      <select id="suite" aria-label="Suite"><option value="">All suites</option></select>
+    </div>
+    <div class="tablebox"><table id="tbl"><thead><tr>
+      <th data-k="name">Plugin</th><th data-k="updated">Version</th>
+      <th data-k="downloads" class="num">Downloads</th><th data-k="last30" class="num">Last 30 days</th>
+      <th data-k="last30" class="num" data-nosort>Trend</th><th data-k="qgis_min">QGIS</th><th data-nosort>Links</th>
+    </tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <div class="grid2">
+    <section class="card">
+      <h2>Most downloaded in the last 30 days</h2>
+      <p class="sub">Top 10 plugins by new downloads.</p>
+      <div class="bars" id="top30"></div>
+    </section>
+    <section class="card">
+      <h2>Recent releases</h2>
+      <p class="sub">Versions approved on the Hub in the last 60 days.</p>
+      <ul class="rel" id="releases"></ul>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Downloads by country</h2>
+    <p class="sub" id="mapnote"></p>
+    <div class="mapgrid">
+      <div>
+        <svg id="map" class="chart" viewBox="0 0 960 470" role="img" aria-label="Downloads by country"><!--WORLD--></svg>
+        <div class="scale" id="scale"></div>
+      </div>
+      <ol class="toplist" id="toplist"></ol>
+    </div>
+  </section>
+
+  <footer>
+    Sources: <a href="https://plugins.qgis.org/plugins/plugins.xml?qgis=4.0">plugins.xml</a> (versions, total downloads);
+    a daily snapshot of it (downloads per day and week, releases); the QGIS Hub download statistics
+    (downloads per country, recorded since <span id="since"></span>). Figures the Hub does not publish are not shown.
+    Geophilo · <a href="https://geophilo.com/">geophilo.com</a>
+  </footer>
+</div>
+<div id="tip" role="tooltip"></div>
+<script>
+const D = /*DATA*/null;
+const fmt = n => (n == null ? "–" : Math.round(n).toLocaleString("en-US"));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const SUITE_VAR = {"PlanX suite": "--s1", "02 suite": "--s2", "Standalone": "--s3"};
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const tip = document.getElementById("tip");
+function showTip(e, text) { tip.textContent = text; tip.style.display = "block";
+  const x = Math.min(e.clientX + 12, innerWidth - tip.offsetWidth - 8); tip.style.left = x + "px"; tip.style.top = (e.clientY + 14) + "px"; }
+function hideTip() { tip.style.display = "none"; }
+document.addEventListener("mouseover", e => { const t = e.target.closest("[data-tip]"); if (!t) hideTip(); });
+document.addEventListener("mousemove", e => { const t = e.target.closest("[data-tip]"); if (t) showTip(e, t.dataset.tip); });
+
+document.getElementById("generated").textContent = D.generated;
+document.getElementById("since").textContent = D.countries_since;
+
+// ---- KPIs
+(function () {
+  const change = D.prev30 > 0 && D.prev30_complete ? (D.last30 - D.prev30) / D.prev30 * 100 : null;
+  const tiles = [
+    ["All-time downloads", fmt(D.total), `${D.plugins.length} plugins on the Hub`],
+    ["Last 30 days", fmt(D.last30), change == null ? "new downloads" :
+      `<span class="${change >= 0 ? "up" : "down"}">${change >= 0 ? "+" : ""}${change.toFixed(0)}%</span> vs. previous 30 days`],
+    ["Last 7 days", fmt(D.plugins.reduce((a, p) => a + p.last7, 0)), "new downloads"],
+    ["Releases", fmt(D.releases30), "approved in the last 30 days"],
+    ["Countries", D.countries.length ? fmt(D.countries.length) : "–", D.countries.length ? `since ${D.countries_since}` : "country data unavailable"],
+  ];
+  document.getElementById("kpis").innerHTML = tiles.map(([l, v, n]) =>
+    `<div class="kpi"><div class="label">${l}</div><div class="value">${v}</div><div class="note">${n}</div></div>`).join("");
+})();
+
+// ---- weekly columns
+(function () {
+  const el = document.getElementById("weekly"), W = D.weekly;
+  if (!W.length) { el.innerHTML = '<p class="empty">Not enough history yet.</p>'; return; }
+  const w = 640, h = 220, pl = 44, pb = 26, pt = 10, max = Math.max(...W.map(x => x.downloads)) || 1;
+  const step = Math.pow(10, Math.floor(Math.log10(max))), top = Math.ceil(max / step) * step;
+  const bw = (w - pl) / W.length, y = v => pt + (h - pt - pb) * (1 - v / top);
+  let s = `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="Downloads per week">`;
+  for (let i = 0; i <= 2; i++) { const v = top * i / 2, yy = y(v);
+    s += `<line x1="${pl}" x2="${w}" y1="${yy}" y2="${yy}" stroke="var(--line)" stroke-width="1"/>`;
+    s += `<text x="${pl - 6}" y="${yy + 4}" text-anchor="end">${fmt(v)}</text>`; }
+  W.forEach((x, i) => {
+    const bx = pl + i * bw + bw * 0.18, bh = (h - pt - pb) * x.downloads / top, by = h - pb - bh;
+    s += `<rect x="${bx}" y="${by}" width="${bw * 0.64}" height="${Math.max(bh, 1)}" rx="3" fill="var(--accent)"
+      data-tip="Week of ${x.week}: ${fmt(x.downloads)} downloads"/>`;
+    if (i % 2 === (W.length - 1) % 2) s += `<text x="${bx + bw * 0.32}" y="${h - 8}" text-anchor="middle">${x.week.slice(5)}</text>`;
+  });
+  el.innerHTML = s + "</svg>";
+})();
+
+// ---- suites (one stacked bar + legend)
+(function () {
+  const S = D.suites, tot = S.reduce((a, s) => a + s.downloads, 0) || 1;
+  let x = 0, bar = '<svg class="chart" viewBox="0 0 400 28" role="img" aria-label="Downloads by suite">';
+  S.forEach(s => { const wv = 400 * s.downloads / tot;
+    bar += `<rect x="${x}" y="2" width="${Math.max(wv - 2, 1)}" height="24" rx="4" fill="var(${SUITE_VAR[s.name]})"
+      data-tip="${s.name}: ${fmt(s.downloads)} downloads (${(100 * s.downloads / tot).toFixed(1)}%)"/>`; x += wv; });
+  bar += "</svg>";
+  const legend = S.map(s => `<span><i style="background:var(${SUITE_VAR[s.name]})"></i>${s.name} · ${s.plugins} plugins ·
+    ${fmt(s.downloads)} (${(100 * s.downloads / tot).toFixed(0)}%)</span>`).join("");
+  document.getElementById("suites").innerHTML = bar + `<div class="legend" style="flex-direction:column">${legend}</div>`;
+  const sel = document.getElementById("suite");
+  S.forEach(s => sel.insertAdjacentHTML("beforeend", `<option>${s.name}</option>`));
+})();
+
+// ---- plugin table
+function spark(vals) {
+  const w = 96, h = 24, max = Math.max(...vals, 1);
+  const pts = vals.map((v, i) => `${(i * w / (vals.length - 1)).toFixed(1)},${(h - 2 - (h - 4) * v / max).toFixed(1)}`);
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline points="${pts.join(" ")}"
+    fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+}
+let sortKey = "downloads", sortDir = -1;
+function renderTable() {
+  const q = document.getElementById("q").value.trim().toLowerCase(), su = document.getElementById("suite").value;
+  const rows = D.plugins.filter(p => (!su || p.suite === su) &&
+      (!q || (p.name + " " + p.package).toLowerCase().includes(q)))
+    .sort((a, b) => (a[sortKey] > b[sortKey] ? 1 : a[sortKey] < b[sortKey] ? -1 : 0) * sortDir);
+  document.querySelector("#tbl tbody").innerHTML = rows.map(p => `<tr>
+    <td><div class="pl">${p.icon ? `<img src="${p.icon}" alt="">` : '<span class="ph"></span>'}<div>
+      <b>${esc(p.name)}</b><span class="suite"><i style="background:var(${SUITE_VAR[p.suite]})"></i>${p.suite}</span>
+      <code> · ${esc(p.package)}</code></div></div></td>
+    <td>${esc(p.version)}${p.experimental ? ' <span class="small">experimental</span>' : ""}<br><span class="small">${p.updated}</span></td>
+    <td class="num">${fmt(p.downloads)}</td>
+    <td class="num">${p.tracked_days >= 30 ? fmt(p.last30) : fmt(p.last30) + '<br><span class="small">since ' + (p.tracked_days) + ' d</span>'}</td>
+    <td class="num" data-tip="${fmt(p.last7)} in the last 7 days">${spark(p.spark)}</td>
+    <td class="small">${esc(p.qgis_min)}${p.qgis_max ? "–" + esc(p.qgis_max) : "+"}</td>
+    <td class="links"><a href="${p.hub_url}">Hub</a><a href="${p.docs_url}">Manual</a>${p.repository ? `<a href="${esc(p.repository)}">Source</a>` : ""}</td>
+  </tr>`).join("") || '<tr><td colspan="7" class="empty">No plugin matches.</td></tr>';
+  document.querySelectorAll("#tbl th").forEach(th => th.removeAttribute("aria-sort"));
+  const th = document.querySelector(`#tbl th[data-k="${sortKey}"]:not([data-nosort])`);
+  if (th) th.setAttribute("aria-sort", sortDir > 0 ? "ascending" : "descending");
+}
+document.querySelectorAll("#tbl th[data-k]:not([data-nosort])").forEach(th => th.addEventListener("click", () => {
+  const k = th.dataset.k; sortDir = sortKey === k ? -sortDir : (k === "name" || k === "qgis_min" ? 1 : -1); sortKey = k; renderTable(); }));
+document.getElementById("q").addEventListener("input", renderTable);
+document.getElementById("suite").addEventListener("change", renderTable);
+renderTable();
+
+// ---- top 30 days
+(function () {
+  const top = [...D.plugins].sort((a, b) => b.last30 - a.last30).slice(0, 10), max = top[0] ? top[0].last30 || 1 : 1;
+  document.getElementById("top30").innerHTML = top.map(p => `<div class="row"><span class="name">${esc(p.name)}</span>
+    <span class="track"><div class="fill" style="width:${(100 * p.last30 / max).toFixed(1)}%"
+      data-tip="${esc(p.name)}: ${fmt(p.last30)} downloads in 30 days"></div></span><span class="v">${fmt(p.last30)}</span></div>`).join("");
+})();
+
+// ---- releases
+(function () {
+  const R = D.releases;
+  document.getElementById("releases").innerHTML = R.length ? R.map(r => `<li><span class="d">${r.date}</span>
+    <span>${esc(r.name)}</span><span class="ver">${esc(r.from)} → ${esc(r.to)}</span></li>`).join("")
+    : '<li class="empty">No release in the last 60 days.</li>';
+})();
+
+// ---- map
+(function () {
+  const C = D.countries, note = document.getElementById("mapnote");
+  if (!C.length) { note.textContent = "Country data is unavailable from the Hub right now; it is retried on the next daily update."; return; }
+  note.textContent = `Downloads recorded by the Hub since ${D.countries_since}, all plugins combined` +
+    (D.countries_answered < D.plugins.length ? ` (${D.countries_answered} of ${D.plugins.length} plugins answered).` : ".");
+  const vals = C.map(c => c.downloads).sort((a, b) => a - b);
+  const cuts = [0.2, 0.4, 0.6, 0.8].map(q => vals[Math.floor(q * (vals.length - 1))]);
+  const bin = v => 1 + cuts.filter(c => v > c).length;
+  const by = Object.fromEntries(C.map(c => [c.iso, c]));
+  document.querySelectorAll("#map path").forEach(p => {
+    const c = by[p.dataset.iso];
+    if (c) { p.style.fill = `var(--q${bin(c.downloads)})`; p.dataset.tip = `${p.dataset.name}: ${fmt(c.downloads)} downloads`; }
+    else p.dataset.tip = `${p.dataset.name}: no recorded downloads`;
+  });
+  const edges = [vals[0], ...cuts, vals[vals.length - 1]];
+  document.getElementById("scale").innerHTML = '<span style="margin-right:6px">Downloads</span>' +
+    [1, 2, 3, 4, 5].map(i => `<i style="background:var(--q${i})" title="${fmt(edges[i - 1])}–${fmt(edges[i])}"></i>`).join("") +
+    `<span style="margin-left:6px">${fmt(vals[0])} – ${fmt(vals[vals.length - 1])}</span>` +
+    '<i style="background:var(--q0);margin-left:14px"></i><span>no data</span>';
+  const tot = vals.reduce((a, b) => a + b, 0);
+  document.getElementById("toplist").innerHTML = C.slice(0, 12).map((c, i) =>
+    `<li><span>${i + 1}. ${esc(c.name)}</span><span>${fmt(c.downloads)} · ${(100 * c.downloads / tot).toFixed(1)}%</span></li>`).join("");
+})();
+</script>
+</body>
+</html>
